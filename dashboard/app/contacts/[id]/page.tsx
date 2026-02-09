@@ -33,20 +33,35 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
     const [newTaskDesc, setNewTaskDesc] = useState("")
     const [newTaskPriority, setNewTaskPriority] = useState<"Low" | "Medium" | "High">("Medium")
     const [newTaskCategory, setNewTaskCategory] = useState("Follow-up")
+    const [newTaskDueDate, setNewTaskDueDate] = useState("")
 
     useEffect(() => {
         async function fetchData() {
             setLoading(true)
             const [contactRes, tasksRes] = await Promise.all([
                 supabase.from('contacts').select('*').eq('id', id).single(),
-                supabase.from('tasks').select('*').eq('contact_id', id).order('completed', { ascending: true }).order('created_at', { ascending: false })
+                supabase.from('tasks').select('*').eq('contact_id', id)
             ])
 
             if (contactRes.error) {
                 setError(contactRes.error.message)
             } else {
                 setContact(contactRes.data)
-                setTasks(tasksRes.data || [])
+
+                // Client side sort for multi-level logic
+                const sorted = (tasksRes.data || []).sort((a, b) => {
+                    if (a.completed !== b.completed) return a.completed ? 1 : -1
+
+                    const weights: Record<string, number> = { High: 3, Medium: 2, Low: 1 }
+                    const priorityDiff = (weights[b.priority] || 0) - (weights[a.priority] || 0)
+                    if (priorityDiff !== 0) return priorityDiff
+
+                    if (!a.due_date && b.due_date) return 1
+                    if (a.due_date && !b.due_date) return -1
+                    if (!a.due_date && !b.due_date) return 0
+                    return new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+                })
+                setTasks(sorted)
             }
             setLoading(false)
         }
@@ -91,6 +106,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                 description: newTaskDesc,
                 priority: newTaskPriority,
                 category: newTaskCategory,
+                due_date: newTaskDueDate || null,
                 completed: false
             })
             .select()
@@ -99,8 +115,8 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
         if (error) {
             alert(error.message)
         } else {
-            setTasks([data, ...tasks])
-            setNewTaskDesc("")
+            // Re-sort locally or just refresh
+            window.location.reload()
         }
     }
 
@@ -284,8 +300,14 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                     onChange={e => setNewTaskDesc(e.target.value)}
                                 />
                                 <div className="flex gap-2">
+                                    <Input
+                                        type="date"
+                                        className="h-8 text-xs flex-1"
+                                        value={newTaskDueDate}
+                                        onChange={e => setNewTaskDueDate(e.target.value)}
+                                    />
                                     <select
-                                        className="text-xs border rounded p-1 flex-1"
+                                        className="text-xs border rounded p-1 h-8"
                                         value={newTaskPriority}
                                         onChange={e => setNewTaskPriority(e.target.value as any)}
                                     >
@@ -293,7 +315,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                         <option value="Medium">Medium</option>
                                         <option value="High">High</option>
                                     </select>
-                                    <Button type="submit" size="sm" variant="secondary">
+                                    <Button type="submit" size="sm" variant="secondary" className="h-8">
                                         <Plus className="h-4 w-4 mr-1" /> Add
                                     </Button>
                                 </div>

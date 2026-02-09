@@ -32,11 +32,18 @@ export default function TasksPage() {
             if (error) {
                 console.error('Error fetching tasks:', error)
             } else {
-                // Simple client-side sort for priorities if needed
+                // Multi-level sort: Priority -> Due Date
                 const sorted = (data || []).sort((a, b) => {
                     if (a.completed !== b.completed) return a.completed ? 1 : -1
+
                     const weights: Record<string, number> = { High: 3, Medium: 2, Low: 1 }
-                    return (weights[b.priority] || 0) - (weights[a.priority] || 0)
+                    const priorityDiff = (weights[b.priority] || 0) - (weights[a.priority] || 0)
+                    if (priorityDiff !== 0) return priorityDiff
+
+                    if (!a.due_date && b.due_date) return 1
+                    if (a.due_date && !b.due_date) return -1
+                    if (!a.due_date && !b.due_date) return 0
+                    return new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
                 })
                 setTasks(sorted)
             }
