@@ -34,6 +34,13 @@ const PRIORITY_COLORS = {
     Low: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200"
 }
 
+import {
+    Tabs,
+    TabsContent,
+    TabsList,
+    TabsTrigger,
+} from "@/components/ui/tabs"
+
 export default function TasksPage() {
     const [tasks, setTasks] = useState<(Task & { contact: Contact })[]>([])
     const [loading, setLoading] = useState(true)
@@ -45,6 +52,7 @@ export default function TasksPage() {
         const { data, error } = await supabase
             .from('tasks')
             .select('*, contact:contacts(*)')
+            // We'll sort everything here but display them filtered
             .order('completed', { ascending: true })
 
         if (error) {
@@ -52,8 +60,6 @@ export default function TasksPage() {
         } else {
             // Multi-level sort: Priority -> Due Date
             const sorted = (data || []).sort((a, b) => {
-                if (a.completed !== b.completed) return a.completed ? 1 : -1
-
                 const weights: Record<string, number> = { High: 3, Medium: 2, Low: 1 }
                 const priorityDiff = (weights[b.priority] || 0) - (weights[a.priority] || 0)
                 if (priorityDiff !== 0) return priorityDiff
@@ -116,73 +122,91 @@ export default function TasksPage() {
 
     if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin h-8 w-8" /></div>
 
+    const activeTasks = tasks.filter(t => !t.completed)
+    const archivedTasks = tasks.filter(t => t.completed)
+
+    const TaskList = ({ items }: { items: (Task & { contact: Contact })[] }) => (
+        <div className="grid gap-4">
+            {items.length === 0 ? (
+                <p className="text-center text-muted-foreground py-12">No tasks found.</p>
+            ) : (
+                items.map(task => (
+                    <Card key={task.id} className={cn(
+                        "transition-all",
+                        task.completed ? "opacity-60 bg-muted/30" : "hover:shadow-md"
+                    )}>
+                        <CardContent className="p-4 flex items-center gap-4">
+                            <Checkbox
+                                checked={task.completed}
+                                onCheckedChange={() => toggleTask(task.id, task.completed)}
+                            />
+
+                            <div className="flex-1 space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <span className={task.completed ? "line-through text-muted-foreground" : "font-medium"}>
+                                        {task.description}
+                                    </span>
+                                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${PRIORITY_COLORS[task.priority] || ""}`}>
+                                        {task.priority}
+                                    </Badge>
+                                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                        {task.category}
+                                    </Badge>
+                                </div>
+
+                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                    <div className="flex items-center gap-1">
+                                        <User className="h-3 w-3" />
+                                        <Link href={`/contacts/${task.contact_id}`} className="hover:underline">
+                                            {task.contact?.first_name} {task.contact?.last_name}
+                                        </Link>
+                                    </div>
+                                    {task.due_date ? (
+                                        <div className="flex items-center gap-1">
+                                            <Calendar className="h-3 w-3" />
+                                            {new Date(task.due_date).toLocaleDateString()}
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-1 text-gray-400">
+                                            <Calendar className="h-3 w-3" />
+                                            No date
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                {task.priority === 'High' && !task.completed && <AlertCircle className="h-4 w-4 text-red-500" />}
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(task)}>
+                                    <Pencil className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))
+            )}
+        </div>
+    )
+
     return (
         <div className="container mx-auto p-6 space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold tracking-tight">Tasks Dashboard</h1>
-                <Badge variant="outline">{tasks.filter(t => !t.completed).length} Pending</Badge>
+                <Badge variant="outline">{activeTasks.length} Pending</Badge>
             </div>
 
-            <div className="grid gap-4">
-                {tasks.length === 0 ? (
-                    <p className="text-center text-muted-foreground py-12">No tasks found. Create one from a lead's page!</p>
-                ) : (
-                    tasks.map(task => (
-                        <Card key={task.id} className={cn(
-                            "transition-all",
-                            task.completed ? "opacity-60 bg-muted/30" : "hover:shadow-md"
-                        )}>
-                            <CardContent className="p-4 flex items-center gap-4">
-                                <Checkbox
-                                    checked={task.completed}
-                                    onCheckedChange={() => toggleTask(task.id, task.completed)}
-                                />
-
-                                <div className="flex-1 space-y-1">
-                                    <div className="flex items-center gap-2">
-                                        <span className={task.completed ? "line-through text-muted-foreground" : "font-medium"}>
-                                            {task.description}
-                                        </span>
-                                        <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${PRIORITY_COLORS[task.priority] || ""}`}>
-                                            {task.priority}
-                                        </Badge>
-                                        <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                                            {task.category}
-                                        </Badge>
-                                    </div>
-
-                                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                        <div className="flex items-center gap-1">
-                                            <User className="h-3 w-3" />
-                                            <Link href={`/contacts/${task.contact_id}`} className="hover:underline">
-                                                {task.contact?.first_name} {task.contact?.last_name}
-                                            </Link>
-                                        </div>
-                                        {task.due_date ? (
-                                            <div className="flex items-center gap-1">
-                                                <Calendar className="h-3 w-3" />
-                                                {new Date(task.due_date).toLocaleDateString()}
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center gap-1 text-gray-400">
-                                                <Calendar className="h-3 w-3" />
-                                                No date
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center gap-2">
-                                    {task.priority === 'High' && !task.completed && <AlertCircle className="h-4 w-4 text-red-500" />}
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(task)}>
-                                        <Pencil className="h-4 w-4 text-muted-foreground" />
-                                    </Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    ))
-                )}
-            </div>
+            <Tabs defaultValue="active" className="w-full">
+                <TabsList className="mb-4">
+                    <TabsTrigger value="active">Actives ({activeTasks.length})</TabsTrigger>
+                    <TabsTrigger value="archive">Archive ({archivedTasks.length})</TabsTrigger>
+                </TabsList>
+                <TabsContent value="active">
+                    <TaskList items={activeTasks} />
+                </TabsContent>
+                <TabsContent value="archive">
+                    <TaskList items={archivedTasks} />
+                </TabsContent>
+            </Tabs>
 
             {/* Edit Dialog */}
             <Dialog open={!!editingTask} onOpenChange={(open) => !open && setEditingTask(null)}>
