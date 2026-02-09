@@ -46,7 +46,7 @@ export function StatusCell({ contact }: { contact: Contact }) {
     }
 
     return (
-        <Select value={status} onValueChange={handleValueChange} disabled={loading}>
+        <Select value={status || undefined} onValueChange={handleValueChange} disabled={loading}>
             <SelectTrigger className="w-[140px]">
                 <SelectValue placeholder="Status">
                     <Badge variant="outline" className={getStatusColor(status || "N/A")}>
