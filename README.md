@@ -24,3 +24,4 @@ This project uses **Supabase Auth** and **RLS policies** to ensure data is restr
 
 ## 📄 License
 MIT
+# Trigger
