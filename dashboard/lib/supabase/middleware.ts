@@ -41,7 +41,12 @@ export async function updateSession(request: NextRequest) {
         // no user, potentially respond by redirecting the user to the login page
         const url = request.nextUrl.clone()
         url.pathname = '/login'
-        return NextResponse.redirect(url)
+        const response = NextResponse.redirect(url)
+        // Copy cookies from supabaseResponse to the redirect response
+        supabaseResponse.cookies.getAll().forEach((cookie) => {
+            response.cookies.set(cookie.name, cookie.value)
+        })
+        return response
     }
 
     if (
@@ -52,7 +57,12 @@ export async function updateSession(request: NextRequest) {
         // user is logged in, redirect to home
         const url = request.nextUrl.clone()
         url.pathname = '/'
-        return NextResponse.redirect(url)
+        const response = NextResponse.redirect(url)
+        // Copy cookies from supabaseResponse to the redirect response
+        supabaseResponse.cookies.getAll().forEach((cookie) => {
+            response.cookies.set(cookie.name, cookie.value)
+        })
+        return response
     }
 
     return supabaseResponse
