@@ -9,7 +9,9 @@ import { columns } from "@/components/contacts/columns"
 import { DataTable } from "@/components/contacts/data-table"
 import { createClient } from "@/lib/supabase/client"
 
-export default function Home() {
+import { Suspense } from "react"
+
+function HomeContent() {
   const [data, setData] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -61,5 +63,13 @@ export default function Home() {
         <DataTable columns={columns} data={data} />
       )}
     </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div>Loading CRM...</div>}>
+      <HomeContent />
+    </Suspense>
   )
 }
