@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Download } from "lucide-react"
+import { AddLeadDialog } from "@/components/contacts/add-lead-dialog"
 
 function HomeContent() {
   const [data, setData] = useState<Contact[]>([])
@@ -135,6 +136,7 @@ function HomeContent() {
             <Download className="h-4 w-4" />
             Export CSV
           </Button>
+          <AddLeadDialog />
           <Link href="/extension" className="text-sm text-blue-500 hover:underline">Download Extension</Link>
         </div>
       </div>
