@@ -21,7 +21,9 @@ import { createClient } from "@/lib/supabase/client"
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
 
-export function Sidebar({ className }: SidebarProps) {
+import { Suspense } from "react"
+
+function SidebarContent({ className }: SidebarProps) {
     const pathname = usePathname()
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -124,5 +126,13 @@ export function Sidebar({ className }: SidebarProps) {
                 </div>
             </div>
         </div>
+    )
+}
+
+export function Sidebar(props: SidebarProps) {
+    return (
+        <Suspense fallback={<div className="w-64 border-r min-h-screen bg-gray-50/40" />}>
+            <SidebarContent {...props} />
+        </Suspense>
     )
 }
