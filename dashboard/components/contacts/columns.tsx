@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { ColumnDef } from "@tanstack/react-table"
 import { Contact } from "@/types"
 import { Badge } from "@/components/ui/badge"
@@ -11,6 +12,7 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuLabel,
+    DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { StatusCell } from "./status-cell"
@@ -39,7 +41,11 @@ export const columns: ColumnDef<Contact>[] = [
         cell: ({ row }) => {
             const first = row.original.first_name || ""
             const last = row.original.last_name || ""
-            return <div className="font-medium">{first} {last}</div>
+            return (
+                <Link href={`/contacts/${row.original.id}`} className="font-medium hover:underline text-blue-600 dark:text-blue-400">
+                    {first} {last}
+                </Link>
+            )
         }
     },
     {
@@ -87,6 +93,12 @@ export const columns: ColumnDef<Contact>[] = [
                             onClick={() => navigator.clipboard.writeText(contact.email || "")}
                         >
                             Copy Email
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem asChild>
+                            <Link href={`/contacts/${contact.id}`} className="cursor-pointer">
+                                Edit details
+                            </Link>
                         </DropdownMenuItem>
                         {contact.linkedin_url && (
                             <DropdownMenuItem onClick={() => {

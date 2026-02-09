@@ -54,9 +54,11 @@ function SidebarContent({ className }: SidebarProps) {
                                 All Leads
                             </Link>
                         </Button>
-                        <Button variant={pathname === "/tasks" ? "secondary" : "ghost"} className="w-full justify-start" disabled>
-                            <CheckSquare className="mr-2 h-4 w-4" />
-                            Tasks (Coming Soon)
+                        <Button variant={pathname === "/tasks" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
+                            <Link href="/tasks">
+                                <CheckSquare className="mr-2 h-4 w-4" />
+                                Tasks
+                            </Link>
                         </Button>
                         <Button variant={pathname === "/pipeline" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
                             <Link href="/pipeline">
