@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Save, Loader2, Phone, Mail, MapPin, Globe, Linkedin } from "lucide-react"
+import { ArrowLeft, Save, Loader2, Phone, Mail, MapPin, Globe, Linkedin, Check } from "lucide-react"
 import Link from "next/link"
 import { StatusCell } from "@/components/contacts/status-cell"
 import {
@@ -40,7 +40,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
     const [contact, setContact] = useState<Contact | null>(null)
     const [tasks, setTasks] = useState<Task[]>([])
     const [loading, setLoading] = useState(true)
-    const [saving, setSaving] = useState(false)
+    const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle")
     const [error, setError] = useState<string | null>(null)
 
     // Task form state
@@ -87,31 +87,40 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
         fetchData()
     }, [id, supabase])
 
-    const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault()
-        if (!contact) return
+    // Debounced Auto-Save
+    useEffect(() => {
+        if (!contact || loading) return
 
-        setSaving(true)
-        const { error } = await supabase
-            .from('contacts')
-            .update({
-                first_name: contact.first_name,
-                last_name: contact.last_name,
-                email: contact.email,
-                phone: contact.phone,
-                location: contact.location,
-                website: contact.website,
-                company: contact.company,
-                company_role: contact.company_role,
-                notes: contact.notes,
-            })
-            .eq('id', id)
+        const timer = setTimeout(async () => {
+            setSaveStatus("saving")
+            const { error } = await supabase
+                .from('contacts')
+                .update({
+                    first_name: contact.first_name,
+                    last_name: contact.last_name,
+                    email: contact.email,
+                    phone: contact.phone,
+                    location: contact.location,
+                    website: contact.website,
+                    company: contact.company,
+                    company_role: contact.company_role,
+                    notes: contact.notes,
+                    list: contact.list,
+                    linkedin_url: contact.linkedin_url,
+                })
+                .eq('id', id)
 
-        if (error) {
-            alert("Error saving: " + error.message)
-        }
-        setSaving(false)
-    }
+            if (error) {
+                setSaveStatus("error")
+                console.error("Auto-save error:", error)
+            } else {
+                setSaveStatus("saved")
+                setTimeout(() => setSaveStatus("idle"), 2000)
+            }
+        }, 1000) // 1 second debounce
+
+        return () => clearTimeout(timer)
+    }, [contact, id, supabase, loading])
 
     const addTask = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -198,12 +207,36 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                         <ArrowLeft className="h-4 w-4" />
                     </Link>
                 </Button>
-                <h1 className="text-3xl font-bold tracking-tight">
-                    {contact.first_name} {contact.last_name}
-                </h1>
-                <Badge variant="outline" className="ml-2 uppercase text-xs">
-                    {contact.list || 'Prospects'}
-                </Badge>
+                <div className="flex flex-col">
+                    <h1 className="text-3xl font-bold tracking-tight">
+                        {contact.first_name} {contact.last_name}
+                    </h1>
+                    <div className="flex items-center gap-2 mt-1">
+                        <Badge variant="outline" className="uppercase text-[10px] h-4">
+                            {contact.list || 'Prospects'}
+                        </Badge>
+                        <div className="text-[10px] font-medium text-muted-foreground flex items-center">
+                            {saveStatus === "saving" && (
+                                <span className="flex items-center gap-1">
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                    Saving...
+                                </span>
+                            )}
+                            {saveStatus === "saved" && (
+                                <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                                    <Check className="h-3 w-3" />
+                                    Saved
+                                </span>
+                            )}
+                            {saveStatus === "error" && (
+                                <span className="flex items-center gap-1 text-red-600">
+                                    <AlertCircle className="h-3 w-3" />
+                                    Error saving
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -213,7 +246,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                         <CardTitle>Details</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={handleSave} className="space-y-4">
+                        <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="first_name">First Name</Label>
@@ -264,13 +297,54 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="role">Role</Label>
-                                    <Input
-                                        id="role"
-                                        value={contact.company_role || ""}
-                                        onChange={e => setContact({ ...contact, company_role: e.target.value })}
-                                    />
+                                    <Label>Lists</Label>
+                                    <div className="flex flex-wrap gap-x-4 gap-y-2 pt-2">
+                                        {["Prospects", "Customers", "Partnerships", "Network/Peers", "Podcast"].map(option => {
+                                            const currentLists = (contact.list || "").split(',').map(l => l.trim().toLowerCase())
+                                            const isChecked = currentLists.includes(option.toLowerCase()) ||
+                                                (option === "Prospects" && currentLists.includes("prospect")) ||
+                                                (option === "Customers" && currentLists.includes("customer"))
+
+                                            return (
+                                                <div key={option} className="flex items-center space-x-2">
+                                                    <Checkbox
+                                                        id={`list-${option}`}
+                                                        checked={isChecked}
+                                                        onCheckedChange={(checked) => {
+                                                            let lists = (contact.list || "").split(',').map(l => l.trim()).filter(l => l !== "")
+                                                            if (checked) {
+                                                                if (!lists.some(l => l.toLowerCase() === option.toLowerCase())) {
+                                                                    lists.push(option)
+                                                                }
+                                                            } else {
+                                                                lists = lists.filter(l => l.toLowerCase() !== option.toLowerCase())
+                                                                // Handle singular/plural cleanup
+                                                                if (option === "Prospects") lists = lists.filter(l => l.toLowerCase() !== "prospect")
+                                                                if (option === "Customers") lists = lists.filter(l => l.toLowerCase() !== "customer")
+                                                            }
+                                                            setContact({ ...contact, list: lists.join(', ') })
+                                                        }}
+                                                    />
+                                                    <label
+                                                        htmlFor={`list-${option}`}
+                                                        className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                                    >
+                                                        {option}
+                                                    </label>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
                                 </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="role">Role</Label>
+                                <Input
+                                    id="role"
+                                    value={contact.company_role || ""}
+                                    onChange={e => setContact({ ...contact, company_role: e.target.value })}
+                                />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
@@ -317,12 +391,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                     onChange={e => setContact({ ...contact, notes: e.target.value })}
                                 />
                             </div>
-
-                            <Button type="submit" disabled={saving} className="w-full">
-                                {saving ? <Loader2 className="animate-spin mr-2 h-4 w-4" /> : <Save className="mr-2 h-4 w-4" />}
-                                Save Changes
-                            </Button>
-                        </form>
+                        </div>
                     </CardContent>
                 </Card>
 
@@ -479,6 +548,6 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-        </div>
+        </div >
     )
 }

@@ -62,15 +62,12 @@ export function StatusCell({ contact }: { contact: Contact }) {
             </SelectTrigger>
             <SelectContent>
                 <SelectItem value="N/A">N/A</SelectItem>
-                <SelectItem value="Prospect">Prospect</SelectItem>
                 <SelectItem value="Cold">Cold</SelectItem>
                 <SelectItem value="Engaged">Engaged</SelectItem>
                 <SelectItem value="Interested">Interested</SelectItem>
                 <SelectItem value="Warm">Warm</SelectItem>
-                <SelectItem value="Customer">Customer</SelectItem>
                 <SelectItem value="Ghosted">Ghosted</SelectItem>
                 <SelectItem value="Closed">Closed</SelectItem>
-                <SelectItem value="Lead">Lead</SelectItem>
             </SelectContent>
         </Select>
     )

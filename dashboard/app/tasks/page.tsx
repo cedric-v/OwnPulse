@@ -46,6 +46,7 @@ export default function TasksPage() {
     const [loading, setLoading] = useState(true)
     const [editingTask, setEditingTask] = useState<(Task & { contact: Contact }) | null>(null)
     const [editForm, setEditForm] = useState({ description: "", priority: "", category: "", due_date: "" })
+    const [searchQuery, setSearchQuery] = useState("")
     const supabase = createClient()
 
     const fetchTasks = async () => {
@@ -122,8 +123,16 @@ export default function TasksPage() {
 
     if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin h-8 w-8" /></div>
 
-    const activeTasks = tasks.filter(t => !t.completed)
-    const archivedTasks = tasks.filter(t => t.completed)
+    const filteredTasks = tasks.filter(task => {
+        const query = searchQuery.toLowerCase()
+        const descriptionMatch = task.description.toLowerCase().includes(query)
+        const firstNameMatch = task.contact?.first_name?.toLowerCase().includes(query) || false
+        const lastNameMatch = task.contact?.last_name?.toLowerCase().includes(query) || false
+        return descriptionMatch || firstNameMatch || lastNameMatch
+    })
+
+    const activeTasks = filteredTasks.filter(t => !t.completed)
+    const archivedTasks = filteredTasks.filter(t => t.completed)
 
     const TaskList = ({ items }: { items: (Task & { contact: Contact })[] }) => (
         <div className="grid gap-4">
@@ -202,7 +211,15 @@ export default function TasksPage() {
         <div className="container mx-auto p-6 space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold tracking-tight">Tasks Dashboard</h1>
-                <Badge variant="outline">{activeTasks.length} Pending</Badge>
+                <div className="flex items-center gap-4">
+                    <Input
+                        placeholder="Rechercher une tâche ou un contact..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-64"
+                    />
+                    <Badge variant="outline">{activeTasks.length} Pending</Badge>
+                </div>
             </div>
 
             <Tabs defaultValue="active" className="w-full">

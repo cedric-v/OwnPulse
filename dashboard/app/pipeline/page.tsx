@@ -9,7 +9,7 @@ import { StatusCell } from "@/components/contacts/status-cell"
 import Link from "next/link"
 
 // Define the pipeline stages
-const STAGES = ["N/A", "Engaged", "Interested", "Warm", "Ghosted", "Closed", "Cold", "Prospect"]
+const STAGES = ["N/A", "Cold", "Engaged", "Interested", "Warm", "Ghosted", "Closed"]
 
 // Helper to group contacts by status
 const groupContacts = (contacts: Contact[]) => {
@@ -78,7 +78,7 @@ export default function PipelinePage() {
                                                 <CardContent className="p-3">
                                                     <div className="flex items-center space-x-3 mb-2">
                                                         <Avatar className="h-8 w-8">
-                                                            <AvatarImage src={contact.avatar_url || ""} />
+                                                            <AvatarImage src={contact.avatar_url || undefined} />
                                                             <AvatarFallback>{contact.first_name?.[0]}</AvatarFallback>
                                                         </Avatar>
                                                         <div className="overflow-hidden">

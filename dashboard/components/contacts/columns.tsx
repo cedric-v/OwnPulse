@@ -28,7 +28,7 @@ export const columns: ColumnDef<Contact>[] = [
             const last = row.original.last_name?.[0] || "?"
             return (
                 <Avatar>
-                    <AvatarImage src={avatarUrl || ""} />
+                    <AvatarImage src={avatarUrl || undefined} />
                     <AvatarFallback>{first}{last}</AvatarFallback>
                 </Avatar>
             )
