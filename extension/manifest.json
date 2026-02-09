@@ -1,0 +1,28 @@
+{
+    "manifest_version": 3,
+    "name": "Vibe CRM",
+    "version": "1.0",
+    "description": "Minimalist CRM Extension for LinkedIn",
+    "permissions": [
+        "activeTab",
+        "scripting"
+    ],
+    "host_permissions": [
+        "https://*.linkedin.com/*",
+        "https://*.supabase.co/*"
+    ],
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "content_scripts": [
+        {
+            "matches": [
+                "https://*.linkedin.com/in/*"
+            ],
+            "js": [
+                "content.js"
+            ],
+            "run_at": "document_end"
+        }
+    ]
+}
