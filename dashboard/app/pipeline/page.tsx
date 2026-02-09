@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { StatusCell } from "@/components/contacts/status-cell"
+import Link from "next/link"
 
 // Define the pipeline stages
 const STAGES = ["N/A", "Engaged", "Interested", "Warm", "Ghosted", "Closed", "Cold", "Prospect"]
@@ -81,9 +82,11 @@ export default function PipelinePage() {
                                                             <AvatarFallback>{contact.first_name?.[0]}</AvatarFallback>
                                                         </Avatar>
                                                         <div className="overflow-hidden">
-                                                            <p className="text-sm font-medium truncate">
-                                                                {contact.first_name} {contact.last_name}
-                                                            </p>
+                                                            <Link href={`/contacts/${contact.id}`} className="block hover:underline group">
+                                                                <p className="text-sm font-medium truncate text-blue-600 dark:text-blue-400 group-hover:text-blue-800 dark:group-hover:text-blue-300">
+                                                                    {contact.first_name} {contact.last_name}
+                                                                </p>
+                                                            </Link>
                                                             <p className="text-xs text-gray-500 truncate">
                                                                 {contact.company || "No Company"}
                                                             </p>
