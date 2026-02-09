@@ -44,5 +44,16 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
+    if (
+        user &&
+        (request.nextUrl.pathname.startsWith('/login') ||
+            request.nextUrl.pathname.startsWith('/auth'))
+    ) {
+        // user is logged in, redirect to home
+        const url = request.nextUrl.clone()
+        url.pathname = '/'
+        return NextResponse.redirect(url)
+    }
+
     return supabaseResponse
 }
