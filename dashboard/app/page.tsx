@@ -11,6 +11,8 @@ import { createClient } from "@/lib/supabase/client"
 import { Input } from "@/components/ui/input"
 
 import { Suspense } from "react"
+import { Button } from "@/components/ui/button"
+import { Download } from "lucide-react"
 
 function HomeContent() {
   const [data, setData] = useState<Contact[]>([])
@@ -73,6 +75,49 @@ function HomeContent() {
     return true
   })
 
+  const exportToCSV = () => {
+    // 1. Prepare headers
+    const headers = [
+      "ID", "First Name", "Last Name", "Email", "Company",
+      "Role", "LinkedIn", "Website", "Phone", "Status",
+      "Lists", "Notes", "Created At"
+    ]
+
+    // 2. Map data
+    const rows = filteredData.map(c => [
+      c.id,
+      c.first_name || "",
+      c.last_name || "",
+      c.email || "",
+      c.company || "",
+      c.company_role || "",
+      c.linkedin_url || "",
+      c.website || "",
+      c.phone || "",
+      c.status || "",
+      c.list || "",
+      (c.notes || "").replace(/\n/g, " "), // Remove newlines for CSV
+      c.created_at
+    ])
+
+    // 3. Format as CSV string
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(row => row.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))
+    ].join("\n")
+
+    // 4. Trigger download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.setAttribute("href", url)
+    link.setAttribute("download", `cedric-crm-export-${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <div className="container mx-auto">
       <div className="flex justify-between items-center mb-6">
@@ -86,6 +131,10 @@ function HomeContent() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-80"
           />
+          <Button variant="outline" size="sm" onClick={exportToCSV} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
           <Link href="/extension" className="text-sm text-blue-500 hover:underline">Download Extension</Link>
         </div>
       </div>
