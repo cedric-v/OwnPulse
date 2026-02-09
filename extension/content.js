@@ -1,6 +1,6 @@
 // Vibe CRM Content Script
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_KEY = 'YOUR_SUPABASE_KEY'; // Service Role Key (MVP only)
+const SUPABASE_URL = 'https://qleflestlmwvgicyebey.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_y3gHLB3whyO8woaGpEXkrQ_0mySZxqa'; // Public Anon Key
 
 function createFloatingButton() {
     if (document.getElementById('vibe-crm-btn')) return;
