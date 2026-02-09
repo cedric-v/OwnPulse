@@ -1,7 +1,12 @@
-
--- Drop old open policies
+-- Cleanup ANY existing policies for these tables (both old and temporary)
 DROP POLICY IF EXISTS "Enable all access for now" ON contacts;
 DROP POLICY IF EXISTS "Enable all access for now" ON tasks;
+DROP POLICY IF EXISTS "authenticated_access" ON contacts;
+DROP POLICY IF EXISTS "authenticated_access" ON tasks;
+DROP POLICY IF EXISTS "Temporary import access" ON contacts;
+DROP POLICY IF EXISTS "Temporary import access tasks" ON tasks;
+DROP POLICY IF EXISTS "Temporary select access" ON contacts;
+DROP POLICY IF EXISTS "Temporary select access tasks" ON tasks;
 
 -- Enable RLS
 ALTER TABLE contacts ENABLE ROW LEVEL SECURITY;
