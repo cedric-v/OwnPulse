@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { StatusCell } from "@/components/contacts/status-cell"
 
 // Define the pipeline stages
-const STAGES = ["Engaged", "Interested", "Warm", "Ghosted", "Closed", "Cold", "Prospect"]
+const STAGES = ["N/A", "Engaged", "Interested", "Warm", "Ghosted", "Closed", "Cold", "Prospect"]
 
 // Helper to group contacts by status
 const groupContacts = (contacts: Contact[]) => {
@@ -17,14 +17,14 @@ const groupContacts = (contacts: Contact[]) => {
     STAGES.forEach(stage => groups[stage] = [])
 
     contacts.forEach(contact => {
-        let status = contact.status || "Cold"
+        let status = contact.status || "N/A"
         // Normalize status match
         const match = STAGES.find(s => s.toLowerCase() === status.toLowerCase())
         if (match) {
             groups[match].push(contact)
         } else {
-            // Fallback or add to 'Cold'
-            groups["Cold"].push(contact)
+            // Fallback or add to 'N/A'
+            groups["N/A"].push(contact)
         }
     })
     return groups

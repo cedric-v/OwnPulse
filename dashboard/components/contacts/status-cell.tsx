@@ -53,6 +53,7 @@ export function StatusCell({ contact }: StatusCellProps) {
                 <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
+                <SelectItem value="N/A">N/A</SelectItem>
                 <SelectItem value="Prospect">Prospect</SelectItem>
                 <SelectItem value="Cold">Cold</SelectItem>
                 <SelectItem value="Engaged">Engaged</SelectItem>

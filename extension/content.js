@@ -79,7 +79,7 @@ function scrapeProfile() {
         company_role: companyRole,
         linkedin_url: linkedinUrl,
         avatar_url: avatarUrl,
-        status: 'Cold',
+        status: 'N/A',
         list: 'Prospects'
     };
 }

@@ -58,22 +58,40 @@ fs.createReadStream(csvFilePath)
                 company_role: row.company_role,
                 avatar_url: row.avatar_url,
                 notes: row.notes,
-                status: statusName,
+                status: row.status_names || 'N/A', // Changed default status fallback
                 list: listName, // New column
                 created_at: row.created_at || new Date().toISOString(),
                 updated_at: row.updated_at || new Date().toISOString()
             };
         });
 
+        console.log("De-duplicating contacts by LinkedIn URL...");
+        const uniqueContactsMap = new Map();
+
+        contacts.forEach(c => {
+            if (c.linkedin_url && !uniqueContactsMap.has(c.linkedin_url)) {
+                uniqueContactsMap.set(c.linkedin_url, c);
+            } else if (!c.linkedin_url) {
+                // If no linkedin_url, use email as fallback or just keep it
+                const fallbackKey = c.email || Math.random().toString();
+                if (!uniqueContactsMap.has(fallbackKey)) {
+                    uniqueContactsMap.set(fallbackKey, c);
+                }
+            }
+        });
+
+        const dedupedContacts = Array.from(uniqueContactsMap.values());
+        console.log(`Remaining unique contacts: ${dedupedContacts.length}`);
+
         console.log("Upserting contacts to Supabase...");
 
         // Batch Insert (Supabase limits request size, so chunk it)
         const chunkSize = 100;
-        for (let i = 0; i < contacts.length; i += chunkSize) {
-            const chunk = contacts.slice(i, i + chunkSize);
+        for (let i = 0; i < dedupedContacts.length; i += chunkSize) {
+            const chunk = dedupedContacts.slice(i, i + chunkSize);
             const { error } = await supabase
                 .from('contacts')
-                .upsert(chunk, { onConflict: 'id' }); // Upsert based on ID
+                .upsert(chunk, { onConflict: 'id' });
 
             if (error) {
                 console.error(`Error inserting chunk ${i / chunkSize}:`, error);
