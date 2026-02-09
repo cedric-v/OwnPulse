@@ -79,7 +79,8 @@ function scrapeProfile() {
         company_role: companyRole,
         linkedin_url: linkedinUrl,
         avatar_url: avatarUrl,
-        source: 'LinkedIn Extension'
+        status: 'Cold',
+        list: 'Prospects'
     };
 }
 
