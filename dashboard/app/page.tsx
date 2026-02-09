@@ -2,6 +2,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Contact } from "@/types"
 import { columns } from "@/components/contacts/columns"
@@ -46,9 +47,9 @@ export default function Home() {
     <div className="container mx-auto">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold tracking-tight">
-          {listFilter ? `${listFilter}` : "All Leads"}
+          {listFilter ? `${listFilter}` : "Cedric's CRM"}
         </h1>
-        <a href="/extension" className="text-sm text-blue-500 hover:underline">Download Extension</a>
+        <Link href="/extension" className="text-sm text-blue-500 hover:underline">Download Extension</Link>
       </div>
 
       {loading ? (
