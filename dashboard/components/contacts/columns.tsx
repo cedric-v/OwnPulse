@@ -33,8 +33,9 @@ export const columns: ColumnDef<Contact>[] = [
         },
     },
     {
-        accessorKey: "first_name",
+        id: "name",
         header: "Name",
+        accessorFn: (row) => `${row.first_name} ${row.last_name}`,
         cell: ({ row }) => {
             const first = row.original.first_name || ""
             const last = row.original.last_name || ""
