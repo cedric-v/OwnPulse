@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation"
 import { Contact } from "@/types"
 import { columns } from "@/components/contacts/columns"
 import { DataTable } from "@/components/contacts/data-table"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from "@/lib/supabase/client"
 
 export default function Home() {
   const [data, setData] = useState<Contact[]>([])
@@ -16,6 +16,7 @@ export default function Home() {
 
   const searchParams = useSearchParams()
   const listFilter = searchParams.get('list')
+  const supabase = createClient()
 
   useEffect(() => {
     async function fetchData() {

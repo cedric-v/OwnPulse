@@ -16,7 +16,7 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from "@/lib/supabase/client"
 import { Contact } from "@/types"
 import { StickyNote } from "lucide-react"
 
@@ -27,6 +27,7 @@ interface NotesSheetProps {
 export function NotesSheet({ contact }: NotesSheetProps) {
     const [notes, setNotes] = useState(contact.notes || "")
     const [loading, setLoading] = useState(false)
+    const supabase = createClient()
     const [open, setOpen] = useState(false)
 
     const handleSave = async () => {

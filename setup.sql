@@ -31,7 +31,7 @@ create table tasks (
 alter table contacts enable row level security;
 alter table tasks enable row level security;
 
--- Open RLS policies for MVP (Service Role will bypass, but good to have basics)
--- WARNING: For production, restricted policies should be applied.
-create policy "Enable all access for now" on contacts for all using (true) with check (true);
-create policy "Enable all access for now" on tasks for all using (true) with check (true);
+-- Restricted RLS policies for PRODUCTION
+-- Only permit authenticated users to perform operations
+create policy "Enable all for authenticated users" on contacts for all to authenticated using (true) with check (true);
+create policy "Enable all for authenticated users" on tasks for all to authenticated using (true) with check (true);

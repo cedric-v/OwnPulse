@@ -1,9 +1,8 @@
-
 "use client"
 
 import { useEffect, useState } from "react"
 import { Contact } from "@/types"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { StatusCell } from "@/components/contacts/status-cell"
@@ -34,6 +33,7 @@ const groupContacts = (contacts: Contact[]) => {
 export default function PipelinePage() {
     const [data, setData] = useState<Contact[]>([])
     const [loading, setLoading] = useState(true)
+    const supabase = createClient()
 
     useEffect(() => {
         async function fetchData() {

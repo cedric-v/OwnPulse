@@ -14,8 +14,10 @@ import {
     Mic,
     Globe,
     Handshake,
-    Settings
+    Settings,
+    LogOut
 } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
 
@@ -24,6 +26,13 @@ export function Sidebar({ className }: SidebarProps) {
     const router = useRouter()
     const searchParams = useSearchParams()
     const currentList = searchParams.get('list')
+    const supabase = createClient()
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut()
+        router.push('/login')
+        router.refresh()
+    }
 
     const navigateToList = (list: string) => {
         router.push(`/?list=${list}`)
@@ -103,10 +112,14 @@ export function Sidebar({ className }: SidebarProps) {
                         </Button>
                     </div>
                 </div>
-                <div className="mt-auto p-4">
+                <div className="mt-auto p-4 space-y-2">
                     <Button variant="ghost" className="w-full justify-start" disabled>
                         <Settings className="mr-2 h-4 w-4" />
                         Settings
+                    </Button>
+                    <Button variant="ghost" className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={handleLogout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        Logout
                     </Button>
                 </div>
             </div>

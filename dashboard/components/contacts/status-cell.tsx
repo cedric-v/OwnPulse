@@ -10,16 +10,13 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { supabase } from "@/lib/supabaseClient"
+import { createClient } from "@/lib/supabase/client"
 import { Contact } from "@/types"
 
-interface StatusCellProps {
-    contact: Contact
-}
-
-export function StatusCell({ contact }: StatusCellProps) {
-    const [status, setStatus] = useState(contact.status || "Prospect")
+export function StatusCell({ contact }: { contact: Contact }) {
+    const [status, setStatus] = useState(contact.status)
     const [loading, setLoading] = useState(false)
+    const supabase = createClient()
 
     const handleValueChange = async (value: string) => {
         setStatus(value)
@@ -43,14 +40,19 @@ export function StatusCell({ contact }: StatusCellProps) {
             case "Prospect": return "bg-blue-500 hover:bg-blue-600"
             case "Lost": return "bg-red-500 hover:bg-red-600"
             case "Lead": return "bg-yellow-500 hover:bg-yellow-600"
+            case "N/A": return "bg-gray-500 hover:bg-gray-600" // Added N/A case
             default: return "bg-gray-500 hover:bg-gray-600"
         }
     }
 
     return (
         <Select value={status} onValueChange={handleValueChange} disabled={loading}>
-            <SelectTrigger className={`w-[130px] h-8 text-white border-0 ${getStatusColor(status)}`}>
-                <SelectValue placeholder="Status" />
+            <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Status">
+                    <Badge variant="outline" className={getStatusColor(status || "N/A")}>
+                        {status || "N/A"}
+                    </Badge>
+                </SelectValue>
             </SelectTrigger>
             <SelectContent>
                 <SelectItem value="N/A">N/A</SelectItem>
