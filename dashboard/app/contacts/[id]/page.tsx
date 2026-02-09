@@ -14,6 +14,20 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Save, Loader2, Phone, Mail, MapPin, Globe, Linkedin } from "lucide-react"
 import Link from "next/link"
 import { StatusCell } from "@/components/contacts/status-cell"
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
 import { Checkbox } from "@/components/ui/checkbox"
 import { Calendar as CalendarIcon, Plus, Tag, AlertCircle } from "lucide-react"
@@ -34,6 +48,10 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
     const [newTaskPriority, setNewTaskPriority] = useState<"Low" | "Medium" | "High">("Medium")
     const [newTaskCategory, setNewTaskCategory] = useState("Follow-up")
     const [newTaskDueDate, setNewTaskDueDate] = useState("")
+
+    // Task edit state
+    const [editingTask, setEditingTask] = useState<Task | null>(null)
+    const [editForm, setEditForm] = useState({ description: "", priority: "", category: "", due_date: "" })
 
     useEffect(() => {
         async function fetchData() {
@@ -128,6 +146,38 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
 
         if (!error) {
             setTasks(tasks.map(t => t.id === taskId ? { ...t, completed: !currentStatus } : t))
+        }
+    }
+
+    const handleEditTask = (task: Task) => {
+        setEditingTask(task)
+        setEditForm({
+            description: task.description || "",
+            priority: task.priority || "Medium",
+            category: task.category || "Follow-up",
+            due_date: task.due_date ? new Date(task.due_date).toISOString().split('T')[0] : ""
+        })
+    }
+
+    const handleUpdateTask = async () => {
+        if (!editingTask) return
+
+        const { error } = await supabase
+            .from('tasks')
+            .update({
+                description: editForm.description,
+                priority: editForm.priority,
+                category: editForm.category,
+                due_date: editForm.due_date || null
+            })
+            .eq('id', editingTask.id)
+
+        if (error) {
+            alert("Error updating task: " + error.message)
+        } else {
+            setEditingTask(null)
+            // Local update or refresh
+            setTasks(tasks.map(t => t.id === editingTask.id ? { ...t, ...editForm, due_date: editForm.due_date || null } as Task : t))
         }
     }
 
@@ -331,10 +381,19 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                         />
                                         <div className="flex-1 min-w-0">
                                             <p className={task.completed ? "line-through text-muted-foreground" : ""}>{task.description}</p>
-                                            <div className="flex gap-2 mt-1">
-                                                <Badge variant="outline" className={`text-[9px] px-1 py-0 ${PRIORITY_COLORS[task.priority]}`}>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <Badge variant="outline" className={`text-[9px] px-1 py-0 ${PRIORITY_COLORS[task.priority as keyof typeof PRIORITY_COLORS]}`}>
                                                     {task.priority}
                                                 </Badge>
+                                                <button
+                                                    onClick={() => handleEditTask(task)}
+                                                    className="flex items-center gap-1 hover:bg-muted px-1 py-0.5 rounded transition-colors group"
+                                                >
+                                                    <CalendarIcon className="h-2.5 w-2.5 text-muted-foreground group-hover:text-blue-500" />
+                                                    <span className="text-[10px] text-muted-foreground group-hover:text-blue-600 group-hover:underline italic">
+                                                        {task.due_date ? new Date(task.due_date).toLocaleDateString() : "No date"}
+                                                    </span>
+                                                </button>
                                                 <span className="text-[10px] text-muted-foreground italic">{task.category}</span>
                                             </div>
                                         </div>
@@ -363,6 +422,63 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     </Card>
                 </div>
             </div>
+
+            {/* Edit Task Dialog */}
+            <Dialog open={!!editingTask} onOpenChange={(open) => !open && setEditingTask(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Task</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="desc">Description</Label>
+                            <Input
+                                id="desc"
+                                value={editForm.description}
+                                onChange={e => setEditForm({ ...editForm, description: e.target.value })}
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label>Priority</Label>
+                                <Select
+                                    value={editForm.priority}
+                                    onValueChange={v => setEditForm({ ...editForm, priority: v })}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Low">Low</SelectItem>
+                                        <SelectItem value="Medium">Medium</SelectItem>
+                                        <SelectItem value="High">High</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Due Date</Label>
+                                <Input
+                                    type="date"
+                                    value={editForm.due_date}
+                                    onChange={e => setEditForm({ ...editForm, due_date: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="cat">Category</Label>
+                            <Input
+                                id="cat"
+                                value={editForm.category}
+                                onChange={e => setEditForm({ ...editForm, category: e.target.value })}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setEditingTask(null)}>Cancel</Button>
+                        <Button onClick={handleUpdateTask}>Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

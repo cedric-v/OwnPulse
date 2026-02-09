@@ -162,15 +162,25 @@ export default function TasksPage() {
                                         </Link>
                                     </div>
                                     {task.due_date ? (
-                                        <div className="flex items-center gap-1">
-                                            <Calendar className="h-3 w-3" />
-                                            {new Date(task.due_date).toLocaleDateString()}
-                                        </div>
+                                        <button
+                                            onClick={() => handleEdit(task)}
+                                            className="flex items-center gap-1 hover:bg-muted px-1.5 py-0.5 rounded transition-colors group"
+                                        >
+                                            <Calendar className="h-3 w-3 group-hover:text-blue-500" />
+                                            <span className="group-hover:text-blue-600 group-hover:underline">
+                                                {new Date(task.due_date).toLocaleDateString()}
+                                            </span>
+                                        </button>
                                     ) : (
-                                        <div className="flex items-center gap-1 text-gray-400">
-                                            <Calendar className="h-3 w-3" />
-                                            No date
-                                        </div>
+                                        <button
+                                            onClick={() => handleEdit(task)}
+                                            className="flex items-center gap-1 text-gray-400 hover:bg-muted px-1.5 py-0.5 rounded transition-colors group"
+                                        >
+                                            <Calendar className="h-3 w-3 group-hover:text-amber-500" />
+                                            <span className="group-hover:text-amber-600 group-hover:underline">
+                                                No date
+                                            </span>
+                                        </button>
                                     )}
                                 </div>
                             </div>
