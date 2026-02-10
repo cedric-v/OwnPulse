@@ -401,7 +401,13 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                     />
                                     {contact.linkedin_url && (
                                         <Button variant="outline" size="icon" asChild>
-                                            <a href={contact.linkedin_url} target="_blank" rel="noreferrer"><Linkedin className="h-4 w-4" /></a>
+                                            <a
+                                                href={contact.linkedin_url.startsWith("http") ? contact.linkedin_url : `https://www.linkedin.com/in/${contact.linkedin_url}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                            >
+                                                <Linkedin className="h-4 w-4" />
+                                            </a>
                                         </Button>
                                     )}
                                 </div>

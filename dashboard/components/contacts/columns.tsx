@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { ColumnDef } from "@tanstack/react-table"
 import { Contact } from "@/types"
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { StatusCell } from "./status-cell"
 import { NotesSheet } from "./notes-sheet"
+import { DeleteLeadAlert } from "./delete-lead-alert"
 
 export const columns: ColumnDef<Contact>[] = [
     {
@@ -76,43 +78,66 @@ export const columns: ColumnDef<Contact>[] = [
     },
     {
         id: "actions",
-        cell: ({ row }) => {
+        cell: ({ row, table }) => {
             const contact = row.original
+            const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
             return (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                            <span className="sr-only">Open menu</span>
-                            <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem
-                            onClick={() => navigator.clipboard.writeText(contact.email || "")}
-                        >
-                            Copy Email
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem asChild>
-                            <Link href={`/contacts/${contact.id}`} className="cursor-pointer">
-                                Edit details
-                            </Link>
-                        </DropdownMenuItem>
-                        {contact.linkedin_url && (
-                            <DropdownMenuItem onClick={() => {
-                                let url = contact.linkedin_url || ""
-                                if (url && !url.startsWith("http")) {
-                                    url = `https://www.linkedin.com/in/${url}`
-                                }
-                                window.open(url, "_blank")
-                            }}>
-                                <Linkedin className="mr-2 h-4 w-4" /> Open LinkedIn
+                <>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Open menu</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem
+                                onClick={() => navigator.clipboard.writeText(contact.email || "")}
+                            >
+                                Copy Email
                             </DropdownMenuItem>
-                        )}
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild>
+                                <Link href={`/contacts/${contact.id}`} className="cursor-pointer">
+                                    Edit details
+                                </Link>
+                            </DropdownMenuItem>
+                            {contact.linkedin_url && (
+                                <DropdownMenuItem onClick={() => {
+                                    let url = contact.linkedin_url || ""
+                                    if (url && !url.startsWith("http")) {
+                                        url = `https://www.linkedin.com/in/${url}`
+                                    }
+                                    window.open(url, "_blank")
+                                }}>
+                                    <Linkedin className="mr-2 h-4 w-4" /> Open LinkedIn
+                                </DropdownMenuItem>
+                            )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                className="text-red-600 focus:text-red-600 cursor-pointer"
+                                onClick={() => setShowDeleteDialog(true)}
+                            >
+                                Delete lead
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <DeleteLeadAlert
+                        contactId={contact.id}
+                        contactName={`${contact.first_name} ${contact.last_name}`}
+                        open={showDeleteDialog}
+                        onOpenChange={setShowDeleteDialog}
+                        onSuccess={() => {
+                            const meta = table.options.meta as any
+                            if (meta?.refreshData) {
+                                meta.refreshData()
+                            }
+                        }}
+                    />
+                </>
             )
         },
     },

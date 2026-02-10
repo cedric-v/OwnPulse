@@ -26,11 +26,13 @@ import { Button } from "@/components/ui/button"
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
+    meta?: any
 }
 
 export function DataTable<TData, TValue>({
     columns,
     data,
+    meta,
 }: DataTableProps<TData, TValue>) {
     const [globalFilter, setGlobalFilter] = React.useState("")
 
@@ -44,6 +46,7 @@ export function DataTable<TData, TValue>({
             globalFilter,
         },
         onGlobalFilterChange: setGlobalFilter,
+        meta,
     })
 
     return (

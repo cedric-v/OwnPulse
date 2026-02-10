@@ -25,23 +25,23 @@ function HomeContent() {
   const listFilter = searchParams.get('list')
   const supabase = createClient()
 
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true)
-      const { data: contacts, error } = await supabase
-        .from('contacts')
-        .select('*')
-        .order('created_at', { ascending: false })
+  const fetchData = async () => {
+    setLoading(true)
+    const { data: contacts, error } = await supabase
+      .from('contacts')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-      if (error) {
-        console.error('Error fetching contacts:', error)
-        setError(error.message)
-      } else {
-        setData(contacts || [])
-      }
-      setLoading(false)
+    if (error) {
+      console.error('Error fetching contacts:', error)
+      setError(error.message)
+    } else {
+      setData(contacts || [])
     }
+    setLoading(false)
+  }
 
+  useEffect(() => {
     fetchData()
   }, [])
 
@@ -148,7 +148,13 @@ function HomeContent() {
       ) : error ? (
         <div className="text-red-500">Error: {error}</div>
       ) : (
-        <DataTable columns={columns} data={filteredData} />
+        <DataTable
+          columns={columns}
+          data={filteredData}
+          meta={{
+            refreshData: fetchData
+          }}
+        />
       )}
     </div>
   )
