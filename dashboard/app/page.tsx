@@ -112,7 +112,7 @@ function HomeContent() {
     const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
     link.setAttribute("href", url)
-    link.setAttribute("download", `cedric-crm-export-${new Date().toISOString().split('T')[0]}.csv`)
+    link.setAttribute("download", `ownpulse-export-${new Date().toISOString().split('T')[0]}.csv`)
     link.style.visibility = 'hidden'
     document.body.appendChild(link)
     link.click()
@@ -123,11 +123,11 @@ function HomeContent() {
     <div className="container mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold tracking-tight">
-          {listFilter ? `${listFilter}` : "Cedric's CRM"}
+          {listFilter ? `${listFilter}` : "OwnPulse"}
         </h1>
         <div className="flex items-center gap-4">
           <Input
-            placeholder="Rechercher un contact, société ou note..."
+            placeholder="Search contact, company or notes..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-80"

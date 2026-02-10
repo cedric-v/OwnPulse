@@ -45,7 +45,7 @@ function SidebarContent({ className }: SidebarProps) {
             <div className="space-y-4 py-4">
                 <div className="px-4 py-2">
                     <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">
-                        Cedric's CRM
+                        OwnPulse
                     </h2>
                     <div className="space-y-1">
                         <Button variant={pathname === "/" && !currentList ? "secondary" : "ghost"} className="w-full justify-start" asChild>

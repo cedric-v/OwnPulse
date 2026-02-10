@@ -42,7 +42,7 @@ export default function LoginPage() {
                 <CardHeader>
                     <CardTitle className="text-2xl">Login</CardTitle>
                     <CardDescription>
-                        Enter your email and password to access Cedric's CRM.
+                        Enter your email and password to access OwnPulse.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

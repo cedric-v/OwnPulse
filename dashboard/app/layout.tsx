@@ -7,8 +7,8 @@ import { Sidebar } from "@/components/sidebar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Cedric's CRM",
-  description: "Minimalist CRM",
+  title: "OwnPulse",
+  description: "Advanced Agentic CRM",
 };
 
 export default function RootLayout({

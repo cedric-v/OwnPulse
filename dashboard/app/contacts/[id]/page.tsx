@@ -106,6 +106,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     company_role: contact.company_role,
                     notes: contact.notes,
                     list: contact.list,
+                    value: contact.value,
                     linkedin_url: contact.linkedin_url,
                 })
                 .eq('id', id)
@@ -344,6 +345,17 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                     id="role"
                                     value={contact.company_role || ""}
                                     onChange={e => setContact({ ...contact, company_role: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label htmlFor="value">Value ($)</Label>
+                                <Input
+                                    id="value"
+                                    type="number"
+                                    step="0.01"
+                                    value={contact.value || 0}
+                                    onChange={e => setContact({ ...contact, value: parseFloat(e.target.value) || 0 })}
                                 />
                             </div>
 

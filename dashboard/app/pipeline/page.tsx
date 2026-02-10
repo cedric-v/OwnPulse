@@ -11,6 +11,13 @@ import Link from "next/link"
 // Define the pipeline stages
 const STAGES = ["N/A", "Cold", "Engaged", "Interested", "Warm", "Ghosted", "Closed"]
 
+const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+    }).format(value)
+}
+
 // Helper to group contacts by status
 const groupContacts = (contacts: Contact[]) => {
     const groups: Record<string, Contact[]> = {}
@@ -66,9 +73,14 @@ export default function PipelinePage() {
                             return (
                                 <div key={stage} className="w-[300px] flex-shrink-0 flex flex-col">
                                     <div className="flex items-center justify-between mb-3 px-1">
-                                        <h3 className="font-semibold text-sm uppercase text-gray-500">{stage}</h3>
-                                        <span className="bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full text-xs font-medium">
-                                            {total}
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="font-semibold text-sm uppercase text-gray-500">{stage}</h3>
+                                            <span className="bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full text-xs font-medium text-gray-400">
+                                                {total}
+                                            </span>
+                                        </div>
+                                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded border border-emerald-100 dark:border-emerald-800/50">
+                                            {formatCurrency(items.reduce((sum, item) => sum + (Number(item.value) || 0), 0))}
                                         </span>
                                     </div>
 
@@ -95,7 +107,9 @@ export default function PipelinePage() {
                                                     {/* Status Cell reused here for inline editing! */}
                                                     <div className="flex justify-between items-center mt-2">
                                                         <StatusCell contact={contact} />
-                                                        {/* Could add date or value here */}
+                                                        <span className="text-xs font-semibold text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
+                                                            {formatCurrency(Number(contact.value) || 0)}
+                                                        </span>
                                                     </div>
                                                 </CardContent>
                                             </Card>

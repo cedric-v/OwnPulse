@@ -26,7 +26,8 @@ export function AddLeadDialog() {
         last_name: "",
         company: "",
         email: "",
-        list: "Prospects"
+        list: "Prospects",
+        value: 0
     })
     const router = useRouter()
     const supabase = createClient()
@@ -44,6 +45,7 @@ export function AddLeadDialog() {
                     company: formData.company,
                     email: formData.email,
                     list: formData.list,
+                    value: formData.value,
                     status: "Prospect" // Default status
                 }
             ])
@@ -54,7 +56,7 @@ export function AddLeadDialog() {
             alert("Error adding lead: " + error.message)
         } else {
             setOpen(false)
-            setFormData({ first_name: "", last_name: "", company: "", email: "", list: "Prospects" })
+            setFormData({ first_name: "", last_name: "", company: "", email: "", list: "Prospects", value: 0 })
             router.refresh()
             if (data && data[0]) {
                 router.push(`/contacts/${data[0].id}`)
@@ -69,17 +71,17 @@ export function AddLeadDialog() {
             <DialogTrigger asChild>
                 <Button className="gap-2">
                     <UserPlus className="h-4 w-4" />
-                    Ajouter un Lead
+                    Add a Lead
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Ajouter un nouveau Lead</DialogTitle>
+                    <DialogTitle>Add a New Lead</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 pt-4">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="first_name">Prénom</Label>
+                            <Label htmlFor="first_name">First Name</Label>
                             <Input
                                 id="first_name"
                                 value={formData.first_name}
@@ -89,7 +91,7 @@ export function AddLeadDialog() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="last_name">Nom</Label>
+                            <Label htmlFor="last_name">Last Name</Label>
                             <Input
                                 id="last_name"
                                 value={formData.last_name}
@@ -100,7 +102,7 @@ export function AddLeadDialog() {
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="company">Société</Label>
+                        <Label htmlFor="company">Company</Label>
                         <Input
                             id="company"
                             value={formData.company}
@@ -119,7 +121,7 @@ export function AddLeadDialog() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label>Listes</Label>
+                        <Label>Lists</Label>
                         <div className="flex flex-wrap gap-x-4 gap-y-2 pt-2">
                             {LIST_OPTIONS.map(option => {
                                 const currentLists = formData.list.split(',').map(l => l.trim().toLowerCase())
@@ -153,10 +155,21 @@ export function AddLeadDialog() {
                             })}
                         </div>
                     </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="value">Value ($)</Label>
+                        <Input
+                            id="value"
+                            type="number"
+                            step="0.01"
+                            value={formData.value}
+                            onChange={e => setFormData({ ...formData, value: parseFloat(e.target.value) || 0 })}
+                            placeholder="0.00"
+                        />
+                    </div>
                     <DialogFooter className="pt-4">
                         <Button type="submit" disabled={loading} className="w-full">
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Créer le Lead
+                            Create Lead
                         </Button>
                     </DialogFooter>
                 </form>

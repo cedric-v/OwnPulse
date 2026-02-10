@@ -13,6 +13,7 @@ export type Contact = {
     list: string | null
     avatar_url: string | null
     notes: string | null
+    value: number | null
     created_at: string
 }
 

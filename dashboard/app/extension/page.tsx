@@ -6,7 +6,7 @@ import { Terminal, Download, Settings, ChevronRight } from "lucide-react"
 export default function ExtensionPage() {
     return (
         <div className="container max-w-2xl mx-auto py-10">
-            <h1 className="text-3xl font-bold mb-6">Install Vibe CRM Extension</h1>
+            <h1 className="text-3xl font-bold mb-6">Install OwnPulse Extension</h1>
 
             <div className="space-y-6">
                 <Card>
@@ -53,7 +53,7 @@ export default function ExtensionPage() {
                             <p className="text-sm">
                                 Navigate to your project directory and select the <code className="bg-muted px-1 rounded">extension</code> folder:
                                 <br />
-                                <span className="text-xs text-muted-foreground italic">cedric-crm/extension</span>
+                                <span className="text-xs text-muted-foreground italic">OwnPulse/extension</span>
                             </p>
                         </div>
                     </CardContent>
@@ -71,8 +71,8 @@ export default function ExtensionPage() {
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-muted-foreground">
-                            Click the "Puzzle" icon in Chrome and <strong>pin</strong> Vibe CRM.
-                            Then, navigate to any LinkedIn profile to see the "Add to Vibe" button.
+                            Click the "Puzzle" icon in Chrome and <strong>pin</strong> OwnPulse.
+                            Then, navigate to any LinkedIn profile to see the "Add to OwnPulse" button.
                         </p>
                     </CardContent>
                 </Card>
