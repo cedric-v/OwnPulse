@@ -13,9 +13,9 @@ import { Badge } from "@/components/ui/badge"
 import { AddCompanyDialog } from "@/components/companies/add-company-dialog"
 
 const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('fr-CH', {
         style: 'currency',
-        currency: 'USD',
+        currency: 'CHF',
     }).format(value)
 }
 

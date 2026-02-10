@@ -18,6 +18,8 @@ In the era of "Vibe Coding," I wanted to prove to myself that you can deconstruc
 ## ✨ Key Features
 - **One-Click Lead Capture:** A native Chrome Extension that adds an "Add to CRM" button directly onto LinkedIn profiles.
 - **Sovereign Dashboard:** A clean, high-velocity Next.js interface to manage your sales pipeline.
+- **Lead Value Tracking:** Assign CHF values to leads and visualize real-time revenue totals across your pipeline stages.
+- **Company Management:** Link multiple leads to a single company profile with shared notes and organizational overviews.
 - **Modern UX (Auto-Save):** Real-time feedback with debounced auto-save—no manual "Save" buttons needed.
 - **Multi-List Categorization:** Assign leads to multiple lists (Customers, Prospects, Partners, etc.) simultaneously.
 - **Personal & Portable:** One-click CSV export of your entire/filtered database.
@@ -35,7 +37,7 @@ In the era of "Vibe Coding," I wanted to prove to myself that you can deconstruc
 
 ### 1. Database Setup (Supabase)
 1. Create a free project on [Supabase](https://supabase.com).
-2. Execute the SQL schema found in `/supabase/schema.sql` to initialize your `contacts` and `tasks` tables.
+2. Execute the SQL schema found in `/supabase/schema.sql` to initialize your `contacts`, `companies`, and `tasks` tables.
 3. Retrieve your `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
 
 ### 2. Web App Installation (Local)

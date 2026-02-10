@@ -12,9 +12,9 @@ import Link from "next/link"
 const STAGES = ["N/A", "Cold", "Engaged", "Interested", "Warm", "Ghosted", "Closed"]
 
 const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('fr-CH', {
         style: 'currency',
-        currency: 'USD',
+        currency: 'CHF',
     }).format(value)
 }
 

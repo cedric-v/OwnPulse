@@ -362,7 +362,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                             </div>
 
                             <div className="space-y-2">
-                                <Label htmlFor="value">Value ($)</Label>
+                                <Label htmlFor="value">Value (CHF)</Label>
                                 <Input
                                     id="value"
                                     type="number"

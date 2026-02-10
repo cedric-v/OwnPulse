@@ -16,9 +16,9 @@ import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('fr-CH', {
         style: 'currency',
-        currency: 'USD',
+        currency: 'CHF',
     }).format(value)
 }
 
@@ -143,7 +143,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="value">Total Potential Value ($)</Label>
+                                <Label htmlFor="value">Total Potential Value (CHF)</Label>
                                 <Input
                                     id="value"
                                     type="number"
