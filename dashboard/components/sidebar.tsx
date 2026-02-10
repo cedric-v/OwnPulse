@@ -15,7 +15,8 @@ import {
     Globe,
     Handshake,
     Settings,
-    LogOut
+    LogOut,
+    Building
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
@@ -64,6 +65,12 @@ function SidebarContent({ className }: SidebarProps) {
                             <Link href="/pipeline">
                                 <Kanban className="mr-2 h-4 w-4" />
                                 Pipeline
+                            </Link>
+                        </Button>
+                        <Button variant={pathname === "/companies" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
+                            <Link href="/companies">
+                                <Building className="mr-2 h-4 w-4" />
+                                Companies
                             </Link>
                         </Button>
                     </div>

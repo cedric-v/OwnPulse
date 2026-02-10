@@ -1,6 +1,8 @@
 # 🛰️ OwnPulse
 ### **A Sovereign Social CRM for LinkedIn**
 
+![OwnPulse Dashboard](./OwnPulse-screenshot.jpg)
+
 *Built by [Cedric V.](https://cedricv.com/en/) — Architecting efficient, self-hosted solutions.*
 
 ---
@@ -9,7 +11,7 @@
 
 **OwnPulse** was born from a technical challenge: building a lightweight, sovereign alternative to modern Social CRMs like **Breakcold**. 
 
-In the era of "Vibe Coding," I wanted to prove that you can deconstruct a complex SaaS and rebuild the core 20% of features that deliver 80% of the value in record time. OwnPulse is designed for builders and entrepreneurs who want the power of a Social CRM without the monthly subscription or the data privacy concerns of third-party platforms.
+In the era of "Vibe Coding," I wanted to prove to myself that you can deconstruct a complex SaaS and rebuild the core 20% of features that deliver 80% of the value in record time. OwnPulse is designed for builders and entrepreneurs who want the power of a Social CRM without the monthly subscription or the data privacy concerns of third-party platforms.
 
 > "Why subscribe to a cloud when you can own your pulse?"
 

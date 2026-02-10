@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Save, Loader2, Phone, Mail, MapPin, Globe, Linkedin, Check } from "lucide-react"
+import { ArrowLeft, Save, Loader2, Phone, Mail, MapPin, Globe, Linkedin, Check, Building } from "lucide-react"
 import Link from "next/link"
 import { StatusCell } from "@/components/contacts/status-cell"
 import {
@@ -290,12 +290,25 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="company">Company</Label>
-                                    <Input
-                                        id="company"
-                                        value={contact.company || ""}
-                                        onChange={e => setContact({ ...contact, company: e.target.value })}
-                                    />
+                                    <Label htmlFor="company" className="flex items-center gap-2">Company</Label>
+                                    <div className="flex gap-2">
+                                        <Input
+                                            id="company"
+                                            value={contact.company || ""}
+                                            onChange={e => setContact({ ...contact, company: e.target.value })}
+                                            className="flex-1"
+                                        />
+                                        {contact.company_id && (
+                                            <Button variant="outline" size="icon" asChild>
+                                                <Link href={`/companies/${contact.company_id}`}>
+                                                    <Building className="h-4 w-4" />
+                                                </Link>
+                                            </Button>
+                                        )}
+                                    </div>
+                                    {contact.company_id && (
+                                        <p className="text-[10px] text-blue-500 italic">Linked to Company profile</p>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Lists</Label>

@@ -1,3 +1,16 @@
+export type Company = {
+    id: string
+    name: string
+    linkedin_url: string | null
+    website_url: string | null
+    city: string | null
+    logo_url: string | null
+    notes: string | null
+    value: number | null
+    created_at: string
+    updated_at: string
+}
+
 export type Contact = {
     id: string
     first_name: string | null
@@ -8,6 +21,7 @@ export type Contact = {
     website: string | null
     linkedin_url: string | null
     company: string | null
+    company_id: string | null
     company_role: string | null
     status: string | null
     list: string | null

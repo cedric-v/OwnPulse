@@ -4,6 +4,26 @@
 -- Enable UUID extension
 create extension if not exists "uuid-ossp";
 
+-- Companies Table
+create table companies (
+  id uuid primary key default uuid_generate_v4(),
+  name text not null unique,
+  linkedin_url text,
+  website_url text,
+  city text,
+  logo_url text,
+  notes text,
+  value decimal(12,2) default 0,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+-- Migration: Create companies from existing contacts
+-- insert into companies (name) 
+-- select distinct company from contacts where company is not null 
+-- on conflict (name) do nothing;
+-- update contacts set company_id = c.id from companies c where contacts.company = c.name;
+
 -- Contacts Table
 create table contacts (
   id uuid primary key default uuid_generate_v4(),
@@ -11,7 +31,8 @@ create table contacts (
   last_name text,
   email text,
   linkedin_url text,
-  company text,
+  company text, -- Legacy/display name
+  company_id uuid references companies(id) on delete set null,
   company_role text,
   status text default 'Prospect',
   list text default 'Prospects', -- Comma separated lists
@@ -38,10 +59,11 @@ create table tasks (
 );
 
 -- Enable Row Level Security (RLS)
+alter table companies enable row level security;
 alter table contacts enable row level security;
 alter table tasks enable row level security;
 
 -- Policies: Authenticated users can manage their own data
--- (Note: In a true multi-tenant setup, you'd add a user_id column and filter by it)
+create policy "authenticated_access" on companies for all to authenticated using (true) with check (true);
 create policy "authenticated_access" on contacts for all to authenticated using (true) with check (true);
 create policy "authenticated_access" on tasks for all to authenticated using (true) with check (true);
