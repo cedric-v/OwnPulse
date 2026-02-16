@@ -69,18 +69,33 @@ function scrapeProfile() {
         companyRole = roleElement ? roleElement.innerText.trim() : 'Unknown Role';
         avatarUrl = avatarElement ? avatarElement.src : null;
     } else if (url.includes('threads.net') || url.includes('threads.com')) {
-        const nameElement = document.querySelector('h1') || document.querySelector('meta[property="og:title"]');
-        name = nameElement ? (nameElement.content || nameElement.innerText || '').split(' (@')[0].trim() : '';
+        // Try meta tags first for full name
+        const ogTitle = document.querySelector('meta[property="og:title"]')?.content;
+        const pageTitle = document.title;
 
-        // Threads profile structure is very dynamic, trying common selectors
-        const bioElement = document.querySelector('span div span'); // Often bio
+        if (ogTitle && ogTitle.includes('(@')) {
+            name = ogTitle.split(' (@')[0].trim();
+        } else if (pageTitle && pageTitle.includes('(@')) {
+            name = pageTitle.split(' (@')[0].trim();
+        } else {
+            const nameElement = document.querySelector('h1');
+            name = nameElement ? nameElement.innerText.trim() : '';
+        }
+
+        // Bio extraction
+        const bioElement = document.querySelector('header ~ div span') || document.querySelector('span div span');
         companyRole = bioElement ? bioElement.innerText.trim() : 'Threads Profile';
 
         const avatarElement = document.querySelector('img[alt*="profile picture"]');
         avatarUrl = avatarElement ? avatarElement.src : null;
     } else if (url.includes('instagram.com')) {
-        const nameElement = document.querySelector('header h2') || document.querySelector('h2');
-        name = nameElement ? nameElement.innerText.trim() : '';
+        const pageTitle = document.title;
+        if (pageTitle && pageTitle.includes('(@')) {
+            name = pageTitle.split(' (@')[0].trim();
+        } else {
+            const nameElement = document.querySelector('header h2') || document.querySelector('h2');
+            name = nameElement ? nameElement.innerText.trim() : '';
+        }
 
         const bioElement = document.querySelector('header section div:last-child span');
         companyRole = bioElement ? bioElement.innerText.trim() : 'Instagram Profile';
@@ -90,12 +105,11 @@ function scrapeProfile() {
     }
 
     if (!name || name === 'Unknown Name') {
-        const titleParts = document.title.split(' ');
-        name = titleParts[0] + (titleParts[1] ? ' ' + titleParts[1] : '');
+        name = 'Unknown';
     }
 
-    const nameParts = name.split(' ');
-    const firstName = nameParts[0];
+    const nameParts = name.split(' ').filter(p => p.trim() !== '');
+    const firstName = nameParts[0] || 'Unknown';
     const lastName = nameParts.slice(1).join(' ');
 
     const profileData = {
