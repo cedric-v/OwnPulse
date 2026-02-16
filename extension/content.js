@@ -49,7 +49,7 @@ function createFloatingButton() {
 
 function scrapeProfile() {
     const url = window.location.href;
-    let name = 'Unknown Name';
+    let name = '';
     let companyRole = 'Unknown Role';
     let avatarUrl = null;
     let platformUrl = url;
@@ -69,32 +69,49 @@ function scrapeProfile() {
         companyRole = roleElement ? roleElement.innerText.trim() : 'Unknown Role';
         avatarUrl = avatarElement ? avatarElement.src : null;
     } else if (url.includes('threads.net') || url.includes('threads.com')) {
-        // Try meta tags first for full name
-        const ogTitle = document.querySelector('meta[property="og:title"]')?.content;
-        const pageTitle = document.title;
+        const username = url.split('@')[1]?.split('/')[0] || '';
 
+        // 1. Try meta tags (best for full name)
+        const ogTitle = document.querySelector('meta[property="og:title"]')?.content || document.title;
         if (ogTitle && ogTitle.includes('(@')) {
             name = ogTitle.split(' (@')[0].trim();
-        } else if (pageTitle && pageTitle.includes('(@')) {
-            name = pageTitle.split(' (@')[0].trim();
-        } else {
-            const nameElement = document.querySelector('h1');
-            name = nameElement ? nameElement.innerText.trim() : '';
+        }
+
+        // 2. If name is still username or not found, search in h1
+        if (!name || name.toLowerCase() === username.toLowerCase()) {
+            const h1s = Array.from(document.querySelectorAll('h1'));
+            for (const h1 of h1s) {
+                const text = h1.innerText.trim();
+                if (text && text.toLowerCase() !== username.toLowerCase()) {
+                    name = text;
+                    break;
+                }
+            }
+        }
+
+        // 3. Last fallback
+        if (!name) {
+            const h1Element = document.querySelector('h1');
+            name = h1Element ? h1Element.innerText.trim() : 'Unknown';
         }
 
         // Bio extraction
-        const bioElement = document.querySelector('header ~ div span') || document.querySelector('span div span');
+        const bioElement = document.querySelector('header div span') || document.querySelector('header ~ div span') || document.querySelector('span div span');
         companyRole = bioElement ? bioElement.innerText.trim() : 'Threads Profile';
 
         const avatarElement = document.querySelector('img[alt*="profile picture"]');
         avatarUrl = avatarElement ? avatarElement.src : null;
     } else if (url.includes('instagram.com')) {
+        const username = url.pathname.split('/')[1] || '';
         const pageTitle = document.title;
+
         if (pageTitle && pageTitle.includes('(@')) {
             name = pageTitle.split(' (@')[0].trim();
-        } else {
+        }
+
+        if (!name || name.toLowerCase() === username.toLowerCase()) {
             const nameElement = document.querySelector('header h2') || document.querySelector('h2');
-            name = nameElement ? nameElement.innerText.trim() : '';
+            name = nameElement ? nameElement.innerText.trim() : (name || 'Unknown');
         }
 
         const bioElement = document.querySelector('header section div:last-child span');
@@ -104,6 +121,7 @@ function scrapeProfile() {
         avatarUrl = avatarElement ? avatarElement.src : null;
     }
 
+    // Cleaning name
     if (!name || name === 'Unknown Name') {
         name = 'Unknown';
     }
@@ -113,8 +131,8 @@ function scrapeProfile() {
     const lastName = nameParts.slice(1).join(' ');
 
     const profileData = {
-        first_name: firstName || 'Unknown',
-        last_name: lastName || 'Name',
+        first_name: firstName,
+        last_name: lastName || '', // No more 'Name' default
         company_role: companyRole,
         linkedin_url: null,
         threads_url: null,
