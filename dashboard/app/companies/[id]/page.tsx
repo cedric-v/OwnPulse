@@ -150,6 +150,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                                     step="0.01"
                                     value={company.value || 0}
                                     onChange={e => setCompany({ ...company, value: parseFloat(e.target.value) || 0 })}
+                                    onFocus={e => e.target.select()}
                                 />
                             </div>
                         </div>
