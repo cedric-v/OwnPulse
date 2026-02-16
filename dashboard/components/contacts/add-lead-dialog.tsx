@@ -164,6 +164,7 @@ export function AddLeadDialog() {
                             value={formData.value}
                             onChange={e => setFormData({ ...formData, value: parseFloat(e.target.value) || 0 })}
                             placeholder="0.00"
+                            onFocus={e => e.target.select()}
                         />
                     </div>
                     <DialogFooter className="pt-4">

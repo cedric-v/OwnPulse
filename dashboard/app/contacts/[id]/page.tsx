@@ -369,6 +369,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                     step="0.01"
                                     value={contact.value || 0}
                                     onChange={e => setContact({ ...contact, value: parseFloat(e.target.value) || 0 })}
+                                    onFocus={e => e.target.select()}
                                 />
                             </div>
 
