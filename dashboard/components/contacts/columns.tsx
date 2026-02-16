@@ -6,7 +6,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { Contact } from "@/types"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { MoreHorizontal, Linkedin } from "lucide-react"
+import { MoreHorizontal, Linkedin, Globe, Instagram } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
@@ -113,6 +113,28 @@ export const columns: ColumnDef<Contact>[] = [
                                     window.open(url, "_blank")
                                 }}>
                                     <Linkedin className="mr-2 h-4 w-4" /> Open LinkedIn
+                                </DropdownMenuItem>
+                            )}
+                            {contact.threads_url && (
+                                <DropdownMenuItem onClick={() => {
+                                    let url = contact.threads_url || ""
+                                    if (url && !url.startsWith("http")) {
+                                        url = `https://www.threads.net/${url}`
+                                    }
+                                    window.open(url, "_blank")
+                                }}>
+                                    <Globe className="mr-2 h-4 w-4" /> Open Threads
+                                </DropdownMenuItem>
+                            )}
+                            {contact.instagram_url && (
+                                <DropdownMenuItem onClick={() => {
+                                    let url = contact.instagram_url || ""
+                                    if (url && !url.startsWith("http")) {
+                                        url = `https://www.instagram.com/${url}`
+                                    }
+                                    window.open(url, "_blank")
+                                }}>
+                                    <Instagram className="mr-2 h-4 w-4" /> Open Instagram
                                 </DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />

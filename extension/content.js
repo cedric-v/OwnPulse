@@ -6,14 +6,14 @@ function createFloatingButton() {
     if (document.getElementById('vibe-crm-btn')) return;
 
     const btn = document.createElement('button');
-    btn.id = 'vibe-crm-btn';
-    btn.innerText = 'Add to Vibe';
+    btn.id = 'ownpulse-crm-btn';
+    btn.innerText = 'Add to OwnPulse';
     btn.style.position = 'fixed';
     btn.style.top = '80px';
     btn.style.right = '20px';
     btn.style.zIndex = '9999';
     btn.style.padding = '10px 20px';
-    btn.style.backgroundColor = '#0a66c2'; // LinkedIn Blue
+    btn.style.backgroundColor = '#6366f1'; // OwnPulse Indigo (modernized)
     btn.style.color = 'white';
     btn.style.border = 'none';
     btn.style.borderRadius = '24px';
@@ -39,8 +39,8 @@ function createFloatingButton() {
         }
 
         setTimeout(() => {
-            btn.innerText = 'Add to Vibe';
-            btn.style.backgroundColor = '#0a66c2';
+            btn.innerText = 'Add to OwnPulse';
+            btn.style.backgroundColor = '#6366f1';
         }, 3000);
     });
 
@@ -48,40 +48,77 @@ function createFloatingButton() {
 }
 
 function scrapeProfile() {
-    // Selectors might need adjustment based on LinkedIn's dynamic classes
-    const nameElement = document.querySelector('.text-heading-xlarge') || document.querySelector('h1.text-heading-xlarge');
-    const roleElement = document.querySelector('.text-body-medium');
-    const avatarElement = document.querySelector('.pv-top-card-profile-picture__image--show') || document.querySelector('img.pv-top-card-profile-picture__image');
+    const url = window.location.href;
+    let name = 'Unknown Name';
+    let companyRole = 'Unknown Role';
+    let avatarUrl = null;
+    let platformUrl = url;
 
-    let name = nameElement ? nameElement.innerText.trim() : '';
-    if (!name) {
-        // Fallback to document title
-        const title = document.title;
-        if (title.includes(' | LinkedIn')) {
-            name = title.split(' | LinkedIn')[0];
-        } else {
-            name = 'Unknown Name';
+    if (url.includes('linkedin.com')) {
+        const nameElement = document.querySelector('.text-heading-xlarge') || document.querySelector('h1.text-heading-xlarge');
+        const roleElement = document.querySelector('.text-body-medium');
+        const avatarElement = document.querySelector('.pv-top-card-profile-picture__image--show') || document.querySelector('img.pv-top-card-profile-picture__image');
+
+        name = nameElement ? nameElement.innerText.trim() : '';
+        if (!name) {
+            const title = document.title;
+            if (title.includes(' | LinkedIn')) {
+                name = title.split(' | LinkedIn')[0];
+            }
         }
+        companyRole = roleElement ? roleElement.innerText.trim() : 'Unknown Role';
+        avatarUrl = avatarElement ? avatarElement.src : null;
+    } else if (url.includes('threads.net') || url.includes('threads.com')) {
+        const nameElement = document.querySelector('h1') || document.querySelector('meta[property="og:title"]');
+        name = nameElement ? (nameElement.content || nameElement.innerText || '').split(' (@')[0].trim() : '';
+
+        // Threads profile structure is very dynamic, trying common selectors
+        const bioElement = document.querySelector('span div span'); // Often bio
+        companyRole = bioElement ? bioElement.innerText.trim() : 'Threads Profile';
+
+        const avatarElement = document.querySelector('img[alt*="profile picture"]');
+        avatarUrl = avatarElement ? avatarElement.src : null;
+    } else if (url.includes('instagram.com')) {
+        const nameElement = document.querySelector('header h2') || document.querySelector('h2');
+        name = nameElement ? nameElement.innerText.trim() : '';
+
+        const bioElement = document.querySelector('header section div:last-child span');
+        companyRole = bioElement ? bioElement.innerText.trim() : 'Instagram Profile';
+
+        const avatarElement = document.querySelector('header img');
+        avatarUrl = avatarElement ? avatarElement.src : null;
     }
 
-    // Split name for simple first/last
+    if (!name || name === 'Unknown Name') {
+        const titleParts = document.title.split(' ');
+        name = titleParts[0] + (titleParts[1] ? ' ' + titleParts[1] : '');
+    }
+
     const nameParts = name.split(' ');
     const firstName = nameParts[0];
     const lastName = nameParts.slice(1).join(' ');
 
-    const companyRole = roleElement ? roleElement.innerText.trim() : 'Unknown Role';
-    const avatarUrl = avatarElement ? avatarElement.src : null;
-    const linkedinUrl = window.location.href;
-
-    return {
-        first_name: firstName,
-        last_name: lastName,
+    const profileData = {
+        first_name: firstName || 'Unknown',
+        last_name: lastName || 'Name',
         company_role: companyRole,
-        linkedin_url: linkedinUrl,
+        linkedin_url: null,
+        threads_url: null,
+        instagram_url: null,
         avatar_url: avatarUrl,
         status: 'N/A',
         list: 'Prospects'
     };
+
+    if (url.includes('linkedin.com')) {
+        profileData.linkedin_url = platformUrl;
+    } else if (url.includes('threads.net') || url.includes('threads.com')) {
+        profileData.threads_url = platformUrl;
+    } else if (url.includes('instagram.com')) {
+        profileData.instagram_url = platformUrl;
+    }
+
+    return profileData;
 }
 
 async function saveToSupabase(data) {
@@ -90,8 +127,8 @@ async function saveToSupabase(data) {
         throw new Error('Missing Config');
     }
 
-    // Check if contact exists
-    const searchUrl = `${SUPABASE_URL}/rest/v1/contacts?linkedin_url=eq.${encodeURIComponent(data.linkedin_url)}`;
+    // Check if contact exists by any social URL
+    const searchUrl = `${SUPABASE_URL}/rest/v1/contacts?or=(linkedin_url.eq.${encodeURIComponent(data.linkedin_url || 'null')},threads_url.eq.${encodeURIComponent(data.threads_url || 'null')},instagram_url.eq.${encodeURIComponent(data.instagram_url || 'null')})`;
     const searchRes = await fetch(searchUrl, {
         method: 'GET',
         headers: {

@@ -26,6 +26,9 @@ export function AddLeadDialog() {
         last_name: "",
         company: "",
         email: "",
+        linkedin_url: "",
+        threads_url: "",
+        instagram_url: "",
         list: "Prospects",
         value: 0
     })
@@ -44,6 +47,9 @@ export function AddLeadDialog() {
                     last_name: formData.last_name,
                     company: formData.company,
                     email: formData.email,
+                    linkedin_url: formData.linkedin_url || null,
+                    threads_url: formData.threads_url || null,
+                    instagram_url: formData.instagram_url || null,
                     list: formData.list,
                     value: formData.value,
                     status: "Prospect" // Default status
@@ -56,7 +62,7 @@ export function AddLeadDialog() {
             alert("Error adding lead: " + error.message)
         } else {
             setOpen(false)
-            setFormData({ first_name: "", last_name: "", company: "", email: "", list: "Prospects", value: 0 })
+            setFormData({ first_name: "", last_name: "", company: "", email: "", linkedin_url: "", threads_url: "", instagram_url: "", list: "Prospects", value: 0 })
             router.refresh()
             if (data && data[0]) {
                 router.push(`/contacts/${data[0].id}`)
@@ -109,6 +115,35 @@ export function AddLeadDialog() {
                             onChange={e => setFormData({ ...formData, company: e.target.value })}
                             placeholder="Acme Corp"
                         />
+                    </div>
+                    <div className="grid grid-cols-1 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="linkedin_url">LinkedIn URL</Label>
+                            <Input
+                                id="linkedin_url"
+                                value={formData.linkedin_url}
+                                onChange={e => setFormData({ ...formData, linkedin_url: e.target.value })}
+                                placeholder="https://linkedin.com/in/..."
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="threads_url">Threads URL</Label>
+                            <Input
+                                id="threads_url"
+                                value={formData.threads_url}
+                                onChange={e => setFormData({ ...formData, threads_url: e.target.value })}
+                                placeholder="https://threads.net/@..."
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="instagram_url">Instagram URL</Label>
+                            <Input
+                                id="instagram_url"
+                                value={formData.instagram_url}
+                                onChange={e => setFormData({ ...formData, instagram_url: e.target.value })}
+                                placeholder="https://instagram.com/..."
+                            />
+                        </div>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>

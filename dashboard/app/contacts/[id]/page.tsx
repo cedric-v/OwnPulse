@@ -108,6 +108,8 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     list: contact.list,
                     value: contact.value,
                     linkedin_url: contact.linkedin_url,
+                    threads_url: contact.threads_url,
+                    instagram_url: contact.instagram_url,
                 })
                 .eq('id', id)
 
@@ -392,25 +394,69 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <Label htmlFor="linkedin_url" className="flex items-center gap-2"><Linkedin className="h-3 w-3" /> LinkedIn Profile</Label>
-                                <div className="flex gap-2">
-                                    <Input
-                                        id="linkedin_url"
-                                        value={contact.linkedin_url || ""}
-                                        onChange={e => setContact({ ...contact, linkedin_url: e.target.value })}
-                                    />
-                                    {contact.linkedin_url && (
-                                        <Button variant="outline" size="icon" asChild>
-                                            <a
-                                                href={contact.linkedin_url.startsWith("http") ? contact.linkedin_url : `https://www.linkedin.com/in/${contact.linkedin_url}`}
-                                                target="_blank"
-                                                rel="noreferrer"
-                                            >
-                                                <Linkedin className="h-4 w-4" />
-                                            </a>
-                                        </Button>
-                                    )}
+                            <div className="grid grid-cols-1 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="linkedin_url" className="flex items-center gap-2"><Linkedin className="h-3 w-3" /> LinkedIn Profile</Label>
+                                    <div className="flex gap-2">
+                                        <Input
+                                            id="linkedin_url"
+                                            value={contact.linkedin_url || ""}
+                                            onChange={e => setContact({ ...contact, linkedin_url: e.target.value })}
+                                        />
+                                        {contact.linkedin_url && (
+                                            <Button variant="outline" size="icon" asChild>
+                                                <a
+                                                    href={contact.linkedin_url.startsWith("http") ? contact.linkedin_url : `https://www.linkedin.com/in/${contact.linkedin_url}`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+                                                    <Linkedin className="h-4 w-4" />
+                                                </a>
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="threads_url" className="flex items-center gap-2"><Globe className="h-3 w-3" /> Threads Profile</Label>
+                                    <div className="flex gap-2">
+                                        <Input
+                                            id="threads_url"
+                                            value={contact.threads_url || ""}
+                                            onChange={e => setContact({ ...contact, threads_url: e.target.value })}
+                                        />
+                                        {contact.threads_url && (
+                                            <Button variant="outline" size="icon" asChild>
+                                                <a
+                                                    href={contact.threads_url.startsWith("http") ? contact.threads_url : `https://www.threads.net/${contact.threads_url}`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+                                                    <Globe className="h-4 w-4" />
+                                                </a>
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="instagram_url" className="flex items-center gap-2"><Globe className="h-3 w-3" /> Instagram Profile</Label>
+                                    <div className="flex gap-2">
+                                        <Input
+                                            id="instagram_url"
+                                            value={contact.instagram_url || ""}
+                                            onChange={e => setContact({ ...contact, instagram_url: e.target.value })}
+                                        />
+                                        {contact.instagram_url && (
+                                            <Button variant="outline" size="icon" asChild>
+                                                <a
+                                                    href={contact.instagram_url.startsWith("http") ? contact.instagram_url : `https://www.instagram.com/${contact.instagram_url}`}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+                                                    <Globe className="h-4 w-4" />
+                                                </a>
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 

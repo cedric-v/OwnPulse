@@ -31,6 +31,8 @@ create table contacts (
   last_name text,
   email text,
   linkedin_url text,
+  threads_url text,
+  instagram_url text,
   company text, -- Legacy/display name
   company_id uuid references companies(id) on delete set null,
   company_role text,

@@ -20,6 +20,8 @@ export type Contact = {
     location: string | null
     website: string | null
     linkedin_url: string | null
+    threads_url: string | null
+    instagram_url: string | null
     company: string | null
     company_id: string | null
     company_role: string | null

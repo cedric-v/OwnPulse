@@ -1,5 +1,5 @@
 # 🛰️ OwnPulse
-### **A Sovereign Social CRM for LinkedIn**
+### **A Sovereign Social CRM for LinkedIn, Threads, and Instagram**
 
 ![OwnPulse Dashboard](./OwnPulse-screenshot.jpg)
 
@@ -16,7 +16,7 @@ In the era of "Vibe Coding," I wanted to prove to myself that you can deconstruc
 > "Why subscribe to a cloud when you can own your pulse?"
 
 ## ✨ Key Features
-- **One-Click Lead Capture:** A native Chrome Extension that adds an "Add to CRM" button directly onto LinkedIn profiles.
+- **One-Click Lead Capture:** A native Chrome Extension that adds an "Add to OwnPulse" button directly onto LinkedIn, Threads, and Instagram profiles.
 - **Sovereign Dashboard:** A clean, high-velocity Next.js interface to manage your sales pipeline.
 - **Lead Value Tracking:** Assign CHF values to leads and visualize real-time revenue totals across your pipeline stages.
 - **Company Management:** Link multiple leads to a single company profile with shared notes and organizational overviews.
@@ -28,7 +28,7 @@ In the era of "Vibe Coding," I wanted to prove to myself that you can deconstruc
 ## 🛠️ Tech Stack
 - **Frontend/Backend:** [Next.js](https://nextjs.org/) (App Router) + [Tailwind CSS](https://tailwindcss.com/)
 - **Database:** [Supabase](https://supabase.com/) (PostgreSQL + RLS)
-- **Integration:** Chrome Extension Manifest V3
+- **Integration:** Chrome Extension Manifest V3 (LinkedIn, Threads, Instagram)
 - **Deployment:** [Vercel](https://vercel.com/)
 
 ---
@@ -39,6 +39,7 @@ In the era of "Vibe Coding," I wanted to prove to myself that you can deconstruc
 1. Create a free project on [Supabase](https://supabase.com).
 2. Execute the SQL schema found in `/supabase/schema.sql` to initialize your `contacts`, `companies`, and `tasks` tables.
 3. Retrieve your `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
+4. *Existing users:* If you are upgrading from a version before Threads/Instagram support, run `migration_social_fields.sql`.
 
 ### 2. Web App Installation (Local)
 1. Clone the repository.
@@ -63,7 +64,7 @@ In the era of "Vibe Coding," I wanted to prove to myself that you can deconstruc
 ---
 
 ## 📊 How it works
-1. 📡 **Capture**: The Chrome extension scrapes the LinkedIn profile DOM securely.
+1. 📡 **Capture**: The Chrome extension scrapes the LinkedIn, Threads, or Instagram profile DOM securely.
 2. ⚡ **Sync**: Data is sent instantly to your private Supabase PostgreSQL instance.
 3. 🛰️ **Pulse**: Manage your relationships and pipeline stages via the OwnPulse dashboard.
 
@@ -73,7 +74,7 @@ In the era of "Vibe Coding," I wanted to prove to myself that you can deconstruc
 
 **IMPORTANT: READ THIS BEFORE USE.**
 This project is for **educational and personal use only**. It is not affiliated with, authorized, maintained, sponsored, or endorsed by LinkedIn or its affiliates.
-- **Compliance:** Using third-party extensions to modify platform behavior may violate LinkedIn's Terms of Service.
+- **Compliance:** Using third-party extensions to modify platform behavior may violate Terms of Service of the respective platforms (LinkedIn, Threads, Instagram).
 - **Risk:** Use this software at your own risk. The author is not responsible for any account warnings or suspensions.
 - **No Warranty:** This software is provided "as is", without warranty of any kind.
 
