@@ -9,7 +9,7 @@
 
 ---
 
-**OwnPulse** is the **ultimate tool for solopreneurs to pilot their business**. It provides a centralized, private view of your growth and health, bridging the gap between **lead acquisition**, **marketing performance**, and **financial sustainability**.
+**OwnPulse** is the **ultimate tool for solopreneurs to pilot their business**. It provides a centralized, private view of your business growth and health, bridging the gap between **lead acquisition**, **marketing performance**, and **financial sustainability**.
 
 ---
 
