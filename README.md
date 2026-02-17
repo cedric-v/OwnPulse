@@ -30,6 +30,7 @@ It bridges the gap between **lead acquisition**, **marketing performance**, and 
 - **Revenue vs. Reality:** Track total sales against professional expenses and **actual remuneration**.
 - **Net Profit Simulation:** Real-time visibility into your *true* margin after social contributions and taxes.
 - **Offer Mastery:** Manage complex service offers with integrated work-time calculators and automatic margin tracking.
+- **Offers Dashboard:** Visualize profitability, real hourly rates, and sales goals progress per offer.
 - **Runway Analysis:** Know exactly how many months of operation you have left based on current cash flow.
 
 ## 🛠️ Tech Stack

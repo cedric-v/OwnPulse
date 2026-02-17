@@ -59,22 +59,58 @@ export default function CFODashboard() {
 
     const isWithinPeriod = (dateString: string | null | undefined) => {
         if (!dateString) return false
-        if (period === "all") return true
 
         const date = new Date(dateString)
-        const now = new Date()
-        const start = new Date()
+        // Reset hours for accurate comparison
+        date.setHours(0, 0, 0, 0)
+        const today = new Date()
+        today.setHours(0, 0, 0, 0)
 
-        if (period === "30d") start.setDate(now.getDate() - 30)
-        else if (period === "90d") start.setDate(now.getDate() - 90)
-        else if (period === "6m") start.setMonth(now.getMonth() - 6)
-        else if (period === "12m") start.setMonth(now.getMonth() - 12)
-        else if (period === "ytd") {
-            start.setFullYear(now.getFullYear(), 0, 1)
-            start.setHours(0, 0, 0, 0)
+        const oneDay = 24 * 60 * 60 * 1000
+        const diffTime = date.getTime() - today.getTime()
+        const diffDays = Math.ceil(diffTime / oneDay)
+
+        const year = date.getFullYear()
+        const currentYear = today.getFullYear()
+
+        // Quarters helper
+        const getQuarter = (d: Date) => Math.floor(d.getMonth() / 3) + 1
+        const currentQuarter = getQuarter(today)
+
+        switch (period) {
+            // Past
+            case "30d": return diffDays <= 0 && diffDays >= -30
+            case "90d": return diffDays <= 0 && diffDays >= -90
+            case "6m": return diffDays <= 0 && diffDays >= -180
+            case "12m": return diffDays <= 0 && diffDays >= -365
+            case "ytd": return year === currentYear && date <= today
+            case "lastYear": return year === currentYear - 1
+            case "lastQuarter": {
+                const lastQ = currentQuarter === 1 ? 4 : currentQuarter - 1
+                const targetYear = currentQuarter === 1 ? currentYear - 1 : currentYear
+                return getQuarter(date) === lastQ && year === targetYear
+            }
+
+            // Future
+            case "next30d": return diffDays >= 0 && diffDays <= 30
+            case "next90d": return diffDays >= 0 && diffDays <= 90
+            case "nextYear": return year === currentYear + 1
+            case "currentQuarter": return year === currentYear && getQuarter(date) === currentQuarter
+            case "nextQuarter": {
+                const nextQ = currentQuarter === 4 ? 1 : currentQuarter + 1
+                const targetYear = currentQuarter === 4 ? currentYear + 1 : currentYear
+                return getQuarter(date) === nextQ && year === targetYear
+            }
+
+            // Specific Quarters (Current Year)
+            case "Q1": return year === currentYear && getQuarter(date) === 1
+            case "Q2": return year === currentYear && getQuarter(date) === 2
+            case "Q3": return year === currentYear && getQuarter(date) === 3
+            case "Q4": return year === currentYear && getQuarter(date) === 4
+
+            case "all": return true
+            default: return true
         }
-
-        return date >= start
     }
 
     const filteredSales = sales.filter(s => isWithinPeriod(s.sale_date))

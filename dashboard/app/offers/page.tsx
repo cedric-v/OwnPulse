@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useLanguage } from "@/components/i18n/language-context"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { PeriodSelector } from "@/components/dashboard/period-selector"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Plus, MoreVertical, Filter } from "lucide-react"
@@ -18,6 +19,7 @@ export default function OffersPage() {
     const [sales, setSales] = useState<Sale[]>([])
     const [showOnlyWithGoals, setShowOnlyWithGoals] = useState(true)
     const [loading, setLoading] = useState(true)
+    const [currency, setCurrency] = useState("EUR")
     const supabase = createClient()
 
     useEffect(() => {
@@ -26,31 +28,69 @@ export default function OffersPage() {
 
     const fetchData = async () => {
         setLoading(true)
-        const { data: offersData } = await supabase.from('offers').select('*')
-        const { data: salesData } = await supabase.from('sales').select('*')
+        const [offersRes, salesRes, currencyRes] = await Promise.all([
+            supabase.from('offers').select('*'),
+            supabase.from('sales').select('*'),
+            supabase.from('settings').select('value').eq('key', 'currency').single()
+        ])
 
-        if (offersData) setOffers(offersData)
-        if (salesData) setSales(salesData)
+        if (offersRes.data) setOffers(offersRes.data)
+        if (salesRes.data) setSales(salesRes.data)
+        if (currencyRes.data) setCurrency(currencyRes.data.value)
         setLoading(false)
     }
 
     // Hepler to filter sales by date
     const filterSalesByPeriod = (salesArray: Sale[], period: string) => {
-        const now = new Date()
         const oneDay = 24 * 60 * 60 * 1000
 
         return salesArray.filter(sale => {
             const date = new Date(sale.sale_date)
-            const diffDays = Math.round((now.getTime() - date.getTime()) / oneDay)
+            // Reset hours for accurate comparison
+            date.setHours(0, 0, 0, 0)
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+
+            const diffTime = date.getTime() - today.getTime()
+            const diffDays = Math.ceil(diffTime / oneDay)
+
             const year = date.getFullYear()
-            const currentYear = now.getFullYear()
+            const currentYear = today.getFullYear()
+
+            // Quarters helper
+            const getQuarter = (d: Date) => Math.floor(d.getMonth() / 3) + 1
+            const currentQuarter = getQuarter(today)
 
             switch (period) {
-                case "30d": return diffDays <= 30
-                case "90d": return diffDays <= 90
-                case "6m": return diffDays <= 180
-                case "12m": return diffDays <= 365
-                case "ytd": return year === currentYear
+                // Past
+                case "30d": return diffDays <= 0 && diffDays >= -30
+                case "90d": return diffDays <= 0 && diffDays >= -90
+                case "6m": return diffDays <= 0 && diffDays >= -180
+                case "12m": return diffDays <= 0 && diffDays >= -365
+                case "ytd": return year === currentYear && date <= today
+                case "lastYear": return year === currentYear - 1
+                case "lastQuarter": {
+                    const lastQ = currentQuarter === 1 ? 4 : currentQuarter - 1
+                    const targetYear = currentQuarter === 1 ? currentYear - 1 : currentYear
+                    return getQuarter(date) === lastQ && year === targetYear
+                }
+
+                // Future
+                case "next30d": return diffDays >= 0 && diffDays <= 30
+                case "next90d": return diffDays >= 0 && diffDays <= 90
+                case "nextYear": return year === currentYear + 1
+                case "nextQuarter": {
+                    const nextQ = currentQuarter === 4 ? 1 : currentQuarter + 1
+                    const targetYear = currentQuarter === 4 ? currentYear + 1 : currentYear
+                    return getQuarter(date) === nextQ && year === targetYear
+                }
+
+                // Specific Quarters (Current Year)
+                case "Q1": return year === currentYear && getQuarter(date) === 1
+                case "Q2": return year === currentYear && getQuarter(date) === 2
+                case "Q3": return year === currentYear && getQuarter(date) === 3
+                case "Q4": return year === currentYear && getQuarter(date) === 4
+
                 case "all": return true
                 default: return true
             }
@@ -82,8 +122,8 @@ export default function OffersPage() {
     // Formula: Sum(Quantity * WorkTimePerSale) / NumberOfWeeksInPeriod
     // Default to 52 for year, or days/7.
     let weeksInPeriod = 52
-    if (period === "30d") weeksInPeriod = 4
-    if (period === "90d") weeksInPeriod = 12
+    if (period === "30d" || period === "next30d") weeksInPeriod = 4
+    if (period === "90d" || period === "next90d" || period.startsWith("Q") || period === "lastQuarter" || period === "currentQuarter" || period === "nextQuarter") weeksInPeriod = 12
     if (period === "6m") weeksInPeriod = 26
     if (period === "ytd") {
         const now = new Date()
@@ -135,14 +175,11 @@ export default function OffersPage() {
 
         const salesRemaining = Math.max(0, totalQtyGoal - realizedQty)
 
-        // Real Hourly Rate for this offer based on actual sales
-        // (RealizedRevenue - (UnitCost * RealizedQty)) / (HoursPerUnit * RealizedQty)
-        const unitCost = offer.unit_cost || 0
-        const hoursPerUnit = offer.work_time?.reduce((h, act) => act.per_sale ? h + act.hours : h, 0) || 0
-        const totalRealizedHours = hoursPerUnit * realizedQty
-        const realizedCost = unitCost * realizedQty
-
-        const realHourlyRate = totalRealizedHours > 0 ? (realizedRevenue - realizedCost) / totalRealizedHours : 0
+        // Theoretical Hourly Rate (requested by user)
+        // (DefaultPrice - UnitCost) / (TotalHours)
+        const totalHours = offer.work_time?.reduce((sum, act) => sum + (act.hours || 0), 0) || 0
+        const margin = (offer.default_price || 0) - (offer.unit_cost || 0)
+        const realHourlyRate = totalHours > 0 ? margin / totalHours : 0
 
         return {
             ...offer,
@@ -158,12 +195,10 @@ export default function OffersPage() {
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat(language === 'fr' ? 'fr-FR' : 'en-US', {
             style: 'currency',
-            currency: 'EUR', // Should verify uses settings currency, but defaulting EUR/CHF based on previous context. 
-            // Previous files used simple suffix or looked up settings.
-            // Let's us string concatenation for now or minimal formatting to match screenshot style.
+            currency: currency,
             minimumFractionDigits: 0,
             maximumFractionDigits: 0
-        }).format(amount).replace('EUR', '€') // Hack to match "4 500 €" style if needed, or just let Intl handle it.
+        }).format(amount)
     }
 
     const formatNumber = (num: number) => {
@@ -174,19 +209,7 @@ export default function OffersPage() {
         <div className="p-8 max-w-7xl mx-auto space-y-8">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold tracking-tight">{t('offersDashboard.title')}</h1>
-                <Select value={period} onValueChange={setPeriod}>
-                    <SelectTrigger className="w-[180px] bg-white">
-                        <SelectValue placeholder={t('common.period')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="30d">{t('periods.30d')}</SelectItem>
-                        <SelectItem value="90d">{t('periods.90d')}</SelectItem>
-                        <SelectItem value="6m">{t('periods.6m')}</SelectItem>
-                        <SelectItem value="12m">{t('periods.12m')}</SelectItem>
-                        <SelectItem value="ytd">{t('periods.ytd')}</SelectItem>
-                        <SelectItem value="all">{t('periods.all')}</SelectItem>
-                    </SelectContent>
-                </Select>
+                <PeriodSelector value={period as any} onValueChange={setPeriod} />
             </div>
 
             {/* KPI Cards */}
@@ -223,7 +246,7 @@ export default function OffersPage() {
                 {/* 4. Hourly Rate */}
                 <Card className="flex flex-col justify-center items-center p-6 space-y-4">
                     <div className="text-sm font-medium text-indigo-500 text-center uppercase tracking-wider">{t('offersDashboard.avgHourlyRate')}</div>
-                    <div className="text-4xl font-bold text-slate-900">{Math.round(avgHourlyRate)} €/h</div>
+                    <div className="text-4xl font-bold text-slate-900">{formatCurrency(Math.round(avgHourlyRate))}/h</div>
                 </Card>
             </div>
 
@@ -241,10 +264,6 @@ export default function OffersPage() {
                         >
                             {showOnlyWithGoals ? <span>✓</span> : null}
                             {t('offersDashboard.hideNoGoals')}
-                        </Button>
-                        <Button variant="outline" size="sm" className="gap-2">
-                            <Filter className="w-4 h-4" />
-                            {t('offersDashboard.filter')}
                         </Button>
                         <Button size="sm" className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white" asChild>
                             <Link href="/settings?tab=offers">
@@ -278,7 +297,7 @@ export default function OffersPage() {
                                     <TableCell className="text-right text-slate-500 bg-slate-50/30">{formatCurrency(offer.default_price)}</TableCell>
                                     <TableCell className="text-right font-bold text-slate-900 bg-slate-50/30">{offer.realizedQty}</TableCell>
                                     <TableCell className="text-right text-slate-500 bg-slate-50/30">{offer.salesRemaining}</TableCell>
-                                    <TableCell className="text-right font-bold text-slate-900 bg-slate-100">{Math.round(offer.realHourlyRate)} €/h</TableCell>
+                                    <TableCell className="text-right font-bold text-slate-900 bg-slate-100">{formatCurrency(Math.round(offer.realHourlyRate))}/h</TableCell>
                                     <TableCell>
                                         <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                                             <Link href={`/settings?tab=offers&edit=${offer.id}`}>
