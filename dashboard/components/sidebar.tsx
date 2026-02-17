@@ -145,6 +145,12 @@ function SidebarContent({ className }: SidebarProps) {
                                 {t('sidebar.cfo')}
                             </Link>
                         </Button>
+                        <Button variant={pathname === "/offers" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
+                            <Link href="/offers">
+                                <Users className="mr-2 h-4 w-4" />
+                                {t('sidebar.offers')}
+                            </Link>
+                        </Button>
                     </div>
                 </div>
                 <div className="mt-auto p-4 space-y-2">
