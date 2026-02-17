@@ -179,7 +179,7 @@ export function OfferForm({ offer, onSave, onCancel, currency }: OfferFormProps)
                             <div className="col-span-2">
                                 <Input
                                     type="number"
-                                    value={activity.hours}
+                                    value={activity.hours || ''}
                                     onChange={(e) => {
                                         const newActs = [...activities]
                                         newActs[index].hours = parseFloat(e.target.value) || 0
@@ -231,7 +231,7 @@ export function OfferForm({ offer, onSave, onCancel, currency }: OfferFormProps)
                             <Label className="text-xs">{month}</Label>
                             <Input
                                 type="number"
-                                value={currentGoal.monthly_counts[i]}
+                                value={currentGoal.monthly_counts[i] || ''}
                                 onChange={(e) => updateGoal(i, e.target.value)}
                                 className="h-8 text-center bg-slate-50 border-none"
                             />
