@@ -1,7 +1,9 @@
 # 🛰️ OwnPulse
 ### **The Sovereign Business Command Center: Social CRM, Marketing, and Financial Intelligence**
 
-![OwnPulse Dashboard](./OwnPulse-screenshot.jpg)
+![OwnPulse Pipeline](assets/ownpulse-pipeline.jpg)
+![OwnPulse Marketing Dashboard](assets/ownpulse-marketing-dashboard.jpg)
+![OwnPulse Tasks](assets/ownpulse-tasks.jpg)
 
 *Built by [Cedric V.](https://cedricv.com/en/) — architecting lightweight, sovereign systems for modern entrepreneurs.*
 
