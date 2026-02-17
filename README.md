@@ -1,5 +1,5 @@
 # 🛰️ OwnPulse
-### **The Sovereign Business Command Center: Social CRM, Marketing, and Financial Intelligence**
+### **The Ultimate Pilot Tool for Solopreneurs: Social CRM, Marketing, and Financial Intelligence**
 
 ![OwnPulse Pipeline](assets/ownpulse-pipeline.jpg)
 ![OwnPulse Marketing Dashboard](assets/ownpulse-marketing-dashboard.jpg)
@@ -9,7 +9,7 @@
 
 ---
 
-**OwnPulse** is a sovereign **Business Command Center** for independent builders. It provides a centralized, private view of your growth and health, bridging the gap between **lead acquisition**, **marketing performance**, and **financial sustainability**.
+**OwnPulse** is the **ultimate tool for solopreneurs to pilot their business**. It provides a centralized, private view of your growth and health, bridging the gap between **lead acquisition**, **marketing performance**, and **financial sustainability**.
 
 ---
 
