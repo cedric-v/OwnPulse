@@ -55,6 +55,7 @@ export function ExpensesAnalysis({ expenses, currency }: ExpensesAnalysisProps) 
             "Formation": "training",
             "Déplacements": "travel",
             "Taxes": "taxes",
+            "Rémunération": "remuneration",
             "Divers": "others"
         }
         const transKey = catMap[key] || key.toLowerCase()

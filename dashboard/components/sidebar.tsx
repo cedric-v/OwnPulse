@@ -91,7 +91,7 @@ function SidebarContent({ className }: SidebarProps) {
                             onClick={() => navigateToList("Customers")}
                         >
                             <Handshake className="mr-2 h-4 w-4" />
-                            Customers
+                            {t('sidebar.customers')}
                         </Button>
                         <Button
                             variant={currentList === "Prospects" ? "secondary" : "ghost"}
@@ -99,7 +99,7 @@ function SidebarContent({ className }: SidebarProps) {
                             onClick={() => navigateToList("Prospects")}
                         >
                             <Briefcase className="mr-2 h-4 w-4" />
-                            Prospects
+                            {t('sidebar.prospects')}
                         </Button>
                         <Button
                             variant={currentList === "Partnerships" ? "secondary" : "ghost"}
@@ -107,7 +107,7 @@ function SidebarContent({ className }: SidebarProps) {
                             onClick={() => navigateToList("Partnerships")}
                         >
                             <Users className="mr-2 h-4 w-4" />
-                            Partnerships
+                            {t('sidebar.partnerships')}
                         </Button>
                         <Button
                             variant={currentList === "Network/Peers" ? "secondary" : "ghost"}
@@ -115,7 +115,7 @@ function SidebarContent({ className }: SidebarProps) {
                             onClick={() => navigateToList("Network/Peers")}
                         >
                             <Globe className="mr-2 h-4 w-4" />
-                            Network/Peers
+                            {t('sidebar.network')}
                         </Button>
                         <Button
                             variant={currentList === "Podcast" ? "secondary" : "ghost"}
@@ -123,7 +123,7 @@ function SidebarContent({ className }: SidebarProps) {
                             onClick={() => navigateToList("Podcast")}
                         >
                             <Mic className="mr-2 h-4 w-4" />
-                            Podcast
+                            {t('sidebar.podcast')}
                         </Button>
                     </div>
                 </div>

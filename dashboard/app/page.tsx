@@ -8,6 +8,7 @@ import { Contact } from "@/types"
 import { columns } from "@/components/contacts/columns"
 import { DataTable } from "@/components/contacts/data-table"
 import { createClient } from "@/lib/supabase/client"
+import { useLanguage } from "@/components/i18n/language-context"
 import { Input } from "@/components/ui/input"
 
 import { Suspense } from "react"
@@ -16,6 +17,7 @@ import { Download } from "lucide-react"
 import { AddLeadDialog } from "@/components/contacts/add-lead-dialog"
 
 function HomeContent() {
+  const { t } = useLanguage()
   const [data, setData] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -120,24 +122,24 @@ function HomeContent() {
   }
 
   return (
-    <div className="container mx-auto">
-      <div className="flex justify-between items-center mb-6">
+    <div className="flex-1 space-y-4 p-8 pt-6">
+      <div className="flex items-center justify-between space-y-2 mb-6">
         <h1 className="text-3xl font-bold tracking-tight">
-          {listFilter ? `${listFilter}` : "OwnPulse"}
+          {listFilter ? t(`sidebar.${listFilter.toLowerCase()}`) : t('sidebar.allLeads')}
         </h1>
         <div className="flex items-center gap-4">
           <Input
-            placeholder="Search contact, company or notes..."
+            placeholder={t('common.search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-80"
           />
           <Button variant="outline" size="sm" onClick={exportToCSV} className="gap-2">
             <Download className="h-4 w-4" />
-            Export CSV
+            {t('common.exportCsv') || "Export CSV"}
           </Button>
           <AddLeadDialog />
-          <Link href="/extension" className="text-sm text-blue-500 hover:underline">Download Extension</Link>
+          <Link href="/extension" className="text-sm text-blue-500 hover:underline">{t('common.downloadExtension') || "Download Extension"}</Link>
         </div>
       </div>
 

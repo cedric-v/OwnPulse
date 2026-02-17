@@ -12,7 +12,9 @@ import { NewSaleForm } from "@/app/cfo/components/new-sale-form"
 import { NewExpenseForm } from "@/app/cfo/components/new-expense-form"
 import { SalesList } from "@/app/cfo/components/sales-list"
 import { ExpensesAnalysis } from "@/app/cfo/components/expenses-analysis"
+import { ExpensesList } from "@/app/cfo/components/expenses-list"
 import { PeriodSelector, Period } from "@/components/dashboard/period-selector"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 export default function CFODashboard() {
     const { t } = useLanguage()
@@ -24,6 +26,7 @@ export default function CFODashboard() {
     const [socialRate, setSocialRate] = useState(45)
     const [taxRate, setTaxRate] = useState(5)
     const [targetMonthlySalary, setTargetMonthlySalary] = useState(4000)
+    const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
     const supabase = createClient()
 
     const fetchFinancials = async () => {
@@ -185,8 +188,30 @@ export default function CFODashboard() {
                         </Card>
                     </div>
                     <ExpensesAnalysis expenses={filteredExpenses} currency={currency} />
+                    <ExpensesList
+                        expenses={filteredExpenses}
+                        currency={currency}
+                        onEdit={(expense) => setEditingExpense(expense)}
+                    />
                 </TabsContent>
             </Tabs>
+
+            <Dialog open={!!editingExpense} onOpenChange={(open) => !open && setEditingExpense(null)}>
+                <DialogContent className="max-w-4xl">
+                    <DialogHeader>
+                        <DialogTitle>{t('common.edit')}</DialogTitle>
+                    </DialogHeader>
+                    {editingExpense && (
+                        <NewExpenseForm
+                            initialData={editingExpense}
+                            onSuccess={() => {
+                                setEditingExpense(null)
+                                fetchFinancials()
+                            }}
+                        />
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }

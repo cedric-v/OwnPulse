@@ -48,6 +48,11 @@ export function NetResult({ sales, expenses, currency, socialRate, taxRate, targ
     const socialContributions = targetRemuneration * (socialRate / 100)
     const taxes = totalSales * (taxRate / 100)
 
+    const proExpenses = expenses.filter(e => e.category !== "Rémunération")
+    const remunerationExpenses = expenses.filter(e => e.category === "Rémunération")
+    const totalProExpenses = proExpenses.reduce((acc, e) => acc + (e.price_ht || 0), 0)
+    const totalActualRemuneration = remunerationExpenses.reduce((acc, e) => acc + (e.price_ht || 0), 0)
+
     return (
         <Card>
             <CardHeader>
@@ -65,13 +70,25 @@ export function NetResult({ sales, expenses, currency, socialRate, taxRate, targ
                             <span>{t('cfo.revenue')}</span>
                             <span>{totalSales.toLocaleString('fr-CH', { style: 'currency', currency: currency })}</span>
                         </div>
-                        <div className="flex justify-between items-center text-sm text-muted-foreground">
-                            <span>{t('cfo.remuneration')} ({monthCount} {t('cfo.months')} x {targetMonthlySalary.toLocaleString('fr-CH')} {currency})</span>
-                            <div className="flex items-center gap-2">
-                                <span>-</span>
-                                <span className="font-medium text-foreground">{targetRemuneration.toLocaleString('fr-CH', { style: 'currency', currency: currency })}</span>
-                            </div>
+
+                        {/* Professional Expenses */}
+                        <div className="flex justify-between items-center text-sm">
+                            <span>{t('cfo.proExpenses')}</span>
+                            <span>- {totalProExpenses.toLocaleString('fr-CH', { style: 'currency', currency: currency })}</span>
                         </div>
+
+                        {/* Actual Remuneration */}
+                        <div className="flex justify-between items-center text-sm text-pink-600 font-medium">
+                            <span>{t('cfo.remuneration')} ({t('cfo.real')})</span>
+                            <span>- {totalActualRemuneration.toLocaleString('fr-CH', { style: 'currency', currency: currency })}</span>
+                        </div>
+
+                        {/* Target Remuneration (Reference) */}
+                        <div className="flex justify-between items-center text-xs text-muted-foreground italic pl-4">
+                            <span>{t('cfo.targetRemuneration')} ({monthCount}m)</span>
+                            <span>{targetRemuneration.toLocaleString('fr-CH', { style: 'currency', currency: currency })}</span>
+                        </div>
+
                         <div className="flex justify-between items-center text-sm text-muted-foreground">
                             <span>{t('cfo.socialContributions')} (est. {socialRate}%)</span>
                             <span>- {socialContributions.toLocaleString('fr-CH', { style: 'currency', currency: currency })}</span>
@@ -80,15 +97,11 @@ export function NetResult({ sales, expenses, currency, socialRate, taxRate, targ
                             <span>{t('cfo.taxes')} (est. {taxRate}%)</span>
                             <span>- {taxes.toLocaleString('fr-CH', { style: 'currency', currency: currency })}</span>
                         </div>
-                        <div className="flex justify-between items-center text-sm">
-                            <span>{t('cfo.proExpenses')}</span>
-                            <span>- {totalExpenses.toLocaleString('fr-CH', { style: 'currency', currency: currency })}</span>
-                        </div>
 
                         <div className="flex flex-col items-center mt-8 gap-2">
                             <span className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">{t('cfo.netBenefit')}</span>
                             <span className="bg-pink-100 text-pink-800 text-lg font-bold px-4 py-1 rounded-full">
-                                {(totalSales - totalExpenses - targetRemuneration - socialContributions - taxes).toLocaleString('fr-CH', { style: 'currency', currency: currency })}
+                                {(totalSales - totalProExpenses - totalActualRemuneration - socialContributions - taxes).toLocaleString('fr-CH', { style: 'currency', currency: currency })}
                             </span>
                         </div>
                     </TabsContent>
@@ -100,11 +113,15 @@ export function NetResult({ sales, expenses, currency, socialRate, taxRate, targ
                         </div>
                         <div className="flex justify-between items-center text-sm">
                             <span>{t('cfo.proExpenses')} (Est.)</span>
-                            <span>- {(totalExpenses * 1.1).toLocaleString('fr-CH', { style: 'currency', currency: currency })}</span>
+                            <span>- {(totalProExpenses * 1.1).toLocaleString('fr-CH', { style: 'currency', currency: currency })}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm text-blue-600 font-medium">
+                            <span>{t('cfo.targetRemuneration')}</span>
+                            <span>- {targetRemuneration.toLocaleString('fr-CH', { style: 'currency', currency: currency })}</span>
                         </div>
                         <div className="flex justify-center mt-8">
                             <span className="bg-blue-100 text-blue-800 text-lg font-bold px-4 py-1 rounded-full">
-                                {(totalSales * 1.2 - totalExpenses * 1.1).toLocaleString('fr-CH', { style: 'currency', currency: currency })}
+                                {(totalSales * 1.2 - totalProExpenses * 1.1 - targetRemuneration).toLocaleString('fr-CH', { style: 'currency', currency: currency })}
                             </span>
                         </div>
                     </TabsContent>

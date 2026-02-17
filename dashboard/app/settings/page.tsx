@@ -14,6 +14,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast"
 import { Plus, Trash2, Save, Loader2, Edit2, Check, X } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { OfferForm } from "./components/offer-form"
 
 export default function SettingsPage() {
     const { toast } = useToast()
@@ -30,11 +32,8 @@ export default function SettingsPage() {
     const supabase = createClient()
 
     // Offer state
-    const [newOfferName, setNewOfferName] = useState("")
-    const [newOfferPrice, setNewOfferPrice] = useState("")
-    const [editingOfferId, setEditingOfferId] = useState<string | null>(null)
-    const [editOfferName, setEditOfferName] = useState("")
-    const [editOfferPrice, setEditOfferPrice] = useState("")
+    const [isOfferDialogOpen, setIsOfferDialogOpen] = useState(false)
+    const [editingOffer, setEditingOffer] = useState<Offer | undefined>(undefined)
 
     // Acquisition Channel state
     const [newChannelName, setNewChannelName] = useState("")
@@ -96,52 +95,39 @@ export default function SettingsPage() {
         setSaving(false)
     }
 
-    const addOffer = async () => {
-        if (!newOfferName) return
-        const { data, error } = await supabase
-            .from('offers')
-            .insert({ name: newOfferName, default_price: parseFloat(newOfferPrice) || 0 })
-            .select()
-            .single()
-
-        if (error) {
-            toast({ title: t('common.error'), description: error.message, variant: "destructive" })
-        } else {
-            setOffers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
-            setNewOfferName("")
-            setNewOfferPrice("")
-            toast({ title: t('common.success'), description: t('common.success') })
-        }
-    }
-
-    const startEditOffer = (offer: Offer) => {
-        setEditingOfferId(offer.id)
-        setEditOfferName(offer.name)
-        setEditOfferPrice(offer.default_price.toString())
-    }
-
-    const cancelEditOffer = () => {
-        setEditingOfferId(null)
-        setEditOfferName("")
-        setEditOfferPrice("")
-    }
-
-    const updateOffer = async (id: string) => {
+    const handleSaveOffer = async (offerData: Partial<Offer>) => {
         setSaving(true)
-        const { error } = await supabase
-            .from('offers')
-            .update({
-                name: editOfferName,
-                default_price: parseFloat(editOfferPrice) || 0
-            })
-            .eq('id', id)
 
-        if (error) {
-            toast({ title: t('common.error'), description: error.message, variant: "destructive" })
+        if (editingOffer) {
+            // Update
+            const { error } = await supabase
+                .from('offers')
+                .update(offerData)
+                .eq('id', editingOffer.id)
+
+            if (error) {
+                toast({ title: t('common.error'), description: error.message, variant: "destructive" })
+            } else {
+                setOffers(prev => prev.map(o => o.id === editingOffer.id ? { ...o, ...offerData } : o))
+                setIsOfferDialogOpen(false)
+                setEditingOffer(undefined)
+                toast({ title: t('common.success'), description: t('common.success') })
+            }
         } else {
-            setOffers(prev => prev.map(o => o.id === id ? { ...o, name: editOfferName, default_price: parseFloat(editOfferPrice) || 0 } : o))
-            setEditingOfferId(null)
-            toast({ title: t('common.success'), description: t('common.success') })
+            // Create
+            const { data, error } = await supabase
+                .from('offers')
+                .insert(offerData)
+                .select()
+                .single()
+
+            if (error) {
+                toast({ title: t('common.error'), description: error.message, variant: "destructive" })
+            } else {
+                setOffers(prev => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)))
+                setIsOfferDialogOpen(false)
+                toast({ title: t('common.success'), description: t('common.success') })
+            }
         }
         setSaving(false)
     }
@@ -154,6 +140,16 @@ export default function SettingsPage() {
             setOffers(prev => prev.filter(o => o.id !== id))
             toast({ title: t('common.success'), description: t('common.success') })
         }
+    }
+
+    const openAddOffer = () => {
+        setEditingOffer(undefined)
+        setIsOfferDialogOpen(true)
+    }
+
+    const startEditOffer = (offer: Offer) => {
+        setEditingOffer(offer)
+        setIsOfferDialogOpen(true)
     }
 
     // Acquisition Channel CRUD
@@ -325,28 +321,26 @@ export default function SettingsPage() {
                             <CardDescription>{t('settings.offersNote')}</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
-                            <div className="flex items-end gap-4 max-w-2xl">
-                                <div className="space-y-2 flex-1">
-                                    <Label>{t('settings.offerName')}</Label>
-                                    <Input
-                                        value={newOfferName}
-                                        onChange={e => setNewOfferName(e.target.value)}
-                                        placeholder="Nom de l'offre"
-                                    />
-                                </div>
-                                <div className="space-y-2 w-32">
-                                    <Label>{t('settings.defaultPrice')} ({currency})</Label>
-                                    <Input
-                                        type="number"
-                                        value={newOfferPrice}
-                                        onChange={e => setNewOfferPrice(e.target.value)}
-                                        placeholder="0"
-                                    />
-                                </div>
-                                <Button onClick={addOffer}>
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    {t('settings.addOffer')}
-                                </Button>
+                            <div className="flex justify-end">
+                                <Dialog open={isOfferDialogOpen} onOpenChange={setIsOfferDialogOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button onClick={openAddOffer}>
+                                            <Plus className="mr-2 h-4 w-4" />
+                                            {t('settings.addOffer')}
+                                        </Button>
+                                    </DialogTrigger>
+                                    <DialogContent className="max-w-4xl h-[90vh]">
+                                        <DialogHeader>
+                                            <DialogTitle>{editingOffer ? t('settings.editOffer') : t('settings.addOffer')}</DialogTitle>
+                                        </DialogHeader>
+                                        <OfferForm
+                                            offer={editingOffer}
+                                            onSave={handleSaveOffer}
+                                            onCancel={() => setIsOfferDialogOpen(false)}
+                                            currency={currency}
+                                        />
+                                    </DialogContent>
+                                </Dialog>
                             </div>
 
                             <div className="border rounded-md">
@@ -354,6 +348,7 @@ export default function SettingsPage() {
                                     <TableHeader>
                                         <TableRow>
                                             <TableHead>{t('settings.offerName')}</TableHead>
+                                            <TableHead>{t('offers.type')}</TableHead>
                                             <TableHead className="text-right">{t('settings.defaultPrice')}</TableHead>
                                             <TableHead className="w-24"></TableHead>
                                         </TableRow>
@@ -361,54 +356,26 @@ export default function SettingsPage() {
                                     <TableBody>
                                         {offers.map(offer => (
                                             <TableRow key={offer.id}>
-                                                <TableCell>
-                                                    {editingOfferId === offer.id ? (
-                                                        <Input
-                                                            value={editOfferName}
-                                                            onChange={e => setEditOfferName(e.target.value)}
-                                                        />
-                                                    ) : offer.name}
-                                                </TableCell>
+                                                <TableCell className="font-medium">{offer.name}</TableCell>
+                                                <TableCell>{offer.type}</TableCell>
                                                 <TableCell className="text-right">
-                                                    {editingOfferId === offer.id ? (
-                                                        <Input
-                                                            type="number"
-                                                            value={editOfferPrice}
-                                                            onChange={e => setEditOfferPrice(e.target.value)}
-                                                            className="text-right"
-                                                        />
-                                                    ) : (
-                                                        `${offer.default_price.toLocaleString('fr-CH', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`
-                                                    )}
+                                                    {offer.default_price.toLocaleString('fr-CH', { style: 'decimal', minimumFractionDigits: 2, maximumFractionDigits: 2 })} {currency}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-1">
-                                                        {editingOfferId === offer.id ? (
-                                                            <>
-                                                                <Button size="icon" variant="ghost" onClick={() => updateOffer(offer.id)}>
-                                                                    <Check className="h-4 w-4 text-green-600" />
-                                                                </Button>
-                                                                <Button size="icon" variant="ghost" onClick={cancelEditOffer}>
-                                                                    <X className="h-4 w-4 text-red-600" />
-                                                                </Button>
-                                                            </>
-                                                        ) : (
-                                                            <>
-                                                                <Button size="icon" variant="ghost" onClick={() => startEditOffer(offer)}>
-                                                                    <Edit2 className="h-4 w-4" />
-                                                                </Button>
-                                                                <Button size="icon" variant="ghost" onClick={() => deleteOffer(offer.id)}>
-                                                                    <Trash2 className="h-4 w-4 text-red-500" />
-                                                                </Button>
-                                                            </>
-                                                        )}
+                                                        <Button size="icon" variant="ghost" onClick={() => startEditOffer(offer)}>
+                                                            <Edit2 className="h-4 w-4" />
+                                                        </Button>
+                                                        <Button size="icon" variant="ghost" onClick={() => deleteOffer(offer.id)}>
+                                                            <Trash2 className="h-4 w-4 text-red-500" />
+                                                        </Button>
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
                                         ))}
                                         {offers.length === 0 && (
                                             <TableRow>
-                                                <TableCell colSpan={3} className="text-center py-4 text-muted-foreground">
+                                                <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
                                                     {t('settings.noOffersConfigured')}
                                                 </TableCell>
                                             </TableRow>

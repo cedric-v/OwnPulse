@@ -4,6 +4,7 @@
 import { useEffect, useState, use } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
+import { useLanguage } from "@/components/i18n/language-context"
 import { Contact, Task, Sale } from "@/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -36,6 +37,7 @@ import { NewSaleForm } from "@/app/cfo/components/new-sale-form"
 export default function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params)
     const router = useRouter()
+    const { t } = useLanguage()
     const supabase = createClient()
 
     const [contact, setContact] = useState<Contact | null>(null)
@@ -58,6 +60,8 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
     // Task edit state
     const [editingTask, setEditingTask] = useState<Task | null>(null)
     const [editForm, setEditForm] = useState({ description: "", priority: "", category: "", due_date: "" })
+    const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+    const [isDeleting, setIsDeleting] = useState(false)
 
     useEffect(() => {
         async function fetchData() {
@@ -210,6 +214,26 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
             setEditingTask(null)
             // Local update or refresh
             setTasks(tasks.map(t => t.id === editingTask.id ? { ...t, ...editForm, due_date: editForm.due_date || null } as Task : t))
+        }
+    }
+
+    const handleDeleteContact = async () => {
+        setIsDeleting(true)
+        try {
+            // Tasks and Sales should be deleted by DB cascade if FKs are set up.
+            // If not, we might need manual cleanup, but usually we trust the schema here.
+            const { error } = await supabase
+                .from('contacts')
+                .delete()
+                .eq('id', id)
+
+            if (error) throw error
+
+            router.push('/')
+        } catch (error: any) {
+            alert("Error deleting contact: " + error.message)
+            setIsDeleting(false)
+            setShowDeleteDialog(false)
         }
     }
 
@@ -692,6 +716,13 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                     <a href={`tel:${contact.phone}`}><Phone className="mr-2 h-4 w-4" /> Call</a>
                                 </Button>
                             )}
+                            <Button
+                                variant="destructive"
+                                className="justify-start mt-4"
+                                onClick={() => setShowDeleteDialog(true)}
+                            >
+                                <Plus className="mr-2 h-4 w-4 rotate-45" /> {t('common.delete')}
+                            </Button>
                         </CardContent>
                     </Card>
                 </div>
@@ -790,6 +821,35 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                             />
                         )}
                     </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{t('contacts.deleteConfirmTitle')}</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <p className="text-sm text-muted-foreground">
+                            {t('contacts.deleteConfirmMessage')}
+                        </p>
+                    </div>
+                    <DialogFooter>
+                        <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>
+                            {t('common.cancel')}
+                        </Button>
+                        <Button variant="destructive" onClick={handleDeleteContact} disabled={isDeleting}>
+                            {isDeleting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    {t('common.delete')}...
+                                </>
+                            ) : (
+                                t('common.delete')
+                            )}
+                        </Button>
+                    </DialogFooter>
                 </DialogContent>
             </Dialog>
         </div >

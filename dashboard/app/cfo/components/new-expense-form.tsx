@@ -10,11 +10,12 @@ import { useToast } from "@/components/ui/use-toast"
 
 interface NewExpenseFormProps {
     onSuccess: () => void
+    initialData?: any // Added for editing support
 }
 
 import { useLanguage } from "@/components/i18n/language-context"
 
-export function NewExpenseForm({ onSuccess }: NewExpenseFormProps) {
+export function NewExpenseForm({ onSuccess, initialData }: NewExpenseFormProps) {
     const { t } = useLanguage()
     const [loading, setLoading] = useState(false)
     const [currency, setCurrency] = useState("CHF")
@@ -34,27 +35,46 @@ export function NewExpenseForm({ onSuccess }: NewExpenseFormProps) {
     }, [supabase])
 
     // Form state
-    const [description, setDescription] = useState("")
-    const [category, setCategory] = useState("")
-    const [importance, setImportance] = useState<"Mandatory" | "Important" | "Optional">("Mandatory")
-    const [price, setPrice] = useState("")
-    const [vat, setVat] = useState("20")
-    const [date, setDate] = useState(new Date().toISOString().split('T')[0])
-    const [frequency, setFrequency] = useState("unique")
+    const [description, setDescription] = useState(initialData?.description || "")
+    const [category, setCategory] = useState(initialData?.category || "")
+    const [importance, setImportance] = useState<"Mandatory" | "Important" | "Optional">(initialData?.importance || "Mandatory")
+    const [price, setPrice] = useState(initialData?.price_ht?.toString() || "")
+    const [vat, setVat] = useState(initialData?.vat_rate?.toString() || "8.1")
+    const [date, setDate] = useState(initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0])
+    const [frequency, setFrequency] = useState(initialData?.payment_frequency || "unique")
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
 
-        const { error } = await supabase.from('expenses').insert({
-            description,
-            category,
-            importance,
-            price_ht: parseFloat(price),
-            vat_rate: parseFloat(vat),
-            date,
-            payment_frequency: frequency
-        })
+        let error
+
+        if (initialData?.id) {
+            const { error: updateError } = await supabase
+                .from('expenses')
+                .update({
+                    description,
+                    category,
+                    importance,
+                    price_ht: parseFloat(price),
+                    vat_rate: parseFloat(vat),
+                    date,
+                    payment_frequency: frequency
+                })
+                .eq('id', initialData.id)
+            error = updateError
+        } else {
+            const { error: insertError } = await supabase.from('expenses').insert({
+                description,
+                category,
+                importance,
+                price_ht: parseFloat(price),
+                vat_rate: parseFloat(vat),
+                date,
+                payment_frequency: frequency
+            })
+            error = insertError
+        }
 
         if (error) {
             toast({ title: t('common.error'), description: error.message, variant: "destructive" })
@@ -87,6 +107,7 @@ export function NewExpenseForm({ onSuccess }: NewExpenseFormProps) {
                             <SelectItem value="Prestations">{t('cfo.services')}</SelectItem>
                             <SelectItem value="Formation">{t('cfo.training')}</SelectItem>
                             <SelectItem value="Déplacements">{t('cfo.travel')}</SelectItem>
+                            <SelectItem value="Rémunération">{t('cfo.remuneration')}</SelectItem>
                             <SelectItem value="Taxes">{t('cfo.taxes')}</SelectItem>
                             <SelectItem value="Divers">{t('cfo.others')}</SelectItem>
                         </SelectContent>

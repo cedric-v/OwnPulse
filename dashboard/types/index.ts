@@ -80,10 +80,41 @@ export type Setting = {
     updated_at: string
 }
 
+export type OfferType =
+    | "Consulting ou coaching individuel"
+    | "Formation d'entreprise / Accompagnement collectif"
+    | "Mission freelance"
+    | "Produit digital"
+    | "Autre"
+
+export type OfferActivity = {
+    description: string
+    hours: number
+    per_sale: boolean
+}
+
+export type SalesGoal = {
+    year: number
+    monthly_counts: number[] // Array of 12 numbers
+}
+
+export type PaymentTerms = {
+    mode: "100% à la commande" | "100% en fin de mission" | "% à la commande et le solde en fin de mission" | "Échelonné"
+    deposit_percentage?: number
+    installments_count?: number
+    delay: "Immédiat" | "30 jours" | "60 jours" | "90 jours"
+}
+
 export type Offer = {
     id: string
     name: string
+    type?: OfferType
+    description?: string
     default_price: number
+    unit_cost?: number
+    work_time?: OfferActivity[]
+    sales_goals?: SalesGoal[]
+    payment_terms?: PaymentTerms
     created_at: string
 }
 
