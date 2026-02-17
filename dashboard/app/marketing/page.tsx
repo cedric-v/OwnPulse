@@ -111,7 +111,7 @@ export default function MarketingPage() {
     const totalSalesByContact: Record<string, number> = {}
     sales.forEach(s => {
         if (s.contact_id) {
-            totalSalesByContact[s.contact_id] = (totalSalesByContact[s.contact_id] || 0) + 1
+            totalSalesByContact[s.contact_id] = (totalSalesByContact[s.contact_id] || 0) + (s.quantity || 1)
         }
     })
 
