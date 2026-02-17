@@ -9,30 +9,27 @@
 
 ---
 
-## 📖 Beyond the CRM
+**OwnPulse** is a sovereign **Business Command Center** for independent builders. It provides a centralized, private view of your growth and health, bridging the gap between **lead acquisition**, **marketing performance**, and **financial sustainability**.
 
-**OwnPulse** has evolved from a simple social lead-capture tool into a comprehensive **Business Command Center**. It’s designed for independent builders who need a clear, centralized view of their growth and health without relying on fragmented, expensive SaaS platforms.
+---
 
-It bridges the gap between **lead acquisition**, **marketing performance**, and **financial sustainability**.
-
-## ✨ The Three Pillars
+## ✨ Core Pillars
 
 ### 1. ⚡ Sovereign Social CRM
 - **Smart Capture:** Instantly save leads from **LinkedIn, Threads, and Instagram** via the dedicated Chrome Extension.
 - **Pipeline Management:** Move leads through custom stages with a high-velocity, debounced interface.
 - **Bi-directional Linking:** Connect sales directly to contacts for a 360° view of customer history.
 
-### 2. 📊 Marketing Intelligence
+### 2. 📊 Marketing & Offer Intelligence
 - **Acquisition Analysis:** Track exactly which social channels are driving your customers.
 - **Conversion Velocity:** Measure the *time-to-conversion* from first contact to first sale.
-- **Customer Retention:** Visualize returning vs. new customer ratios to optimize your long-term growth.
-  - *Calculation Logic:* A "Returning Client" is defined as a contact who has purchased **more than 1 item in total** (sum of all quantities across all sales). A single sale with quantity > 1 counts as returning.
+- **Offer Mastery:** Manage complex service offers with integrated work-time calculators and automatic margin tracking.
+- **Profitability Dashboard:** Visualize real vs. theoretical hourly rates and sales goals progress per offer.
+- **Retention Tracking:** Visualize returning vs. new customer ratios to optimize long-term growth.
 
 ### 3. 💰 Financial Command (CFO Dashboard)
 - **Revenue vs. Reality:** Track total sales against professional expenses and **actual remuneration**.
 - **Net Profit Simulation:** Real-time visibility into your *true* margin after social contributions and taxes.
-- **Offer Mastery:** Manage complex service offers with integrated work-time calculators and automatic margin tracking.
-- **Offers Dashboard:** Visualize profitability, real hourly rates, and sales goals progress per offer.
 - **Runway Analysis:** Know exactly how many months of operation you have left based on current cash flow.
 
 ## 🛠️ Tech Stack
