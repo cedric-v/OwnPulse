@@ -23,17 +23,12 @@ import { useLanguage } from "@/components/i18n/language-context"
 import { ArrowUpDown } from "lucide-react"
 import { Column } from "@tanstack/react-table"
 
-const TotalSalesHeader = ({ column }: { column: Column<Contact, unknown> }) => {
+const TotalSalesHeader = () => {
     const { t } = useLanguage()
     return (
-        <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="hover:bg-transparent p-0 flex items-center gap-1 font-semibold"
-        >
+        <span className="font-semibold">
             {t('contacts.totalSales')}
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+        </span>
     )
 }
 
@@ -102,7 +97,7 @@ export const columns: ColumnDef<Contact>[] = [
     },
     {
         accessorKey: "total_sales",
-        header: ({ column }) => <TotalSalesHeader column={column} />,
+        header: () => <TotalSalesHeader />,
         cell: ({ row }) => {
             const amount = parseFloat(row.getValue("total_sales") || "0")
             const formatted = new Intl.NumberFormat("fr-FR", {
