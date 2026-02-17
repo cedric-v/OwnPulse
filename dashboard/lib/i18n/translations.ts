@@ -51,7 +51,7 @@ export const translations = {
             fromContactToClient: "Du premier contact à la conversion",
             retention: "Rétention Clients",
             returningVsSingle: "{{returning}} fidèles vs {{single}} nouveaux",
-            retentionSplit: "Répartition Rétention",
+            retentionSplit: "Fidélisation",
             retentionNote: "Proportion de clients ayant acheté plusieurs fois.",
             topOffers: "Top 5 Offres",
             offersNote: "Volume de ventes par offre sur la période.",
