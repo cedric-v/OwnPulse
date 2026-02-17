@@ -106,18 +106,29 @@ export default function MarketingPage() {
         .sort((a, b) => b.count - a.count)
         .slice(0, 5)
 
-    // 4. Retention Rate (Based on period filtered contacts)
-    let singleOfferClients = 0
-    let multiOfferClients = 0
-    filteredContacts.forEach(c => {
-        if (c.offers_purchased && Array.isArray(c.offers_purchased) && c.offers_purchased.length > 0) {
-            if (c.offers_purchased.length === 1 && c.offers_purchased[0].count === 1) {
-                singleOfferClients++
-            } else {
-                multiOfferClients++
-            }
+    // 4. Retention Rate (Based on real sales data)
+    // We count how many sales each contact has in total (all time)
+    const totalSalesByContact: Record<string, number> = {}
+    sales.forEach(s => {
+        if (s.contact_id) {
+            totalSalesByContact[s.contact_id] = (totalSalesByContact[s.contact_id] || 0) + 1
         }
     })
+
+    // We only consider contacts who have at least one sale in the selected period
+    const activeContactIds = new Set(filteredSales.map(s => s.contact_id).filter(Boolean))
+
+    let singleOfferClients = 0
+    let multiOfferClients = 0
+
+    activeContactIds.forEach(contactId => {
+        if (contactId && totalSalesByContact[contactId] > 1) {
+            multiOfferClients++
+        } else {
+            singleOfferClients++
+        }
+    })
+
     const totalClients = singleOfferClients + multiOfferClients
     const retentionRate = totalClients > 0 ? Math.round((multiOfferClients / totalClients) * 100) : 0
     const retentionData = [

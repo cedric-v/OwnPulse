@@ -583,15 +583,15 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     {/* Sales History Card */}
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                            <CardTitle className="text-lg">Sales History</CardTitle>
+                            <CardTitle className="text-lg">{t('contacts.salesHistory')}</CardTitle>
                             <Button size="sm" onClick={() => setShowSaleDialog(true)}>
-                                <Plus className="h-4 w-4 mr-1" /> Add Sale
+                                <Plus className="h-4 w-4 mr-1" /> {t('contacts.addSale')}
                             </Button>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
                                 {sales.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground italic text-center py-4">No sales recorded for this contact.</p>
+                                    <p className="text-sm text-muted-foreground italic text-center py-4">{t('contacts.noSales')}</p>
                                 ) : (
                                     <div className="space-y-2">
                                         {sales.map(sale => (

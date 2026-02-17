@@ -183,6 +183,9 @@ export const translations = {
             deleteContact: "Supprimer le contact",
             deleteConfirmTitle: "Êtes-vous sûr ?",
             deleteConfirmMessage: "Cette action est irréversible. Le contact ainsi que toutes ses tâches et ventes associées seront définitivement supprimés.",
+            salesHistory: "Historique des ventes",
+            addSale: "Ajouter une vente",
+            noSales: "Aucune vente enregistrée pour ce contact.",
         }
     },
     en: {
@@ -367,6 +370,9 @@ export const translations = {
             deleteContact: "Delete contact",
             deleteConfirmTitle: "Are you sure?",
             deleteConfirmMessage: "This action cannot be undone. This will permanently delete the contact and all associated tasks and sales.",
+            salesHistory: "Sales History",
+            addSale: "Add Sale",
+            noSales: "No sales recorded for this contact.",
         }
     }
 };
