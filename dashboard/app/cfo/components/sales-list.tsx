@@ -15,24 +15,27 @@ interface SalesListProps {
     currency: string
 }
 
+import { useLanguage } from "@/components/i18n/language-context"
+
 export function SalesList({ sales, currency }: SalesListProps) {
+    const { t } = useLanguage()
     return (
         <div className="rounded-md border bg-card">
             <Table>
                 <TableHeader>
                     <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Offre</TableHead>
-                        <TableHead>Client</TableHead>
-                        <TableHead>Quantité</TableHead>
-                        <TableHead className="text-right">Montant HT</TableHead>
+                        <TableHead>{t('common.period')}</TableHead>
+                        <TableHead>{t('cfo.offer')}</TableHead>
+                        <TableHead>{t('cfo.client')}</TableHead>
+                        <TableHead>{t('cfo.quantity')}</TableHead>
+                        <TableHead className="text-right">{t('cfo.priceHt')}</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {sales.length === 0 ? (
                         <TableRow>
                             <TableCell colSpan={5} className="h-24 text-center">
-                                Aucune offre trouvée. Créez une nouvelle offre pour commencer.
+                                {t('common.all')}
                             </TableCell>
                         </TableRow>
                     ) : (

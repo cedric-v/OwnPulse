@@ -86,3 +86,9 @@ export type Offer = {
     default_price: number
     created_at: string
 }
+
+export type AcquisitionChannel = {
+    id: string
+    name: string
+    created_at: string
+}

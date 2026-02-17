@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useLanguage } from "@/components/i18n/language-context"
 import { Sale, Expense } from "@/types"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -14,6 +15,7 @@ import { ExpensesAnalysis } from "@/app/cfo/components/expenses-analysis"
 import { PeriodSelector, Period } from "@/components/dashboard/period-selector"
 
 export default function CFODashboard() {
+    const { t } = useLanguage()
     const [sales, setSales] = useState<Sale[]>([])
     const [expenses, setExpenses] = useState<Expense[]>([])
     const [loading, setLoading] = useState(true)
@@ -29,8 +31,8 @@ export default function CFODashboard() {
         const salesRes = await supabase.from('sales').select('*, contacts(first_name, last_name)').order('created_at', { ascending: false })
         const expensesRes = await supabase.from('expenses').select('*').order('created_at', { ascending: false })
 
-        if (salesRes.data) setSales(salesRes.data)
-        if (expensesRes.data) setExpenses(expensesRes.data)
+        if (salesRes.data) setSales(salesRes.data as Sale[])
+        if (expensesRes.data) setExpenses(expensesRes.data as Expense[])
 
         const { data: currencyData } = await supabase.from('settings').select('value').eq('key', 'currency').single()
         if (currencyData) setCurrency(currencyData.value)
@@ -50,7 +52,7 @@ export default function CFODashboard() {
 
     useEffect(() => {
         fetchFinancials()
-    }, [])
+    }, [supabase])
 
     const isWithinPeriod = (dateString: string | null | undefined) => {
         if (!dateString) return false
@@ -75,38 +77,30 @@ export default function CFODashboard() {
     const filteredSales = sales.filter(s => isWithinPeriod(s.sale_date))
     const filteredExpenses = expenses.filter(e => isWithinPeriod(e.created_at))
 
-    const periodLabel = {
-        "30d": "30 jours",
-        "90d": "90 jours",
-        "6m": "6 mois",
-        "12m": "12 mois",
-        "ytd": "Année",
-        "all": "Tout"
-    }[period]
+    const periodLabel = t(`periods.${period}`)
 
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
             <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">CFO Dashboard</h2>
+                <h2 className="text-3xl font-bold tracking-tight">{t('cfo.title')}</h2>
                 <PeriodSelector value={period} onValueChange={setPeriod} />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Revenue ({periodLabel})</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t('cfo.revenue')} ({periodLabel})</CardTitle>
                         <DollarSign className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
                             {filteredSales.reduce((acc, sale) => acc + (sale.price_ht || 0), 0).toLocaleString('fr-CH', { style: 'currency', currency: currency })}
                         </div>
-                        <p className="text-xs text-muted-foreground">+20.1% from last month</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Total Expenses ({periodLabel})</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t('cfo.expenses')} ({periodLabel})</CardTitle>
                         <TrendingDown className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -117,7 +111,7 @@ export default function CFODashboard() {
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Net Profit</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t('cfo.netProfit')}</CardTitle>
                         <Wallet className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -129,20 +123,20 @@ export default function CFODashboard() {
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Runway</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t('cfo.runway')}</CardTitle>
                         <Target className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">6.2 Months</div>
+                        <div className="text-2xl font-bold">6.2 {t('cfo.months')}</div>
                     </CardContent>
                 </Card>
             </div>
 
             <Tabs defaultValue="overview" className="space-y-4">
                 <TabsList>
-                    <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="sales">Sales</TabsTrigger>
-                    <TabsTrigger value="expenses">Expenses</TabsTrigger>
+                    <TabsTrigger value="overview">{t('cfo.overview')}</TabsTrigger>
+                    <TabsTrigger value="sales">{t('cfo.sales')}</TabsTrigger>
+                    <TabsTrigger value="expenses">{t('cfo.expenses')}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="overview" className="space-y-4">
@@ -161,16 +155,15 @@ export default function CFODashboard() {
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                         <Card className="col-span-4">
                             <CardHeader>
-                                <CardTitle>Revenue Goal</CardTitle>
+                                <CardTitle>{t('cfo.revenueGoal')}</CardTitle>
                             </CardHeader>
                             <CardContent className="pl-2">
-                                {/* Revenue Gauge Chart Placeholder */}
                                 <div className="flex justify-center items-center h-[200px] text-muted-foreground">Gauge Chart Here</div>
                             </CardContent>
                         </Card>
                         <Card className="col-span-3">
                             <CardHeader>
-                                <CardTitle>New Sale</CardTitle>
+                                <CardTitle>{t('cfo.newSale')}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <NewSaleForm onSuccess={fetchFinancials} />
@@ -184,7 +177,7 @@ export default function CFODashboard() {
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                         <Card className="col-span-7">
                             <CardHeader>
-                                <CardTitle>New Expense</CardTitle>
+                                <CardTitle>{t('cfo.newExpense')}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <NewExpenseForm onSuccess={fetchFinancials} />

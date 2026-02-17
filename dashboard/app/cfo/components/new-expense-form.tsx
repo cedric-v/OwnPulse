@@ -12,7 +12,10 @@ interface NewExpenseFormProps {
     onSuccess: () => void
 }
 
+import { useLanguage } from "@/components/i18n/language-context"
+
 export function NewExpenseForm({ onSuccess }: NewExpenseFormProps) {
+    const { t } = useLanguage()
     const [loading, setLoading] = useState(false)
     const [currency, setCurrency] = useState("CHF")
     const { toast } = useToast()
@@ -54,9 +57,9 @@ export function NewExpenseForm({ onSuccess }: NewExpenseFormProps) {
         })
 
         if (error) {
-            toast({ title: "Error", description: error.message, variant: "destructive" })
+            toast({ title: t('common.error'), description: error.message, variant: "destructive" })
         } else {
-            toast({ title: "Success", description: "Expense recorded successfully" })
+            toast({ title: t('common.success'), description: "Expense recorded successfully" })
             setDescription("")
             setPrice("")
             onSuccess()
@@ -66,37 +69,37 @@ export function NewExpenseForm({ onSuccess }: NewExpenseFormProps) {
 
     return (
         <form onSubmit={handleSubmit} className="space-y-4 p-4 border rounded-lg bg-card">
-            <h3 className="text-lg font-semibold text-primary">Nouvelle dépense</h3>
+            <h3 className="text-lg font-semibold text-primary">{t('cfo.newExpense')}</h3>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                    <Label>Description</Label>
+                    <Label>{t('cfo.description')}</Label>
                     <Input value={description} onChange={e => setDescription(e.target.value)} placeholder="Ex: Abonnement Logiciel" />
                 </div>
                 <div className="space-y-2">
-                    <Label>Catégorie</Label>
+                    <Label>{t('cfo.category')}</Label>
                     <Select onValueChange={setCategory} value={category}>
-                        <SelectTrigger><SelectValue placeholder="Choisir une catégorie" /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder={t('cfo.chooseCategory')} /></SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="Logiciels">Logiciels</SelectItem>
-                            <SelectItem value="Matériel">Matériel</SelectItem>
-                            <SelectItem value="Marketing">Marketing</SelectItem>
-                            <SelectItem value="Prestations">Prestations de services</SelectItem>
-                            <SelectItem value="Formation">Formations</SelectItem>
-                            <SelectItem value="Déplacements">Déplacements</SelectItem>
-                            <SelectItem value="Taxes">Taxes et impôts</SelectItem>
-                            <SelectItem value="Divers">Autres achats</SelectItem>
+                            <SelectItem value="Logiciels">{t('cfo.software')}</SelectItem>
+                            <SelectItem value="Matériel">{t('cfo.hardware')}</SelectItem>
+                            <SelectItem value="Marketing">{t('cfo.marketing')}</SelectItem>
+                            <SelectItem value="Prestations">{t('cfo.services')}</SelectItem>
+                            <SelectItem value="Formation">{t('cfo.training')}</SelectItem>
+                            <SelectItem value="Déplacements">{t('cfo.travel')}</SelectItem>
+                            <SelectItem value="Taxes">{t('cfo.taxes')}</SelectItem>
+                            <SelectItem value="Divers">{t('cfo.others')}</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
                 <div className="space-y-2">
-                    <Label>Importance</Label>
+                    <Label>{t('cfo.importance')}</Label>
                     <Select onValueChange={(v: any) => setImportance(v)} value={importance}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="Mandatory">Indispensable</SelectItem>
-                            <SelectItem value="Important">Important</SelectItem>
-                            <SelectItem value="Optional">Facultatif</SelectItem>
+                            <SelectItem value="Mandatory">{t('cfo.mandatory')}</SelectItem>
+                            <SelectItem value="Important">{t('cfo.important')}</SelectItem>
+                            <SelectItem value="Optional">{t('cfo.optional')}</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -104,33 +107,33 @@ export function NewExpenseForm({ onSuccess }: NewExpenseFormProps) {
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                    <Label>Prix HT</Label>
+                    <Label>{t('cfo.priceHt')}</Label>
                     <Input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder={`0 ${currency}`} />
                 </div>
                 <div className="space-y-2">
-                    <Label>TVA %</Label>
+                    <Label>{t('cfo.vat')}</Label>
                     <Input type="number" value={vat} onChange={e => setVat(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                    <Label>Fréquence</Label>
+                    <Label>{t('cfo.frequency')}</Label>
                     <Select value={frequency} onValueChange={setFrequency}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="unique">Paiement unique</SelectItem>
-                            <SelectItem value="mensuel">Mensuel</SelectItem>
-                            <SelectItem value="annuel">Annuel</SelectItem>
+                            <SelectItem value="unique">{t('cfo.unique')}</SelectItem>
+                            <SelectItem value="mensuel">{t('cfo.monthly')}</SelectItem>
+                            <SelectItem value="annuel">{t('cfo.annual')}</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
                 <div className="space-y-2">
-                    <Label>Date</Label>
+                    <Label>{t('cfo.expenseDate')}</Label>
                     <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
                 </div>
             </div>
 
             <div className="flex justify-end">
                 <Button type="submit" disabled={loading}>
-                    {loading ? "Enregistrement..." : "Enregistrer"}
+                    {loading ? t('common.loading') : t('common.save')}
                 </Button>
             </div>
         </form>

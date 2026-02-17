@@ -1,16 +1,18 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { createClient } from "@/lib/supabase/client"
-import { Contact, Sale } from "@/types"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend } from "recharts"
-import { Loader2, TrendingUp, Users, Clock, ShoppingBag } from "lucide-react"
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts"
+import { Loader2, Users, Clock } from "lucide-react"
 import { PeriodSelector, Period } from "@/components/dashboard/period-selector"
+import { createClient } from "@/lib/supabase/client"
+import { useLanguage } from "@/components/i18n/language-context"
+import { Contact, Sale } from "@/types"
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#d0ed57']
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d']
 
 export default function MarketingPage() {
+    const { t } = useLanguage()
     const [contacts, setContacts] = useState<Contact[]>([])
     const [sales, setSales] = useState<Sale[]>([])
     const [loading, setLoading] = useState(true)
@@ -31,7 +33,7 @@ export default function MarketingPage() {
             setLoading(false)
         }
         fetchData()
-    }, [])
+    }, [supabase])
 
     if (loading) {
         return <div className="flex justify-center items-center h-screen"><Loader2 className="h-8 w-8 animate-spin" /></div>
@@ -119,36 +121,38 @@ export default function MarketingPage() {
     const totalClients = singleOfferClients + multiOfferClients
     const retentionRate = totalClients > 0 ? Math.round((multiOfferClients / totalClients) * 100) : 0
     const retentionData = [
-        { name: 'Single Offer', value: singleOfferClients },
-        { name: 'Returning Clients', value: multiOfferClients }
+        { name: t('marketing.singleOffer'), value: singleOfferClients },
+        { name: t('marketing.returningClients'), value: multiOfferClients }
     ]
 
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
             <div className="flex items-center justify-between space-y-2">
-                <h2 className="text-3xl font-bold tracking-tight">Marketing Dashboard</h2>
+                <h2 className="text-3xl font-bold tracking-tight">{t('marketing.title')}</h2>
                 <PeriodSelector value={period} onValueChange={setPeriod} />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Avg. Conversion Time</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t('marketing.avgConversion')}</CardTitle>
                         <Clock className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{avgConversionTime} days</div>
-                        <p className="text-xs text-muted-foreground">From first contact to client</p>
+                        <div className="text-2xl font-bold">{avgConversionTime} {t('marketing.days')}</div>
+                        <p className="text-xs text-muted-foreground">{t('marketing.fromContactToClient')}</p>
                     </CardContent>
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Client Retention</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t('marketing.retention')}</CardTitle>
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{retentionRate}%</div>
-                        <p className="text-xs text-muted-foreground">{multiOfferClients} returning clients (vs {singleOfferClients} single-buy)</p>
+                        <p className="text-xs text-muted-foreground">
+                            {t('marketing.returningVsSingle', { returning: multiOfferClients, single: singleOfferClients })}
+                        </p>
                     </CardContent>
                 </Card>
             </div>
@@ -156,8 +160,8 @@ export default function MarketingPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="col-span-4">
                     <CardHeader>
-                        <CardTitle>Acquisition Channels</CardTitle>
-                        <CardDescription>Where are your customers coming from?</CardDescription>
+                        <CardTitle>{t('marketing.acquisitionChannels')}</CardTitle>
+                        <CardDescription>{t('marketing.acquisitionNote')}</CardDescription>
                     </CardHeader>
                     <CardContent className="pl-2">
                         <div className="h-[300px]">
@@ -176,8 +180,8 @@ export default function MarketingPage() {
 
                 <Card className="col-span-3">
                     <CardHeader>
-                        <CardTitle>Retention Split</CardTitle>
-                        <CardDescription>Single vs Multiple purchases</CardDescription>
+                        <CardTitle>{t('marketing.retentionSplit')}</CardTitle>
+                        <CardDescription>{t('marketing.retentionNote')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="h-[300px]">
@@ -207,8 +211,8 @@ export default function MarketingPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
                 <Card className="col-span-7">
                     <CardHeader>
-                        <CardTitle>Top Selling Offers</CardTitle>
-                        <CardDescription>Most popular products/services</CardDescription>
+                        <CardTitle>{t('marketing.topOffers')}</CardTitle>
+                        <CardDescription>{t('marketing.offersNote')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="h-[300px]">

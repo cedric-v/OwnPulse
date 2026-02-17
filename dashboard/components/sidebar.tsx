@@ -21,6 +21,7 @@ import {
     Wallet
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
+import { useLanguage } from "@/components/i18n/language-context"
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
 
@@ -32,6 +33,7 @@ function SidebarContent({ className }: SidebarProps) {
     const searchParams = useSearchParams()
     const currentList = searchParams.get('list')
     const supabase = createClient()
+    const { t } = useLanguage()
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
@@ -54,25 +56,25 @@ function SidebarContent({ className }: SidebarProps) {
                         <Button variant={pathname === "/" && !currentList ? "secondary" : "ghost"} className="w-full justify-start" asChild>
                             <Link href="/">
                                 <Users className="mr-2 h-4 w-4" />
-                                All Leads
+                                {t('sidebar.allLeads')}
                             </Link>
                         </Button>
                         <Button variant={pathname === "/tasks" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
                             <Link href="/tasks">
                                 <CheckSquare className="mr-2 h-4 w-4" />
-                                Tasks
+                                {t('sidebar.tasks')}
                             </Link>
                         </Button>
                         <Button variant={pathname === "/pipeline" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
                             <Link href="/pipeline">
                                 <Kanban className="mr-2 h-4 w-4" />
-                                Pipeline
+                                {t('sidebar.pipeline')}
                             </Link>
                         </Button>
                         <Button variant={pathname === "/companies" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
                             <Link href="/companies">
                                 <Building className="mr-2 h-4 w-4" />
-                                Companies
+                                {t('sidebar.companies')}
                             </Link>
                         </Button>
                     </div>
@@ -80,7 +82,7 @@ function SidebarContent({ className }: SidebarProps) {
                 <Separator className="mx-4" />
                 <div className="px-4 py-2">
                     <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">
-                        Lists
+                        {t('sidebar.lists')}
                     </h2>
                     <div className="space-y-1">
                         <Button
@@ -128,19 +130,19 @@ function SidebarContent({ className }: SidebarProps) {
                 <Separator className="mx-4" />
                 <div className="px-4 py-2">
                     <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">
-                        Dashboards
+                        {t('sidebar.dashboards')}
                     </h2>
                     <div className="space-y-1">
                         <Button variant={pathname === "/marketing" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
                             <Link href="/marketing">
                                 <BarChart3 className="mr-2 h-4 w-4" />
-                                Marketing
+                                {t('sidebar.marketing')}
                             </Link>
                         </Button>
                         <Button variant={pathname === "/cfo" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
                             <Link href="/cfo">
                                 <Wallet className="mr-2 h-4 w-4" />
-                                CFO
+                                {t('sidebar.cfo')}
                             </Link>
                         </Button>
                     </div>
@@ -149,12 +151,12 @@ function SidebarContent({ className }: SidebarProps) {
                     <Button variant={pathname === "/settings" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
                         <Link href="/settings">
                             <Settings className="mr-2 h-4 w-4" />
-                            Settings
+                            {t('sidebar.settings')}
                         </Link>
                     </Button>
                     <Button variant="ghost" className="w-full justify-start text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={handleLogout}>
                         <LogOut className="mr-2 h-4 w-4" />
-                        Logout
+                        {t('common.logout')}
                     </Button>
                 </div>
             </div>

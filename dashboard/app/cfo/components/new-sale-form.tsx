@@ -16,7 +16,10 @@ interface NewSaleFormProps {
     initialData?: Sale | null
 }
 
+import { useLanguage } from "@/components/i18n/language-context"
+
 export function NewSaleForm({ onSuccess, defaultContactId, initialData }: NewSaleFormProps) {
+    const { t } = useLanguage()
     const [loading, setLoading] = useState(false)
     const [contacts, setContacts] = useState<{ id: string, first_name: string | null, last_name: string | null }[]>([])
     const [offers, setOffers] = useState<Offer[]>([])
@@ -60,8 +63,8 @@ export function NewSaleForm({ onSuccess, defaultContactId, initialData }: NewSal
                 supabase.from('settings').select('value').eq('key', 'currency').single(),
                 supabase.from('settings').select('value').eq('key', 'vat_rate').single()
             ])
-            if (contactsRes.data) setContacts(contactsRes.data)
-            if (offersRes.data) setOffers(offersRes.data)
+            if (contactsRes.data) setContacts(contactsRes.data as { id: string, first_name: string | null, last_name: string | null }[])
+            if (offersRes.data) setOffers(offersRes.data as Offer[])
             if (currencyRes.data) setCurrency(currencyRes.data.value)
 
             // Only set default VAT if not editing
@@ -104,9 +107,9 @@ export function NewSaleForm({ onSuccess, defaultContactId, initialData }: NewSal
         const { error } = await query
 
         if (error) {
-            toast({ title: "Error", description: error.message, variant: "destructive" })
+            toast({ title: t('common.error'), description: error.message, variant: "destructive" })
         } else {
-            toast({ title: "Success", description: initialData ? "Sale updated successfully" : "Sale recorded successfully" })
+            toast({ title: t('common.success'), description: initialData ? "Sale updated successfully" : "Sale recorded successfully" })
             if (!initialData) {
                 setOfferName("")
                 setPrice("")
@@ -120,9 +123,9 @@ export function NewSaleForm({ onSuccess, defaultContactId, initialData }: NewSal
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                    <Label>Offre</Label>
+                    <Label>{t('cfo.offer')}</Label>
                     <Select onValueChange={handleOfferChange} value={offerName}>
-                        <SelectTrigger><SelectValue placeholder="Choisir une offre" /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder={t('cfo.chooseOffer')} /></SelectTrigger>
                         <SelectContent>
                             {offers.map(offer => (
                                 <SelectItem key={offer.id} value={offer.name}>{offer.name}</SelectItem>
@@ -131,17 +134,17 @@ export function NewSaleForm({ onSuccess, defaultContactId, initialData }: NewSal
                     </Select>
                 </div>
                 <div className="space-y-2">
-                    <Label>Date de vente</Label>
+                    <Label>{t('cfo.saleDate')}</Label>
                     <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
                 </div>
             </div>
 
             <div className="space-y-2">
-                <Label>Client (Contact)</Label>
+                <Label>{t('cfo.client')}</Label>
                 <Select onValueChange={setContactId} value={contactId}>
-                    <SelectTrigger><SelectValue placeholder="Associer à un contact (optionnel)" /></SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder={t('cfo.associateContact')} /></SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="none">Aucun</SelectItem>
+                        <SelectItem value="none">{t('common.all')}</SelectItem>
                         {contacts.map(c => (
                             <SelectItem key={c.id} value={c.id}>
                                 {c.first_name} {c.last_name}
@@ -153,29 +156,29 @@ export function NewSaleForm({ onSuccess, defaultContactId, initialData }: NewSal
 
             <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                    <Label>Prix HT ({currency})</Label>
+                    <Label>{t('cfo.priceHt')} ({currency})</Label>
                     <Input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder={`0 ${currency}`} />
                 </div>
                 <div className="space-y-2">
-                    <Label>TVA %</Label>
+                    <Label>{t('cfo.vat')}</Label>
                     <Input type="number" value={vat} onChange={e => setVat(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                    <Label>Quantité</Label>
+                    <Label>{t('cfo.quantity')}</Label>
                     <Input type="number" value={quantity} onChange={e => setQuantity(e.target.value)} />
                 </div>
             </div>
 
             <div className="space-y-2">
-                <Label>Modalités de paiement</Label>
+                <Label>{t('cfo.paymentTerms')}</Label>
                 <RadioGroup value={paymentTerms} onValueChange={setPaymentTerms}>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="commande_100" id="r1" />
-                        <Label htmlFor="r1">100% à la commande</Label>
+                        <Label htmlFor="r1">{t('cfo.allAtOrder')}</Label>
                     </div>
                     <div className="flex items-center space-x-2">
                         <RadioGroupItem value="mission_100" id="r2" />
-                        <Label htmlFor="r2">100% en fin de mission</Label>
+                        <Label htmlFor="r2">{t('cfo.allAtEnd')}</Label>
                     </div>
                     <div className="flex items-center space-x-4">
                         <div className="flex items-center space-x-2">
@@ -189,13 +192,13 @@ export function NewSaleForm({ onSuccess, defaultContactId, initialData }: NewSal
                                     setPaymentTerms("staggered")
                                 }}
                             />
-                            <Label htmlFor="r3">% à la commande et le solde en fin de mission</Label>
+                            <Label htmlFor="r3">{t('cfo.staggeredOrder')}</Label>
                         </div>
                     </div>
                     <div className="flex items-center space-x-4">
                         <div className="flex items-center space-x-2">
                             <RadioGroupItem value="installments" id="r4" />
-                            <Label htmlFor="r4">Échelonné en</Label>
+                            <Label htmlFor="r4">{t('cfo.installments')}</Label>
                             <Input
                                 type="number"
                                 className="w-16 h-8 text-center"
@@ -205,27 +208,27 @@ export function NewSaleForm({ onSuccess, defaultContactId, initialData }: NewSal
                                     setPaymentTerms("installments")
                                 }}
                             />
-                            <Label htmlFor="r4">mois</Label>
+                            <Label htmlFor="r4">{t('cfo.months')}</Label>
                         </div>
                     </div>
                 </RadioGroup>
             </div>
 
             <div className="space-y-2">
-                <Label>Délai de paiement</Label>
+                <Label>{t('cfo.paymentDelay')}</Label>
                 <Select value={paymentDelay} onValueChange={setPaymentDelay}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="immediat">Immédiat</SelectItem>
-                        <SelectItem value="30_jours">30 jours</SelectItem>
-                        <SelectItem value="60_jours">60 jours</SelectItem>
-                        <SelectItem value="90_jours">90 jours</SelectItem>
+                        <SelectItem value="immediat">{t('cfo.immediate')}</SelectItem>
+                        <SelectItem value="30_jours">{t('cfo.days30')}</SelectItem>
+                        <SelectItem value="60_jours">{t('cfo.days60')}</SelectItem>
+                        <SelectItem value="90_jours">{t('cfo.days90')}</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Enregistrement..." : "Enregistrer"}
+                {loading ? t('common.loading') : t('common.save')}
             </Button>
         </form>
     )

@@ -9,28 +9,29 @@
 
 ## 📖 About the Project
 
-**OwnPulse** was born from a technical challenge: building a lightweight, sovereign alternative to modern Social CRMs like **Breakcold**. 
+**OwnPulse** was born from a technical challenge: building a lightweight, sovereign alternative to modern Social CRMs. 
 
 In the era of "Vibe Coding," I wanted to prove to myself that you can deconstruct a complex SaaS and rebuild the core 20% of features that deliver 80% of the value in record time. OwnPulse is designed for builders and entrepreneurs who want the power of a Social CRM without the monthly subscription or the data privacy concerns of third-party platforms.
 
 > "Why subscribe to a cloud when you can own your pulse?"
 
 ## ✨ Key Features
-- **One-Click Lead Capture:** A native Chrome Extension that adds an "Add to OwnPulse" button directly onto LinkedIn, Threads, and Instagram profiles.
-- **Sovereign Dashboard:** A clean, high-velocity Next.js interface to manage your sales pipeline.
-- **Lead Value Tracking:** Assign CHF values to leads and visualize real-time revenue totals across your pipeline stages.
-- **Company Management:** Link multiple leads to a single company profile with shared notes and organizational overviews.
-- **Modern UX (Auto-Save):** Real-time feedback with debounced auto-save—no manual "Save" buttons needed.
-- **Multi-List Categorization:** Assign leads to multiple lists (Customers, Prospects, Partners, etc.) simultaneously.
-- **Personal & Portable:** One-click CSV export of your entire/filtered database.
+- **Sovereign Dashboard:** High-velocity Next.js interface to manage your sales pipeline.
+- **Advanced Analytics:** 
+    - **Marketing Dashboard:** Track acquisition channels, conversion times, and lead-to-customer ratios.
+    - **CFO Dashboard:** Real-time financial monitoring (Revenue, Expenses, Net Profit, Runway).
+- **Business Simulation:** Simulate net profit after social contributions and taxes directly in the CFO dashboard.
+- **Multi-Language Support:** Fully localized in **French** and **English**, with persistent user preferences.
+- **One-Click Lead Capture:** Chrome Extension for LinkedIn, Threads, and Instagram profiles.
+- **Modern UX:** Real-time feedback with debounced auto-save and date-range filtering.
 - **Data Ownership:** Your data stays in your Supabase instance. No middlemen.
 
 ## 🛠️ Tech Stack
-- **Frontend/Backend:** [Next.js](https://nextjs.org/) (App Router) + [Tailwind CSS](https://tailwindcss.com/)
+- **Frontend/Backend:** [Next.js 15](https://nextjs.org/) (App Router) + [Tailwind CSS](https://tailwindcss.com/)
+- **Charts:** [Recharts](https://recharts.org/)
 - **Database:** [Supabase](https://supabase.com/) (PostgreSQL + RLS)
-- **Integration:** Chrome Extension Manifest V3 (LinkedIn, Threads, Instagram)
-- **Deployment:** [Vercel](https://vercel.com/)
-
+- **i18n:** Custom React Context-based solution with Supabase persistence.
+- **Integration:** Chrome Extension Manifest V3.
 ---
 
 ## 🚀 Getting Started

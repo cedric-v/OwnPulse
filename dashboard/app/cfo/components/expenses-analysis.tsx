@@ -16,7 +16,10 @@ interface ExpensesAnalysisProps {
     currency: string
 }
 
+import { useLanguage } from "@/components/i18n/language-context"
+
 export function ExpensesAnalysis({ expenses, currency }: ExpensesAnalysisProps) {
+    const { t } = useLanguage()
 
     // Group by category
     const categoryTotals: Record<string, number> = {}
@@ -36,32 +39,55 @@ export function ExpensesAnalysis({ expenses, currency }: ExpensesAnalysisProps) 
         }
     })
 
+    const getImportanceLabel = (key: string) => {
+        if (key === 'Mandatory') return t('cfo.mandatory')
+        if (key === 'Important') return t('cfo.important')
+        if (key === 'Optional') return t('cfo.optional')
+        return key
+    }
+
+    const getCategoryLabel = (key: string) => {
+        const catMap: Record<string, string> = {
+            "Logiciels": "software",
+            "Matériel": "hardware",
+            "Marketing": "marketing",
+            "Prestations": "services",
+            "Formation": "training",
+            "Déplacements": "travel",
+            "Taxes": "taxes",
+            "Divers": "others"
+        }
+        const transKey = catMap[key] || key.toLowerCase()
+        const translated = t(`cfo.${transKey}` as any)
+        return translated === `cfo.${transKey}` ? key : translated
+    }
+
     return (
         <div className="grid gap-4 md:grid-cols-2">
             <Card>
                 <CardHeader>
-                    <CardTitle>Importance Analysis</CardTitle>
+                    <CardTitle>{t('cfo.importance')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center">
                                 <div className="w-2 h-8 bg-green-300 mr-2 rounded"></div>
-                                <span className="font-medium">Indispensable</span>
+                                <span className="font-medium">{t('cfo.mandatory')}</span>
                             </div>
                             <span>{importanceTotals['Mandatory'].toLocaleString('fr-CH', { style: 'currency', currency: currency })}</span>
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center">
                                 <div className="w-2 h-8 bg-yellow-300 mr-2 rounded"></div>
-                                <span className="font-medium">Important</span>
+                                <span className="font-medium">{t('cfo.important')}</span>
                             </div>
                             <span>{importanceTotals['Important'].toLocaleString('fr-CH', { style: 'currency', currency: currency })}</span>
                         </div>
                         <div className="flex items-center justify-between">
                             <div className="flex items-center">
                                 <div className="w-2 h-8 bg-red-300 mr-2 rounded"></div>
-                                <span className="font-medium">Facultatif</span>
+                                <span className="font-medium">{t('cfo.optional')}</span>
                             </div>
                             <span>{importanceTotals['Optional'].toLocaleString('fr-CH', { style: 'currency', currency: currency })}</span>
                         </div>
@@ -71,20 +97,20 @@ export function ExpensesAnalysis({ expenses, currency }: ExpensesAnalysisProps) 
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Category Analysis</CardTitle>
+                    <CardTitle>{t('cfo.category')}</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Catégorie</TableHead>
-                                <TableHead className="text-right">Réel TTC</TableHead>
+                                <TableHead>{t('cfo.category')}</TableHead>
+                                <TableHead className="text-right">{t('common.all')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {Object.entries(categoryTotals).map(([cat, total]) => (
                                 <TableRow key={cat}>
-                                    <TableCell className="font-medium">{cat}</TableCell>
+                                    <TableCell className="font-medium">{getCategoryLabel(cat)}</TableCell>
                                     <TableCell className="text-right">{total.toLocaleString('fr-CH', { style: 'currency', currency: currency })}</TableCell>
                                 </TableRow>
                             ))}

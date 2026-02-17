@@ -3,30 +3,30 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/sidebar";
-import { Toaster } from "@/components/ui/toaster";
+import { LanguageProvider } from "@/components/i18n/language-context";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "OwnPulse",
-  description: "Advanced Agentic CRM",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="en">
-      <body className={inter.className} suppressHydrationWarning>
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <main className="flex-1 p-8 bg-background">
-            {children}
-            <Toaster />
-          </main>
-        </div>
+    <html lang="fr">
+      <body className={inter.className}>
+        <LanguageProvider>
+          <div className="flex h-screen bg-slate-50">
+            <Sidebar />
+            <main className="flex-1 overflow-y-auto w-full">
+              {children}
+            </main>
+          </div>
+        </LanguageProvider>
       </body>
     </html>
   );
