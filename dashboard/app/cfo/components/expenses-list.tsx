@@ -124,6 +124,16 @@ export function ExpensesList({ expenses, currency, onEdit }: ExpensesListProps) 
                                 <TableCell className="text-right">
                                     {expense.price_ht?.toLocaleString('fr-CH', { style: 'currency', currency: currency })}
                                 </TableCell>
+                                <TableCell>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => onEdit(expense)}
+                                    >
+                                        <Pencil className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                </TableCell>
                             </TableRow>
                         ))
                     )}
