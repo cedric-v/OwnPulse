@@ -3,7 +3,7 @@ const SUPABASE_URL = 'https://qleflestlmwvgicyebey.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_y3gHLB3whyO8woaGpEXkrQ_0mySZxqa'; // Public Anon Key
 
 function createFloatingButton() {
-    if (document.getElementById('vibe-crm-btn')) return;
+    if (document.getElementById('ownpulse-crm-btn')) return;
 
     const btn = document.createElement('button');
     btn.id = 'ownpulse-crm-btn';
@@ -19,138 +19,218 @@ function createFloatingButton() {
     btn.style.borderRadius = '24px';
     btn.style.fontWeight = 'bold';
     btn.style.cursor = 'pointer';
-    btn.style.boxShadow = '0 4px 6px rgba(0,0,0,0.1)';
+    btn.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)';
     btn.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+    btn.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+    btn.style.outline = 'none';
 
     btn.addEventListener('click', async () => {
+        const originalText = 'Add to OwnPulse';
         btn.innerText = 'Scraping...';
-        const profileData = scrapeProfile();
-        console.log('Scraped Data:', profileData);
+        btn.disabled = true;
+        btn.style.opacity = '0.8';
 
-        btn.innerText = 'Saving...';
         try {
-            await saveToSupabase(profileData);
-            btn.innerText = 'Saved!';
-            btn.style.backgroundColor = '#057642'; // Green
-        } catch (error) {
-            console.error('Error saving to CRM:', error);
-            btn.innerText = 'Error';
-            btn.style.backgroundColor = '#d11124'; // Red
-        }
+            // Wait for DOM to be fully ready if needed
+            if (document.readyState === 'loading') {
+                await new Promise(r => document.addEventListener('DOMContentLoaded', r));
+            }
 
-        setTimeout(() => {
-            btn.innerText = 'Add to OwnPulse';
-            btn.style.backgroundColor = '#6366f1';
-        }, 3000);
+            const profileData = scrapeProfile();
+            console.log('Scraped Data:', profileData);
+
+            if (!profileData || (!profileData.first_name && !profileData.instagram_url)) {
+                throw new Error('Failed to scrape meaningful data');
+            }
+
+            btn.innerText = 'Saving...';
+            await saveToSupabase(profileData);
+            btn.innerText = '✔ Saved to CRM';
+            btn.style.backgroundColor = '#059669'; // Emerald 600
+            btn.style.transform = 'scale(1.05)';
+            btn.style.opacity = '1';
+        } catch (error) {
+            console.error('Error during scraping/saving:', error);
+            btn.innerText = '✖ Error';
+            btn.style.backgroundColor = '#dc2626'; // Red 600
+            btn.style.opacity = '1';
+        } finally {
+            btn.disabled = false;
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.backgroundColor = '#6366f1';
+                btn.style.transform = 'scale(1)';
+                btn.style.opacity = '1';
+            }, 5000); // Increased duration for readability
+        }
     });
 
     document.body.appendChild(btn);
 }
 
 function scrapeProfile() {
-    const url = window.location.href;
+    const url = String(window.location.href);
     let name = '';
-    let companyRole = 'Unknown Role';
+    let firstName = 'Unknown';
+    let lastName = '';
+    let company = '';
+    let companyRole = 'Profile';
     let avatarUrl = null;
     let platformUrl = url;
 
-    if (url.includes('linkedin.com')) {
-        const nameElement = document.querySelector('.text-heading-xlarge') || document.querySelector('h1.text-heading-xlarge');
-        const roleElement = document.querySelector('.text-body-medium');
-        const avatarElement = document.querySelector('.pv-top-card-profile-picture__image--show') || document.querySelector('img.pv-top-card-profile-picture__image');
+    console.log('[OwnPulse] Scraping starting. URL:', url);
 
-        name = nameElement ? nameElement.innerText.trim() : '';
-        if (!name) {
-            const title = document.title;
-            if (title.includes(' | LinkedIn')) {
-                name = title.split(' | LinkedIn')[0];
-            }
-        }
-        companyRole = roleElement ? roleElement.innerText.trim() : 'Unknown Role';
-        avatarUrl = avatarElement ? avatarElement.src : null;
-    } else if (url.includes('threads.net') || url.includes('threads.com')) {
-        const username = url.split('@')[1]?.split('/')[0] || '';
-
-        // 1. Try meta tags (best for full name)
-        const ogTitle = document.querySelector('meta[property="og:title"]')?.content || document.title;
-        if (ogTitle && ogTitle.includes('(@')) {
-            name = ogTitle.split(' (@')[0].trim();
-        }
-
-        // 2. If name is still username or not found, search in h1
-        if (!name || name.toLowerCase() === username.toLowerCase()) {
-            const h1s = Array.from(document.querySelectorAll('h1'));
-            for (const h1 of h1s) {
-                const text = h1.innerText.trim();
-                if (text && text.toLowerCase() !== username.toLowerCase()) {
-                    name = text;
-                    break;
-                }
-            }
-        }
-
-        // 3. Last fallback
-        if (!name) {
-            const h1Element = document.querySelector('h1');
-            name = h1Element ? h1Element.innerText.trim() : 'Unknown';
-        }
-
-        // Bio extraction
-        const bioElement = document.querySelector('header div span') || document.querySelector('header ~ div span') || document.querySelector('span div span');
-        companyRole = bioElement ? bioElement.innerText.trim() : 'Threads Profile';
-
-        const avatarElement = document.querySelector('img[alt*="profile picture"]');
-        avatarUrl = avatarElement ? avatarElement.src : null;
-    } else if (url.includes('instagram.com')) {
-        const username = url.pathname.split('/')[1] || '';
-        const pageTitle = document.title;
-
-        if (pageTitle && pageTitle.includes('(@')) {
-            name = pageTitle.split(' (@')[0].trim();
-        }
-
-        if (!name || name.toLowerCase() === username.toLowerCase()) {
-            const nameElement = document.querySelector('header h2') || document.querySelector('h2');
-            name = nameElement ? nameElement.innerText.trim() : (name || 'Unknown');
-        }
-
-        const bioElement = document.querySelector('header section div:last-child span');
-        companyRole = bioElement ? bioElement.innerText.trim() : 'Instagram Profile';
-
-        const avatarElement = document.querySelector('header img');
-        avatarUrl = avatarElement ? avatarElement.src : null;
-    }
-
-    // Cleaning name
-    if (!name || name === 'Unknown Name') {
-        name = 'Unknown';
-    }
-
-    const nameParts = name.split(' ').filter(p => p.trim() !== '');
-    const firstName = nameParts[0] || 'Unknown';
-    const lastName = nameParts.slice(1).join(' ');
-
-    const profileData = {
-        first_name: firstName,
-        last_name: lastName || '', // No more 'Name' default
-        company_role: companyRole,
-        linkedin_url: null,
-        threads_url: null,
-        instagram_url: null,
-        avatar_url: avatarUrl,
-        status: 'N/A',
-        list: 'Prospects'
+    // Helper to safely get unique string value
+    const getSafeString = (val) => {
+        if (typeof val === 'string') return val.trim();
+        return '';
     };
 
-    if (url.includes('linkedin.com')) {
-        profileData.linkedin_url = platformUrl;
-    } else if (url.includes('threads.net') || url.includes('threads.com')) {
-        profileData.threads_url = platformUrl;
-    } else if (url.includes('instagram.com')) {
-        profileData.instagram_url = platformUrl;
-    }
+    try {
+        if (url.includes('linkedin.com/')) {
+            const nameEl = document.querySelector('.text-heading-xlarge') || document.querySelector('h1.text-heading-xlarge');
+            const roleEl = document.querySelector('.text-body-medium');
+            const avatarEl = document.querySelector('.pv-top-card-profile-picture__image--show') || document.querySelector('img.pv-top-card-profile-picture__image');
 
-    return profileData;
+            name = getSafeString(nameEl?.innerText);
+            if (!name) {
+                const title = document.title || "";
+                if (title.includes(' | LinkedIn')) {
+                    name = title.split(' | LinkedIn')[0];
+                }
+            }
+            companyRole = getSafeString(roleEl?.innerText) || 'LinkedIn Profile';
+            avatarUrl = avatarEl?.src || null;
+            console.log('[OwnPulse] LinkedIn data found:', { name, companyRole });
+
+        } else if (url.includes('threads.net/') || url.includes('threads.com/')) {
+            // STRICT THREADS LOGIC - Only runs if threads.net/ is in URL
+            console.log('[OwnPulse] Threads detected.');
+            const username = (url.split('@')[1] || "").split('/')[0] || '';
+
+            const ogTitle = document.querySelector('meta[property="og:title"]')?.content || document.title || "";
+            if (ogTitle && ogTitle.includes('(@')) {
+                name = ogTitle.split(' (@')[0].trim();
+            }
+
+            if (!name && username) {
+                const h1s = Array.from(document.querySelectorAll('h1'));
+                for (const h1 of h1s) {
+                    const text = getSafeString(h1.innerText);
+                    if (text && text.toLowerCase() !== username.toLowerCase()) {
+                        name = text;
+                        break;
+                    }
+                }
+            }
+
+            if (!name) name = getSafeString(document.querySelector('h1')?.innerText) || 'Unknown';
+            const bioEl = document.querySelector('header div span') || document.querySelector('header ~ div span') || document.querySelector('span div span');
+            companyRole = getSafeString(bioEl?.innerText) || 'Threads Profile';
+            avatarUrl = document.querySelector('img[alt*="profile picture"]')?.src || null;
+
+        } else if (url.includes('instagram.com/')) {
+            console.log('[OwnPulse] Instagram detected.');
+            const pathSegments = (window.location.pathname || "").split('/').filter(Boolean);
+            const username = pathSegments[0] || '';
+
+            const ogTitle = document.querySelector('meta[property="og:title"]')?.content || "";
+            if (ogTitle && ogTitle.includes('(@')) {
+                name = ogTitle.split(' (@')[0].trim();
+            } else if (ogTitle) {
+                const parts = ogTitle.split(' •');
+                name = parts[1] ? parts[0].trim() : ogTitle.trim();
+            }
+
+            // Fallback Name
+            if (!name || (username && name.toLowerCase() === username.toLowerCase())) {
+                const nameElement = document.querySelector('header section span[dir="auto"]') ||
+                    document.querySelector('header section > div:nth-child(2) span') ||
+                    Array.from(document.querySelectorAll('span')).find(el => el.innerText.includes(username) && el.innerText.length > username.length);
+                if (nameElement) {
+                    const text = getSafeString(nameElement.innerText);
+                    if (text.toLowerCase() !== username.toLowerCase()) name = text;
+                }
+            }
+
+            // Bio
+            const metaDesc = document.querySelector('meta[name="description"]')?.content || "";
+            if (metaDesc) {
+                const match = metaDesc.match(/[:«\"(]([^«»\"()]+)[»\")]?$/) || metaDesc.match(/sur Instagram : (.+)$/);
+                if (match && match[1]) companyRole = getSafeString(match[1]);
+            }
+
+            if (!companyRole || companyRole === 'Profile' || companyRole.match(/^\d/) || companyRole.includes('Instagram')) {
+                const bioCandidates = Array.from(document.querySelectorAll('span._ap3a, span[dir="auto"], main section span'));
+                const bioEl = bioCandidates.find(el => {
+                    const text = getSafeString(el.innerText);
+                    const isStat = text.match(/^\d+ (publications|abonnés|abonnements|posts|followers|following|suivi)/i) ||
+                        text.match(/^(publications|abonnés|followers|suivis)$/i);
+                    return text && text.length > 5 && text !== name && !text.includes(username) && !isStat;
+                });
+                if (bioEl) companyRole = getSafeString(bioEl.innerText);
+            }
+
+            // Category
+            const catEl = Array.from(document.querySelectorAll('span')).find(el => {
+                const text = getSafeString(el.innerText);
+                return text && text.length > 2 && el.classList.contains('x1lliihq') && !text.includes(' ') && !text.match(/\d/);
+            });
+            company = getSafeString(catEl?.innerText);
+
+            // Avatar
+            avatarUrl = document.querySelector('header img')?.src || document.querySelector('img[alt*="profil"]')?.src || null;
+
+            // Name splitting
+            const nameParts = (name || username || "").split(' ').filter(p => p.trim() !== '');
+            firstName = nameParts[0] || 'Unknown';
+            lastName = nameParts.slice(1).join(' ');
+
+            return {
+                first_name: firstName,
+                last_name: lastName,
+                company: company,
+                company_role: companyRole || 'Instagram Profile',
+                linkedin_url: null,
+                threads_url: null,
+                instagram_url: url,
+                avatar_url: avatarUrl,
+                status: 'N/A',
+                list: 'Prospects'
+            };
+        }
+
+        // Generic fallback
+        if (!name || name === 'Unknown') name = 'Unknown';
+        const parts = (name || "").split(' ').filter(p => p.trim() !== '');
+        firstName = parts[0] || 'Unknown';
+        lastName = parts.slice(1).join(' ');
+
+        const finalData = {
+            first_name: firstName,
+            last_name: lastName || '',
+            company_role: companyRole,
+            linkedin_url: url.includes('linkedin.com') ? url : null,
+            threads_url: (url.includes('threads.net') || url.includes('threads.com')) ? url : null,
+            instagram_url: null,
+            avatar_url: avatarUrl,
+            status: 'N/A',
+            list: 'Prospects'
+        };
+        console.log('[OwnPulse] Final scrape result:', finalData);
+        return finalData;
+
+    } catch (e) {
+        console.error('[OwnPulse] Critical error in scrapeProfile:', e);
+        return {
+            first_name: 'Error',
+            last_name: 'Scraping',
+            company_role: 'Error',
+            instagram_url: url,
+            status: 'N/A',
+            list: 'Prospects'
+        };
+    }
 }
 
 async function saveToSupabase(data) {

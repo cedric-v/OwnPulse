@@ -104,39 +104,42 @@ export const columns: ColumnDef<Contact>[] = [
                                     Edit details
                                 </Link>
                             </DropdownMenuItem>
-                            {contact.linkedin_url && (
-                                <DropdownMenuItem onClick={() => {
+                            <DropdownMenuItem
+                                disabled={!contact.linkedin_url}
+                                onClick={() => {
                                     let url = contact.linkedin_url || ""
                                     if (url && !url.startsWith("http")) {
                                         url = `https://www.linkedin.com/in/${url}`
                                     }
-                                    window.open(url, "_blank")
-                                }}>
-                                    <Linkedin className="mr-2 h-4 w-4" /> Open LinkedIn
-                                </DropdownMenuItem>
-                            )}
-                            {contact.threads_url && (
-                                <DropdownMenuItem onClick={() => {
+                                    if (url) window.open(url, "_blank")
+                                }}
+                            >
+                                <Linkedin className="mr-2 h-4 w-4" /> Open LinkedIn
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                disabled={!contact.threads_url}
+                                onClick={() => {
                                     let url = contact.threads_url || ""
                                     if (url && !url.startsWith("http")) {
                                         url = `https://www.threads.net/${url}`
                                     }
-                                    window.open(url, "_blank")
-                                }}>
-                                    <Globe className="mr-2 h-4 w-4" /> Open Threads
-                                </DropdownMenuItem>
-                            )}
-                            {contact.instagram_url && (
-                                <DropdownMenuItem onClick={() => {
+                                    if (url) window.open(url, "_blank")
+                                }}
+                            >
+                                <Globe className="mr-2 h-4 w-4" /> Open Threads
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                disabled={!contact.instagram_url}
+                                onClick={() => {
                                     let url = contact.instagram_url || ""
                                     if (url && !url.startsWith("http")) {
                                         url = `https://www.instagram.com/${url}`
                                     }
-                                    window.open(url, "_blank")
-                                }}>
-                                    <Instagram className="mr-2 h-4 w-4" /> Open Instagram
-                                </DropdownMenuItem>
-                            )}
+                                    if (url) window.open(url, "_blank")
+                                }}
+                            >
+                                <Instagram className="mr-2 h-4 w-4" /> Open Instagram
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                                 className="text-red-600 focus:text-red-600 cursor-pointer"
