@@ -89,13 +89,6 @@ export const columns: ColumnDef<Contact>[] = [
         }
     },
     {
-        accessorKey: "notes",
-        header: "Notes",
-        cell: ({ row }) => {
-            return <NotesSheet contact={row.original} />
-        }
-    },
-    {
         accessorKey: "total_sales",
         header: () => <TotalSalesHeader />,
         cell: ({ row }) => {
