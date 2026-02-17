@@ -1,37 +1,42 @@
 # 🛰️ OwnPulse
-### **A Sovereign Social CRM for LinkedIn, Threads, and Instagram**
+### **The Sovereign Business Command Center: Social CRM, Marketing, and Financial Intelligence**
 
 ![OwnPulse Dashboard](./OwnPulse-screenshot.jpg)
 
-*Built by [Cedric V.](https://cedricv.com/en/) — Architecting efficient, self-hosted solutions.*
+*Built by [Cedric V.](https://cedricv.com/en/) — architecting lightweight, sovereign systems for modern entrepreneurs.*
 
 ---
 
-## 📖 About the Project
+## 📖 Beyond the CRM
 
-**OwnPulse** was born from a technical challenge: building a lightweight, sovereign alternative to modern Social CRMs. 
+**OwnPulse** has evolved from a simple social lead-capture tool into a comprehensive **Business Command Center**. It’s designed for independent builders who need a clear, centralized view of their growth and health without relying on fragmented, expensive SaaS platforms.
 
-In the era of "Vibe Coding," I wanted to prove to myself that you can deconstruct a complex SaaS and rebuild the core 20% of features that deliver 80% of the value in record time. OwnPulse is designed for builders and entrepreneurs who want the power of a Social CRM without the monthly subscription or the data privacy concerns of third-party platforms.
+It bridges the gap between **lead acquisition**, **marketing performance**, and **financial sustainability**.
 
-> "Why subscribe to a cloud when you can own your pulse?"
+## ✨ The Three Pillars
 
-## ✨ Key Features
-- **Sovereign Dashboard:** High-velocity Next.js interface to manage your sales pipeline.
-- **Advanced Analytics:** 
-    - **Marketing Dashboard:** Track acquisition channels, conversion times, and lead-to-customer ratios.
-    - **CFO Dashboard:** Real-time financial monitoring (Revenue, Expenses, Net Profit, Runway).
-- **Business Simulation:** Simulate net profit after social contributions and taxes directly in the CFO dashboard.
-- **Multi-Language Support:** Fully localized in **French** and **English**, with persistent user preferences.
-- **One-Click Lead Capture:** Chrome Extension for LinkedIn, Threads, and Instagram profiles.
-- **Modern UX:** Real-time feedback with debounced auto-save and date-range filtering.
-- **Data Ownership:** Your data stays in your Supabase instance. No middlemen.
+### 1. ⚡ Sovereign Social CRM
+- **Smart Capture:** Instantly save leads from **LinkedIn, Threads, and Instagram** via the dedicated Chrome Extension.
+- **Pipeline Management:** Move leads through custom stages with a high-velocity, debounced interface.
+- **Bi-directional Linking:** Connect sales directly to contacts for a 360° view of customer history.
+
+### 2. 📊 Marketing Intelligence
+- **Acquisition Analysis:** Track exactly which social channels are driving your customers.
+- **Conversion Velocity:** Measure the *time-to-conversion* from first contact to first sale.
+- **Customer Retention:** Visualize returning vs. new customer ratios to optimize your long-term growth.
+
+### 3. 💰 Financial Command (CFO Dashboard)
+- **Revenue vs. Reality:** Track total sales against professional expenses and **actual remuneration**.
+- **Net Profit Simulation:** Real-time visibility into your *true* margin after social contributions and taxes.
+- **Offer Mastery:** Manage complex service offers with integrated work-time calculators and automatic margin tracking.
+- **Runway Analysis:** Know exactly how many months of operation you have left based on current cash flow.
 
 ## 🛠️ Tech Stack
-- **Frontend/Backend:** [Next.js 15](https://nextjs.org/) (App Router) + [Tailwind CSS](https://tailwindcss.com/)
-- **Charts:** [Recharts](https://recharts.org/)
-- **Database:** [Supabase](https://supabase.com/) (PostgreSQL + RLS)
-- **i18n:** Custom React Context-based solution with Supabase persistence.
-- **Integration:** Chrome Extension Manifest V3.
+- **Frontend/Backend:** [Next.js 15](https://nextjs.org/) (App Router, Turbopack)
+- **Database:** [Supabase](https://supabase.com/) (PostgreSQL, Real-time sync, Row-Level Security)
+- **Styling & Components:** [Tailwind CSS](https://tailwindcss.com/) + [Shadcn UI](https://ui.shadcn.com/)
+- **i18n:** Custom localized experience (FR/EN) with persistent settings.
+- **Extension:** Chrome Manifest V3 for secure DOM scraping.
 ---
 
 ## 🚀 Getting Started
