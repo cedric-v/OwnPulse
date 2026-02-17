@@ -329,7 +329,7 @@ export default function SettingsPage() {
                                             {t('settings.addOffer')}
                                         </Button>
                                     </DialogTrigger>
-                                    <DialogContent className="max-w-6xl h-[90vh]">
+                                    <DialogContent className="max-w-[95vw] w-full h-[90vh]">
                                         <DialogHeader>
                                             <DialogTitle>{editingOffer ? t('settings.editOffer') : t('settings.addOffer')}</DialogTitle>
                                         </DialogHeader>

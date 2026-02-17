@@ -24,6 +24,7 @@ It bridges the gap between **lead acquisition**, **marketing performance**, and 
 - **Acquisition Analysis:** Track exactly which social channels are driving your customers.
 - **Conversion Velocity:** Measure the *time-to-conversion* from first contact to first sale.
 - **Customer Retention:** Visualize returning vs. new customer ratios to optimize your long-term growth.
+  - *Calculation Logic:* A "Returning Client" is defined as a contact who has purchased **more than 1 item in total** (sum of all quantities across all sales). A single sale with quantity > 1 counts as returning.
 
 ### 3. 💰 Financial Command (CFO Dashboard)
 - **Revenue vs. Reality:** Track total sales against professional expenses and **actual remuneration**.
