@@ -4,14 +4,14 @@
 import { useEffect, useState, use } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { Contact, Task } from "@/types"
+import { Contact, Task, Sale } from "@/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Save, Loader2, Phone, Mail, MapPin, Globe, Linkedin, Check, Building } from "lucide-react"
+import { ArrowLeft, Save, Loader2, Phone, Mail, MapPin, Globe, Linkedin, Check, Building, Pencil } from "lucide-react"
 import Link from "next/link"
 import { StatusCell } from "@/components/contacts/status-cell"
 import {
@@ -30,7 +30,8 @@ import {
 } from "@/components/ui/select"
 
 import { Checkbox } from "@/components/ui/checkbox"
-import { Calendar as CalendarIcon, Plus, Tag, AlertCircle } from "lucide-react"
+import { Calendar as CalendarIcon, Plus, Tag, AlertCircle, ShoppingCart } from "lucide-react"
+import { NewSaleForm } from "@/app/cfo/components/new-sale-form"
 
 export default function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params)
@@ -39,9 +40,14 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
 
     const [contact, setContact] = useState<Contact | null>(null)
     const [tasks, setTasks] = useState<Task[]>([])
+    const [sales, setSales] = useState<Sale[]>([])
     const [loading, setLoading] = useState(true)
+    const [showSaleDialog, setShowSaleDialog] = useState(false)
+    const [editingSale, setEditingSale] = useState<Sale | null>(null)
     const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle")
+    const [currency, setCurrency] = useState("CHF")
     const [error, setError] = useState<string | null>(null)
+    const [channels, setChannels] = useState<{ id: string, name: string }[]>([])
 
     // Task form state
     const [newTaskDesc, setNewTaskDesc] = useState("")
@@ -56,9 +62,12 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
     useEffect(() => {
         async function fetchData() {
             setLoading(true)
-            const [contactRes, tasksRes] = await Promise.all([
+            const [contactRes, tasksRes, salesRes, settingsRes, channelsRes] = await Promise.all([
                 supabase.from('contacts').select('*').eq('id', id).single(),
-                supabase.from('tasks').select('*').eq('contact_id', id)
+                supabase.from('tasks').select('*').eq('contact_id', id),
+                supabase.from('sales').select('*').eq('contact_id', id).order('sale_date', { ascending: false }),
+                supabase.from('settings').select('value').eq('key', 'currency').single(),
+                supabase.from('acquisition_channels').select('*').order('name')
             ])
 
             if (contactRes.error) {
@@ -80,6 +89,9 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     return new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
                 })
                 setTasks(sorted)
+                if (salesRes.data) setSales(salesRes.data)
+                if (settingsRes.data) setCurrency(settingsRes.data.value)
+                if (channelsRes.data) setChannels(channelsRes.data)
             }
             setLoading(false)
         }
@@ -110,6 +122,9 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     linkedin_url: contact.linkedin_url,
                     threads_url: contact.threads_url,
                     instagram_url: contact.instagram_url,
+                    acquisition_channel: contact.acquisition_channel,
+                    first_contact_date: contact.first_contact_date,
+                    customer_conversion_date: contact.customer_conversion_date,
                 })
                 .eq('id', id)
 
@@ -124,6 +139,11 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
 
         return () => clearTimeout(timer)
     }, [contact, id, supabase, loading])
+
+    const refreshSales = async () => {
+        const { data } = await supabase.from('sales').select('*').eq('contact_id', id).order('sale_date', { ascending: false })
+        if (data) setSales(data)
+    }
 
     const addTask = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -243,235 +263,341 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Left Column: Essential Info */}
-                <Card className="md:col-span-2">
-                    <CardHeader>
-                        <CardTitle>Details</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="first_name">First Name</Label>
-                                    <Input
-                                        id="first_name"
-                                        value={contact.first_name || ""}
-                                        onChange={e => setContact({ ...contact, first_name: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="last_name">Last Name</Label>
-                                    <Input
-                                        id="last_name"
-                                        value={contact.last_name || ""}
-                                        onChange={e => setContact({ ...contact, last_name: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="email" className="flex items-center gap-2"><Mail className="h-3 w-3" /> Email</Label>
-                                    <Input
-                                        id="email"
-                                        type="email"
-                                        value={contact.email || ""}
-                                        onChange={e => setContact({ ...contact, email: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="phone" className="flex items-center gap-2"><Phone className="h-3 w-3" /> Phone</Label>
-                                    <Input
-                                        id="phone"
-                                        value={contact.phone || ""}
-                                        onChange={e => setContact({ ...contact, phone: e.target.value })}
-                                        placeholder="+41 7x xxx xx xx"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="company" className="flex items-center gap-2">Company</Label>
-                                    <div className="flex gap-2">
+                {/* Main Column */}
+                <div className="md:col-span-2 space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Details</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="first_name">First Name</Label>
                                         <Input
-                                            id="company"
-                                            value={contact.company || ""}
-                                            onChange={e => setContact({ ...contact, company: e.target.value })}
-                                            className="flex-1"
+                                            id="first_name"
+                                            value={contact.first_name || ""}
+                                            onChange={e => setContact({ ...contact, first_name: e.target.value })}
                                         />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="last_name">Last Name</Label>
+                                        <Input
+                                            id="last_name"
+                                            value={contact.last_name || ""}
+                                            onChange={e => setContact({ ...contact, last_name: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email" className="flex items-center gap-2"><Mail className="h-3 w-3" /> Email</Label>
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            value={contact.email || ""}
+                                            onChange={e => setContact({ ...contact, email: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="phone" className="flex items-center gap-2"><Phone className="h-3 w-3" /> Phone</Label>
+                                        <Input
+                                            id="phone"
+                                            value={contact.phone || ""}
+                                            onChange={e => setContact({ ...contact, phone: e.target.value })}
+                                            placeholder="+41 7x xxx xx xx"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="company" className="flex items-center gap-2">Company</Label>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                id="company"
+                                                value={contact.company || ""}
+                                                onChange={e => setContact({ ...contact, company: e.target.value })}
+                                                className="flex-1"
+                                            />
+                                            {contact.company_id && (
+                                                <Button variant="outline" size="icon" asChild>
+                                                    <Link href={`/companies/${contact.company_id}`}>
+                                                        <Building className="h-4 w-4" />
+                                                    </Link>
+                                                </Button>
+                                            )}
+                                        </div>
                                         {contact.company_id && (
-                                            <Button variant="outline" size="icon" asChild>
-                                                <Link href={`/companies/${contact.company_id}`}>
-                                                    <Building className="h-4 w-4" />
-                                                </Link>
-                                            </Button>
+                                            <p className="text-[10px] text-blue-500 italic">Linked to Company profile</p>
                                         )}
                                     </div>
-                                    {contact.company_id && (
-                                        <p className="text-[10px] text-blue-500 italic">Linked to Company profile</p>
-                                    )}
-                                </div>
-                                <div className="space-y-2">
-                                    <Label>Lists</Label>
-                                    <div className="flex flex-wrap gap-x-4 gap-y-2 pt-2">
-                                        {["Prospects", "Customers", "Partnerships", "Network/Peers", "Podcast"].map(option => {
-                                            const currentLists = (contact.list || "").split(',').map(l => l.trim().toLowerCase())
-                                            const isChecked = currentLists.includes(option.toLowerCase()) ||
-                                                (option === "Prospects" && currentLists.includes("prospect")) ||
-                                                (option === "Customers" && currentLists.includes("customer"))
+                                    <div className="space-y-2">
+                                        <Label>Lists</Label>
+                                        <div className="flex flex-wrap gap-x-4 gap-y-2 pt-2">
+                                            {["Prospects", "Customers", "Partnerships", "Network/Peers", "Podcast"].map(option => {
+                                                const currentLists = (contact.list || "").split(',').map(l => l.trim().toLowerCase())
+                                                const isChecked = currentLists.includes(option.toLowerCase()) ||
+                                                    (option === "Prospects" && currentLists.includes("prospect")) ||
+                                                    (option === "Customers" && currentLists.includes("customer"))
 
-                                            return (
-                                                <div key={option} className="flex items-center space-x-2">
-                                                    <Checkbox
-                                                        id={`list-${option}`}
-                                                        checked={isChecked}
-                                                        onCheckedChange={(checked) => {
-                                                            let lists = (contact.list || "").split(',').map(l => l.trim()).filter(l => l !== "")
-                                                            if (checked) {
-                                                                if (!lists.some(l => l.toLowerCase() === option.toLowerCase())) {
-                                                                    lists.push(option)
+                                                return (
+                                                    <div key={option} className="flex items-center space-x-2">
+                                                        <Checkbox
+                                                            id={`list-${option}`}
+                                                            checked={isChecked}
+                                                            onCheckedChange={(checked) => {
+                                                                let lists = (contact.list || "").split(',').map(l => l.trim()).filter(l => l !== "")
+                                                                if (checked) {
+                                                                    if (!lists.some(l => l.toLowerCase() === option.toLowerCase())) {
+                                                                        lists.push(option)
+                                                                    }
+                                                                } else {
+                                                                    lists = lists.filter(l => l.toLowerCase() !== option.toLowerCase())
+                                                                    // Handle singular/plural cleanup
+                                                                    if (option === "Prospects") lists = lists.filter(l => l.toLowerCase() !== "prospect")
+                                                                    if (option === "Customers") lists = lists.filter(l => l.toLowerCase() !== "customer")
                                                                 }
-                                                            } else {
-                                                                lists = lists.filter(l => l.toLowerCase() !== option.toLowerCase())
-                                                                // Handle singular/plural cleanup
-                                                                if (option === "Prospects") lists = lists.filter(l => l.toLowerCase() !== "prospect")
-                                                                if (option === "Customers") lists = lists.filter(l => l.toLowerCase() !== "customer")
-                                                            }
-                                                            setContact({ ...contact, list: lists.join(', ') })
-                                                        }}
-                                                    />
-                                                    <label
-                                                        htmlFor={`list-${option}`}
-                                                        className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                                                setContact({ ...contact, list: lists.join(', ') })
+                                                            }}
+                                                        />
+                                                        <label
+                                                            htmlFor={`list-${option}`}
+                                                            className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                                        >
+                                                            {option}
+                                                        </label>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="role">Role</Label>
+                                    <Input
+                                        id="role"
+                                        value={contact.company_role || ""}
+                                        onChange={e => setContact({ ...contact, company_role: e.target.value })}
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="value">Value ({currency})</Label>
+                                    <Input
+                                        id="value"
+                                        type="number"
+                                        step="0.01"
+                                        value={contact.value || 0}
+                                        onChange={e => setContact({ ...contact, value: parseFloat(e.target.value) || 0 })}
+                                        onFocus={e => e.target.select()}
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="location" className="flex items-center gap-2"><MapPin className="h-3 w-3" /> Location</Label>
+                                        <Input
+                                            id="location"
+                                            value={contact.location || ""}
+                                            onChange={e => setContact({ ...contact, location: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="website" className="flex items-center gap-2"><Globe className="h-3 w-3" /> Website</Label>
+                                        <Input
+                                            id="website"
+                                            value={contact.website || ""}
+                                            onChange={e => setContact({ ...contact, website: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="grid grid-cols-1 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="linkedin_url" className="flex items-center gap-2"><Linkedin className="h-3 w-3" /> LinkedIn Profile</Label>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                id="linkedin_url"
+                                                value={contact.linkedin_url || ""}
+                                                onChange={e => setContact({ ...contact, linkedin_url: e.target.value })}
+                                            />
+                                            {contact.linkedin_url && (
+                                                <Button variant="outline" size="icon" asChild>
+                                                    <a
+                                                        href={contact.linkedin_url.startsWith("http") ? contact.linkedin_url : `https://www.linkedin.com/in/${contact.linkedin_url}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
                                                     >
-                                                        {option}
-                                                    </label>
+                                                        <Linkedin className="h-4 w-4" />
+                                                    </a>
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="threads_url" className="flex items-center gap-2"><Globe className="h-3 w-3" /> Threads Profile</Label>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                id="threads_url"
+                                                value={contact.threads_url || ""}
+                                                onChange={e => setContact({ ...contact, threads_url: e.target.value })}
+                                            />
+                                            {contact.threads_url && (
+                                                <Button variant="outline" size="icon" asChild>
+                                                    <a
+                                                        href={contact.threads_url.startsWith("http") ? contact.threads_url : `https://www.threads.net/${contact.threads_url}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                    >
+                                                        <Globe className="h-4 w-4" />
+                                                    </a>
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="instagram_url" className="flex items-center gap-2"><Globe className="h-3 w-3" /> Instagram Profile</Label>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                id="instagram_url"
+                                                value={contact.instagram_url || ""}
+                                                onChange={e => setContact({ ...contact, instagram_url: e.target.value })}
+                                            />
+                                            {contact.instagram_url && (
+                                                <Button variant="outline" size="icon" asChild>
+                                                    <a
+                                                        href={contact.instagram_url.startsWith("http") ? contact.instagram_url : `https://www.instagram.com/${contact.instagram_url}`}
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                    >
+                                                        <Globe className="h-4 w-4" />
+                                                    </a>
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="notes">Notes</Label>
+                                    <Textarea
+                                        id="notes"
+                                        rows={6}
+                                        value={contact.notes || ""}
+                                        onChange={e => setContact({ ...contact, notes: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Marketing & Conversion</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label>Canal d'acquisition</Label>
+                                    <Select
+                                        value={contact.acquisition_channel || ""}
+                                        onValueChange={v => setContact({ ...contact, acquisition_channel: v })}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Choisir un canal" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {channels.map(channel => (
+                                                <SelectItem key={channel.id} value={channel.name}>{channel.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Date de premier contact</Label>
+                                        <Input
+                                            type="date"
+                                            value={contact.first_contact_date?.slice(0, 10) || ""}
+                                            onChange={e => setContact({ ...contact, first_contact_date: e.target.value })}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Date devenu client</Label>
+                                        <Input
+                                            type="date"
+                                            value={contact.customer_conversion_date?.slice(0, 10) || ""}
+                                            onChange={e => setContact({ ...contact, customer_conversion_date: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+
+                                {contact.first_contact_date && contact.customer_conversion_date && (
+                                    <div className="pt-2">
+                                        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800 flex justify-between items-center">
+                                            <span className="text-sm font-medium text-blue-800 dark:text-blue-300">Temps de conversion</span>
+                                            <Badge variant="secondary" className="bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-200">
+                                                {(() => {
+                                                    const start = new Date(contact.first_contact_date)
+                                                    const end = new Date(contact.customer_conversion_date)
+                                                    const diffTime = Math.abs(end.getTime() - start.getTime())
+                                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+                                                    return `${diffDays} jours`
+                                                })()}
+                                            </Badge>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Sales History Card */}
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                            <CardTitle className="text-lg">Sales History</CardTitle>
+                            <Button size="sm" onClick={() => setShowSaleDialog(true)}>
+                                <Plus className="h-4 w-4 mr-1" /> Add Sale
+                            </Button>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                {sales.length === 0 ? (
+                                    <p className="text-sm text-muted-foreground italic text-center py-4">No sales recorded for this contact.</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {sales.map(sale => (
+                                            <div key={sale.id} className="group flex justify-between items-center p-2 rounded border text-sm hover:border-blue-200 transition-colors">
+                                                <div className="flex gap-3 items-center">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        onClick={() => setEditingSale(sale)}
+                                                    >
+                                                        <Pencil className="h-3 w-3 text-muted-foreground" />
+                                                    </Button>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-medium">{sale.offer_name}</span>
+                                                        <span className="text-[10px] text-muted-foreground">{new Date(sale.sale_date).toLocaleDateString()}</span>
+                                                    </div>
                                                 </div>
-                                            )
-                                        })}
+                                                <div className="flex flex-col items-end">
+                                                    <span className="font-bold">{sale.price_ht.toLocaleString('fr-CH', { style: 'currency', currency: currency })}</span>
+                                                    <span className="text-[10px] text-muted-foreground">Qty: {sale.quantity}</span>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                </div>
+                                )}
                             </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="role">Role</Label>
-                                <Input
-                                    id="role"
-                                    value={contact.company_role || ""}
-                                    onChange={e => setContact({ ...contact, company_role: e.target.value })}
-                                />
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="value">Value (CHF)</Label>
-                                <Input
-                                    id="value"
-                                    type="number"
-                                    step="0.01"
-                                    value={contact.value || 0}
-                                    onChange={e => setContact({ ...contact, value: parseFloat(e.target.value) || 0 })}
-                                    onFocus={e => e.target.select()}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="location" className="flex items-center gap-2"><MapPin className="h-3 w-3" /> Location</Label>
-                                    <Input
-                                        id="location"
-                                        value={contact.location || ""}
-                                        onChange={e => setContact({ ...contact, location: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="website" className="flex items-center gap-2"><Globe className="h-3 w-3" /> Website</Label>
-                                    <Input
-                                        id="website"
-                                        value={contact.website || ""}
-                                        onChange={e => setContact({ ...contact, website: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="linkedin_url" className="flex items-center gap-2"><Linkedin className="h-3 w-3" /> LinkedIn Profile</Label>
-                                    <div className="flex gap-2">
-                                        <Input
-                                            id="linkedin_url"
-                                            value={contact.linkedin_url || ""}
-                                            onChange={e => setContact({ ...contact, linkedin_url: e.target.value })}
-                                        />
-                                        {contact.linkedin_url && (
-                                            <Button variant="outline" size="icon" asChild>
-                                                <a
-                                                    href={contact.linkedin_url.startsWith("http") ? contact.linkedin_url : `https://www.linkedin.com/in/${contact.linkedin_url}`}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                >
-                                                    <Linkedin className="h-4 w-4" />
-                                                </a>
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="threads_url" className="flex items-center gap-2"><Globe className="h-3 w-3" /> Threads Profile</Label>
-                                    <div className="flex gap-2">
-                                        <Input
-                                            id="threads_url"
-                                            value={contact.threads_url || ""}
-                                            onChange={e => setContact({ ...contact, threads_url: e.target.value })}
-                                        />
-                                        {contact.threads_url && (
-                                            <Button variant="outline" size="icon" asChild>
-                                                <a
-                                                    href={contact.threads_url.startsWith("http") ? contact.threads_url : `https://www.threads.net/${contact.threads_url}`}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                >
-                                                    <Globe className="h-4 w-4" />
-                                                </a>
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="instagram_url" className="flex items-center gap-2"><Globe className="h-3 w-3" /> Instagram Profile</Label>
-                                    <div className="flex gap-2">
-                                        <Input
-                                            id="instagram_url"
-                                            value={contact.instagram_url || ""}
-                                            onChange={e => setContact({ ...contact, instagram_url: e.target.value })}
-                                        />
-                                        {contact.instagram_url && (
-                                            <Button variant="outline" size="icon" asChild>
-                                                <a
-                                                    href={contact.instagram_url.startsWith("http") ? contact.instagram_url : `https://www.instagram.com/${contact.instagram_url}`}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                >
-                                                    <Globe className="h-4 w-4" />
-                                                </a>
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <Label htmlFor="notes">Notes</Label>
-                                <Textarea
-                                    id="notes"
-                                    rows={6}
-                                    value={contact.notes || ""}
-                                    onChange={e => setContact({ ...contact, notes: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                </div>
 
                 {/* Right Column: Status & Tasks */}
                 <div className="space-y-6">
@@ -550,6 +676,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                         </CardContent>
                     </Card>
 
+
                     <Card>
                         <CardHeader>
                             <CardTitle>Quick Actions</CardTitle>
@@ -624,6 +751,45 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                         <Button variant="outline" onClick={() => setEditingTask(null)}>Cancel</Button>
                         <Button onClick={handleUpdateTask}>Save Changes</Button>
                     </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Add Sale Dialog */}
+            <Dialog open={showSaleDialog} onOpenChange={setShowSaleDialog}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Add New Sale</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <NewSaleForm
+                            onSuccess={() => {
+                                setShowSaleDialog(false)
+                                refreshSales()
+                            }}
+                            defaultContactId={id}
+                        />
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Edit Sale Dialog */}
+            <Dialog open={!!editingSale} onOpenChange={(open) => !open && setEditingSale(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Edit Sale</DialogTitle>
+                    </DialogHeader>
+                    <div className="py-4">
+                        {editingSale && (
+                            <NewSaleForm
+                                initialData={editingSale}
+                                onSuccess={() => {
+                                    setEditingSale(null)
+                                    refreshSales()
+                                }}
+                                defaultContactId={id}
+                            />
+                        )}
+                    </div>
                 </DialogContent>
             </Dialog>
         </div >

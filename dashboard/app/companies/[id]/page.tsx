@@ -15,10 +15,10 @@ import { ArrowLeft, Save, Loader2, Globe, Linkedin, MapPin, Building, ExternalLi
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
-const formatCurrency = (value: number) => {
+const formatCurrency = (value: number, currency: string) => {
     return new Intl.NumberFormat('fr-CH', {
         style: 'currency',
-        currency: 'CHF',
+        currency: currency,
     }).format(value)
 }
 
@@ -30,14 +30,16 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
     const [company, setCompany] = useState<Company | null>(null)
     const [leads, setLeads] = useState<Contact[]>([])
     const [loading, setLoading] = useState(true)
+    const [currency, setCurrency] = useState("CHF")
     const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle")
 
     useEffect(() => {
         async function fetchData() {
             setLoading(true)
-            const [companyRes, leadsRes] = await Promise.all([
+            const [companyRes, leadsRes, settingsRes] = await Promise.all([
                 supabase.from('companies').select('*').eq('id', id).single(),
-                supabase.from('contacts').select('*').eq('company_id', id)
+                supabase.from('contacts').select('*').eq('company_id', id),
+                supabase.from('settings').select('value').eq('key', 'currency').single()
             ])
 
             if (!companyRes.error) {
@@ -46,6 +48,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
             if (!leadsRes.error) {
                 setLeads(leadsRes.data || [])
             }
+            if (settingsRes.data) setCurrency(settingsRes.data.value)
             setLoading(false)
         }
         fetchData()
@@ -143,7 +146,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="value">Total Potential Value (CHF)</Label>
+                                <Label htmlFor="value">Total Potential Value ({currency})</Label>
                                 <Input
                                     id="value"
                                     type="number"
@@ -239,7 +242,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                                                 <p className="text-xs text-muted-foreground truncate">{lead.company_role || "No role specified"}</p>
                                             </div>
                                         </div>
-                                        <Badge variant="secondary" className="text-[10px] h-5">{formatCurrency(Number(lead.value) || 0)}</Badge>
+                                        <Badge variant="secondary" className="text-[10px] h-5">{formatCurrency(Number(lead.value) || 0, currency)}</Badge>
                                     </div>
                                 ))}
                                 {leads.length === 0 && (
@@ -259,7 +262,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                             <div className="flex justify-between items-center text-sm font-medium">
                                 <span>Total Deals Value</span>
                                 <span className="text-emerald-600 dark:text-emerald-400">
-                                    {formatCurrency(leads.reduce((sum, l) => sum + (Number(l.value) || 0), 0))}
+                                    {formatCurrency(leads.reduce((sum, l) => sum + (Number(l.value) || 0), 0), currency)}
                                 </span>
                             </div>
                         </CardContent>

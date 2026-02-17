@@ -11,10 +11,10 @@ import Link from "next/link"
 // Define the pipeline stages
 const STAGES = ["N/A", "Cold", "Engaged", "Interested", "Warm", "Ghosted", "Closed"]
 
-const formatCurrency = (value: number) => {
+const formatCurrency = (value: number, currency: string) => {
     return new Intl.NumberFormat('fr-CH', {
         style: 'currency',
-        currency: 'CHF',
+        currency: currency,
     }).format(value)
 }
 
@@ -41,6 +41,7 @@ const groupContacts = (contacts: Contact[]) => {
 export default function PipelinePage() {
     const [data, setData] = useState<Contact[]>([])
     const [loading, setLoading] = useState(true)
+    const [currency, setCurrency] = useState("CHF")
     const supabase = createClient()
 
     useEffect(() => {
@@ -53,6 +54,10 @@ export default function PipelinePage() {
             if (!error) {
                 setData(contacts || [])
             }
+
+            const { data: settingsData } = await supabase.from('settings').select('value').eq('key', 'currency').single()
+            if (settingsData) setCurrency(settingsData.value)
+
             setLoading(false)
         }
         fetchData()
@@ -80,7 +85,7 @@ export default function PipelinePage() {
                                             </span>
                                         </div>
                                         <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-0.5 rounded border border-emerald-100 dark:border-emerald-800/50">
-                                            {formatCurrency(items.reduce((sum, item) => sum + (Number(item.value) || 0), 0))}
+                                            {formatCurrency(items.reduce((sum, item) => sum + (Number(item.value) || 0), 0), currency)}
                                         </span>
                                     </div>
 
@@ -108,7 +113,7 @@ export default function PipelinePage() {
                                                     <div className="flex justify-between items-center mt-2">
                                                         <StatusCell contact={contact} />
                                                         <span className="text-xs font-semibold text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
-                                                            {formatCurrency(Number(contact.value) || 0)}
+                                                            {formatCurrency(Number(contact.value) || 0, currency)}
                                                         </span>
                                                     </div>
                                                 </CardContent>

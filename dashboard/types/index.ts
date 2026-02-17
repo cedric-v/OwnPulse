@@ -31,6 +31,36 @@ export type Contact = {
     notes: string | null
     value: number | null
     created_at: string
+    acquisition_channel?: string | null
+    first_contact_date?: string | null
+    customer_conversion_date?: string | null
+    offers_purchased?: { name: string, count: number }[] | null
+}
+
+export type Sale = {
+    id: string
+    offer_name: string
+    sale_date: string
+    price_ht: number
+    vat_rate: number
+    quantity: number
+    payment_terms: string | null
+    payment_delay: string | null
+    contact_id: string | null
+    created_at: string
+    contacts?: { first_name: string | null, last_name: string | null } | null
+}
+
+export type Expense = {
+    id: string
+    description: string
+    category: string
+    importance: 'Mandatory' | 'Important' | 'Optional'
+    price_ht: number
+    vat_rate: number
+    payment_frequency: string | null
+    date: string
+    created_at: string
 }
 
 export type Task = {
@@ -41,4 +71,18 @@ export type Task = {
     priority: 'Low' | 'Medium' | 'High'
     category: string
     contact_id: string
+}
+
+export type Setting = {
+    id: string
+    key: string
+    value: string
+    updated_at: string
+}
+
+export type Offer = {
+    id: string
+    name: string
+    default_price: number
+    created_at: string
 }

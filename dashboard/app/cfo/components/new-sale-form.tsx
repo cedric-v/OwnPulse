@@ -1,0 +1,232 @@
+"use client"
+
+import { useState, useEffect } from "react"
+import { createClient } from "@/lib/supabase/client"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { useToast } from "@/components/ui/use-toast"
+import { Offer, Sale } from "@/types"
+
+interface NewSaleFormProps {
+    onSuccess: () => void
+    defaultContactId?: string
+    initialData?: Sale | null
+}
+
+export function NewSaleForm({ onSuccess, defaultContactId, initialData }: NewSaleFormProps) {
+    const [loading, setLoading] = useState(false)
+    const [contacts, setContacts] = useState<{ id: string, first_name: string | null, last_name: string | null }[]>([])
+    const [offers, setOffers] = useState<Offer[]>([])
+    const [currency, setCurrency] = useState("CHF")
+    const { toast } = useToast()
+    const supabase = createClient()
+
+    // Form state
+    const [offerName, setOfferName] = useState(initialData?.offer_name || "")
+    const [date, setDate] = useState(initialData?.sale_date?.split('T')[0] || new Date().toISOString().split('T')[0])
+    const [price, setPrice] = useState(initialData?.price_ht?.toString() || "")
+    const [vat, setVat] = useState(initialData?.vat_rate?.toString() || "8.1")
+    const [quantity, setQuantity] = useState(initialData?.quantity?.toString() || "1")
+    const [paymentTerms, setPaymentTerms] = useState("commande_100")
+    const [paymentDelay, setPaymentDelay] = useState(initialData?.payment_delay || "immediat")
+    const [contactId, setContactId] = useState(initialData?.contact_id || defaultContactId || "")
+    const [staggeredValue, setStaggeredValue] = useState("50")
+    const [installmentsValue, setInstallmentsValue] = useState("3")
+
+    // Parse existing payment terms if editing
+    useEffect(() => {
+        if (initialData?.payment_terms) {
+            const terms = initialData.payment_terms
+            if (terms.includes("% commande / solde fin")) {
+                setPaymentTerms("staggered")
+                setStaggeredValue(terms.split("%")[0])
+            } else if (terms.startsWith("Échelonné") && terms.endsWith("mois")) {
+                setPaymentTerms("installments")
+                setInstallmentsValue(terms.match(/\d+/)?.[0] || "3")
+            } else {
+                setPaymentTerms(terms)
+            }
+        }
+    }, [initialData])
+
+    useEffect(() => {
+        async function fetchData() {
+            const [contactsRes, offersRes, currencyRes, vatRes] = await Promise.all([
+                supabase.from('contacts').select('id, first_name, last_name').order('last_name'),
+                supabase.from('offers').select('*').order('name'),
+                supabase.from('settings').select('value').eq('key', 'currency').single(),
+                supabase.from('settings').select('value').eq('key', 'vat_rate').single()
+            ])
+            if (contactsRes.data) setContacts(contactsRes.data)
+            if (offersRes.data) setOffers(offersRes.data)
+            if (currencyRes.data) setCurrency(currencyRes.data.value)
+
+            // Only set default VAT if not editing
+            if (!initialData && vatRes.data) setVat(vatRes.data.value)
+        }
+        fetchData()
+    }, [supabase, initialData])
+
+    const handleOfferChange = (name: string) => {
+        setOfferName(name)
+        const selectedOffer = offers.find(o => o.name === name)
+        if (selectedOffer) {
+            setPrice(selectedOffer.default_price.toString())
+        }
+    }
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        setLoading(true)
+
+        const payload = {
+            offer_name: offerName,
+            sale_date: date,
+            price_ht: parseFloat(price),
+            vat_rate: parseFloat(vat),
+            quantity: parseInt(quantity),
+            payment_terms: paymentTerms === "staggered"
+                ? `${staggeredValue}% commande / solde fin`
+                : paymentTerms === "installments"
+                    ? `Échelonné ${installmentsValue} mois`
+                    : paymentTerms,
+            payment_delay: paymentDelay,
+            contact_id: contactId === "none" ? null : (contactId || null)
+        }
+
+        const query = initialData
+            ? supabase.from('sales').update(payload).eq('id', initialData.id)
+            : supabase.from('sales').insert(payload)
+
+        const { error } = await query
+
+        if (error) {
+            toast({ title: "Error", description: error.message, variant: "destructive" })
+        } else {
+            toast({ title: "Success", description: initialData ? "Sale updated successfully" : "Sale recorded successfully" })
+            if (!initialData) {
+                setOfferName("")
+                setPrice("")
+            }
+            onSuccess()
+        }
+        setLoading(false)
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <Label>Offre</Label>
+                    <Select onValueChange={handleOfferChange} value={offerName}>
+                        <SelectTrigger><SelectValue placeholder="Choisir une offre" /></SelectTrigger>
+                        <SelectContent>
+                            {offers.map(offer => (
+                                <SelectItem key={offer.id} value={offer.name}>{offer.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div className="space-y-2">
+                    <Label>Date de vente</Label>
+                    <Input type="date" value={date} onChange={e => setDate(e.target.value)} />
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <Label>Client (Contact)</Label>
+                <Select onValueChange={setContactId} value={contactId}>
+                    <SelectTrigger><SelectValue placeholder="Associer à un contact (optionnel)" /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="none">Aucun</SelectItem>
+                        {contacts.map(c => (
+                            <SelectItem key={c.id} value={c.id}>
+                                {c.first_name} {c.last_name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                    <Label>Prix HT ({currency})</Label>
+                    <Input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder={`0 ${currency}`} />
+                </div>
+                <div className="space-y-2">
+                    <Label>TVA %</Label>
+                    <Input type="number" value={vat} onChange={e => setVat(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                    <Label>Quantité</Label>
+                    <Input type="number" value={quantity} onChange={e => setQuantity(e.target.value)} />
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <Label>Modalités de paiement</Label>
+                <RadioGroup value={paymentTerms} onValueChange={setPaymentTerms}>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="commande_100" id="r1" />
+                        <Label htmlFor="r1">100% à la commande</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="mission_100" id="r2" />
+                        <Label htmlFor="r2">100% en fin de mission</Label>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="staggered" id="r3" />
+                            <Input
+                                type="number"
+                                className="w-16 h-8 text-center"
+                                value={staggeredValue}
+                                onChange={e => {
+                                    setStaggeredValue(e.target.value)
+                                    setPaymentTerms("staggered")
+                                }}
+                            />
+                            <Label htmlFor="r3">% à la commande et le solde en fin de mission</Label>
+                        </div>
+                    </div>
+                    <div className="flex items-center space-x-4">
+                        <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="installments" id="r4" />
+                            <Label htmlFor="r4">Échelonné en</Label>
+                            <Input
+                                type="number"
+                                className="w-16 h-8 text-center"
+                                value={installmentsValue}
+                                onChange={e => {
+                                    setInstallmentsValue(e.target.value)
+                                    setPaymentTerms("installments")
+                                }}
+                            />
+                            <Label htmlFor="r4">mois</Label>
+                        </div>
+                    </div>
+                </RadioGroup>
+            </div>
+
+            <div className="space-y-2">
+                <Label>Délai de paiement</Label>
+                <Select value={paymentDelay} onValueChange={setPaymentDelay}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="immediat">Immédiat</SelectItem>
+                        <SelectItem value="30_jours">30 jours</SelectItem>
+                        <SelectItem value="60_jours">60 jours</SelectItem>
+                        <SelectItem value="90_jours">90 jours</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Enregistrement..." : "Enregistrer"}
+            </Button>
+        </form>
+    )
+}

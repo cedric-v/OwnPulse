@@ -12,10 +12,10 @@ import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { AddCompanyDialog } from "@/components/companies/add-company-dialog"
 
-const formatCurrency = (value: number) => {
+const formatCurrency = (value: number, currency: string) => {
     return new Intl.NumberFormat('fr-CH', {
         style: 'currency',
-        currency: 'CHF',
+        currency: currency,
     }).format(value)
 }
 
@@ -23,6 +23,7 @@ export default function CompaniesPage() {
     const [companies, setCompanies] = useState<(Company & { _count?: { contacts: number } })[]>([])
     const [searchQuery, setSearchQuery] = useState("")
     const [loading, setLoading] = useState(true)
+    const [currency, setCurrency] = useState("CHF")
     const supabase = createClient()
 
     useEffect(() => {
@@ -42,6 +43,10 @@ export default function CompaniesPage() {
                 }))
                 setCompanies(formatted)
             }
+
+            const { data: settingsData } = await supabase.from('settings').select('value').eq('key', 'currency').single()
+            if (settingsData) setCurrency(settingsData.value)
+
             setLoading(false)
         }
         fetchData()
@@ -110,7 +115,7 @@ export default function CompaniesPage() {
                                             <span>{(company as any).contactCount} Leads</span>
                                         </div>
                                         <Badge variant="secondary" className="font-bold text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/50">
-                                            {formatCurrency(Number(company.value) || 0)}
+                                            {formatCurrency(Number(company.value) || 0, currency)}
                                         </Badge>
                                     </div>
 

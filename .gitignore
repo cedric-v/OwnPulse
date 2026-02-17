@@ -33,3 +33,6 @@ yarn-error.log*
 
 # Extension
 extension/icons/ (if empty)
+
+# Local scripts
+scripts/
