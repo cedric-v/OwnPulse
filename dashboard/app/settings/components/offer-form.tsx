@@ -49,7 +49,11 @@ export function OfferForm({ offer, onSave, onCancel, currency }: OfferFormProps)
 
     // Goals (Default to current year)
     const currentYear = new Date().getFullYear()
-    const [goals, setGoals] = useState<SalesGoal[]>(offer?.sales_goals || [{ year: currentYear, monthly_counts: Array(12).fill(0) }])
+    const [goals, setGoals] = useState<SalesGoal[]>(() => {
+        const initial = offer?.sales_goals || []
+        if (initial.some(g => g.year === currentYear)) return initial
+        return [...initial, { year: currentYear, monthly_counts: Array(12).fill(0) }]
+    })
     const [selectedYear, setSelectedYear] = useState(currentYear)
 
     // Terms

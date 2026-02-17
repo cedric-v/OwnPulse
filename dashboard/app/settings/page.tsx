@@ -334,6 +334,7 @@ export default function SettingsPage() {
                                             <DialogTitle>{editingOffer ? t('settings.editOffer') : t('settings.addOffer')}</DialogTitle>
                                         </DialogHeader>
                                         <OfferForm
+                                            key={editingOffer ? editingOffer.id : 'new'}
                                             offer={editingOffer}
                                             onSave={handleSaveOffer}
                                             onCancel={() => setIsOfferDialogOpen(false)}
