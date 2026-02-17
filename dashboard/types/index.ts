@@ -35,6 +35,7 @@ export type Contact = {
     first_contact_date?: string | null
     customer_conversion_date?: string | null
     offers_purchased?: { name: string, count: number }[] | null
+    total_sales?: number
 }
 
 export type Sale = {

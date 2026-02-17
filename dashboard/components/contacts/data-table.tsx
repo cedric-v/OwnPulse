@@ -8,9 +8,12 @@ import {
     getCoreRowModel,
     getFilteredRowModel,
     getPaginationRowModel,
+    getSortedRowModel,
+    SortingState,
     useReactTable,
 } from "@tanstack/react-table"
 
+import { ArrowUpDown } from "lucide-react"
 import {
     Table,
     TableBody,
@@ -35,6 +38,7 @@ export function DataTable<TData, TValue>({
     meta,
 }: DataTableProps<TData, TValue>) {
     const [globalFilter, setGlobalFilter] = React.useState("")
+    const [sorting, setSorting] = React.useState<SortingState>([])
 
     const table = useReactTable({
         data,
@@ -42,8 +46,11 @@ export function DataTable<TData, TValue>({
         getCoreRowModel: getCoreRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
         getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        onSortingChange: setSorting,
         state: {
             globalFilter,
+            sorting,
         },
         onGlobalFilterChange: setGlobalFilter,
         meta,
@@ -69,7 +76,19 @@ export function DataTable<TData, TValue>({
                                         <TableHead key={header.id}>
                                             {header.isPlaceholder
                                                 ? null
-                                                : flexRender(
+                                                : header.column.getCanSort() ? (
+                                                    <Button
+                                                        variant="ghost"
+                                                        onClick={() => header.column.toggleSorting(header.column.getIsSorted() === "asc")}
+                                                        className="hover:bg-transparent p-0 flex items-center gap-1 font-semibold"
+                                                    >
+                                                        {flexRender(
+                                                            header.column.columnDef.header,
+                                                            header.getContext()
+                                                        )}
+                                                        <ArrowUpDown className="ml-2 h-4 w-4" />
+                                                    </Button>
+                                                ) : flexRender(
                                                     header.column.columnDef.header,
                                                     header.getContext()
                                                 )}

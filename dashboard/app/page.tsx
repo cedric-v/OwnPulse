@@ -31,14 +31,18 @@ function HomeContent() {
     setLoading(true)
     const { data: contacts, error } = await supabase
       .from('contacts')
-      .select('*')
+      .select('*, sales(price_ht)')
       .order('created_at', { ascending: false })
 
     if (error) {
       console.error('Error fetching contacts:', error)
       setError(error.message)
     } else {
-      setData(contacts || [])
+      const enrichedContacts = (contacts || []).map((c: any) => ({
+        ...c,
+        total_sales: (c.sales || []).reduce((acc: number, s: any) => acc + (s.price_ht || 0), 0)
+      }))
+      setData(enrichedContacts)
     }
     setLoading(false)
   }

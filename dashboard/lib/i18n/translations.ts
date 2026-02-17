@@ -186,6 +186,7 @@ export const translations = {
             salesHistory: "Historique des ventes",
             addSale: "Ajouter une vente",
             noSales: "Aucune vente enregistrée pour ce contact.",
+            totalSales: "Total des ventes",
         }
     },
     en: {
@@ -373,6 +374,7 @@ export const translations = {
             salesHistory: "Sales History",
             addSale: "Add Sale",
             noSales: "No sales recorded for this contact.",
+            totalSales: "Total Sales",
         }
     }
 };

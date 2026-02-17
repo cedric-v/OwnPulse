@@ -18,66 +18,102 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { StatusCell } from "./status-cell"
 import { NotesSheet } from "./notes-sheet"
+import { StatusCell } from "./status-cell"
+import { NotesSheet } from "./notes-sheet"
 import { DeleteLeadAlert } from "./delete-lead-alert"
+import { useLanguage } from "@/components/i18n/language-context"
+import { ArrowUpDown } from "lucide-react"
+import { Column } from "@tanstack/react-table"
 
-export const columns: ColumnDef<Contact>[] = [
-    {
-        accessorKey: "avatar_url",
+const TotalSalesHeader = ({ column }: { column: Column<Contact, unknown> }) => {
+    const { t } = useLanguage()
+    return (
+        <Button
+            variant="ghost"
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+            className="hover:bg-transparent p-0 flex items-center gap-1 font-semibold"
+        >
+            {t('contacts.totalSales')}
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+        </Button>
+    )
+}
+{
+    accessorKey: "avatar_url",
         header: "",
-        cell: ({ row }) => {
-            const avatarUrl = row.getValue("avatar_url") as string
-            const first = row.original.first_name?.[0] || "?"
-            const last = row.original.last_name?.[0] || "?"
-            return (
-                <Avatar>
-                    <AvatarImage src={avatarUrl || undefined} />
-                    <AvatarFallback>{first}{last}</AvatarFallback>
-                </Avatar>
-            )
-        },
+            cell: ({ row }) => {
+                const avatarUrl = row.getValue("avatar_url") as string
+                const first = row.original.first_name?.[0] || "?"
+                const last = row.original.last_name?.[0] || "?"
+                return (
+                    <Avatar>
+                        <AvatarImage src={avatarUrl || undefined} />
+                        <AvatarFallback>{first}{last}</AvatarFallback>
+                    </Avatar>
+                )
+            },
     },
-    {
-        id: "name",
+{
+    id: "name",
         header: "Name",
-        accessorFn: (row) => `${row.first_name} ${row.last_name}`,
-        cell: ({ row }) => {
-            const first = row.original.first_name || ""
-            const last = row.original.last_name || ""
-            return (
-                <Link href={`/contacts/${row.original.id}`} className="font-medium hover:underline text-blue-600 dark:text-blue-400">
-                    {first} {last}
-                </Link>
-            )
-        }
-    },
-    {
-        accessorKey: "company",
+            accessorFn: (row) => `${row.first_name} ${row.last_name}`,
+                cell: ({ row }) => {
+                    const first = row.original.first_name || ""
+                    const last = row.original.last_name || ""
+                    return (
+                        <Link href={`/contacts/${row.original.id}`} className="font-medium hover:underline text-blue-600 dark:text-blue-400">
+                            {first} {last}
+                        </Link>
+                    )
+                }
+},
+{
+    accessorKey: "company",
         header: "Company",
-        cell: ({ row }) => {
-            return (
-                <div className="flex flex-col">
-                    <span className="font-medium">{row.original.company || "-"}</span>
-                    <span className="text-xs text-muted-foreground">{row.original.company_role}</span>
-                </div>
-            )
-        }
-    },
-    {
-        accessorKey: "status",
+            cell: ({ row }) => {
+                return (
+                    <div className="flex flex-col">
+                        <span className="font-medium">{row.original.company || "-"}</span>
+                        <span className="text-xs text-muted-foreground">{row.original.company_role}</span>
+                    </div>
+                )
+            }
+},
+{
+    accessorKey: "status",
         header: "Status",
-        cell: ({ row }) => {
-            return <StatusCell contact={row.original} />
-        }
-    },
-    {
-        accessorKey: "notes",
+            cell: ({ row }) => {
+                return <StatusCell contact={row.original} />
+            }
+},
+{
+    accessorKey: "notes",
         header: "Notes",
-        cell: ({ row }) => {
-            return <NotesSheet contact={row.original} />
-        }
-    },
-    {
-        id: "actions",
+            cell: ({ row }) => {
+                return <NotesSheet contact={row.original} />
+            }
+},
+{
+    accessorKey: "notes",
+        header: "Notes",
+            cell: ({ row }) => {
+                return <NotesSheet contact={row.original} />
+            }
+},
+{
+    accessorKey: "total_sales",
+        header: ({ column }) => <TotalSalesHeader column={column} />,
+            cell: ({ row }) => {
+                const amount = parseFloat(row.getValue("total_sales") || "0")
+                const formatted = new Intl.NumberFormat("fr-FR", {
+                    style: "currency",
+                    currency: "EUR",
+                }).format(amount)
+                return <div className="font-medium">{amount > 0 ? formatted : "-"}</div>
+            }
+},
+{
+    id: "actions",
         cell: ({ row, table }) => {
             const contact = row.original
             const [showDeleteDialog, setShowDeleteDialog] = useState(false)
