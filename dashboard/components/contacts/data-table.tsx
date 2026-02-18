@@ -4,6 +4,7 @@
 import * as React from "react"
 import {
     ColumnDef,
+    TableMeta,
     flexRender,
     getCoreRowModel,
     getFilteredRowModel,
@@ -29,7 +30,7 @@ import { Button } from "@/components/ui/button"
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
-    meta?: any
+    meta?: TableMeta<TData>
 }
 
 export function DataTable<TData, TValue>({
@@ -40,6 +41,7 @@ export function DataTable<TData, TValue>({
     const [globalFilter, setGlobalFilter] = React.useState("")
     const [sorting, setSorting] = React.useState<SortingState>([])
 
+    // eslint-disable-next-line react-hooks/incompatible-library
     const table = useReactTable({
         data,
         columns,

@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Save, Loader2, Globe, Linkedin, MapPin, Building, ExternalLink, Users, Check, AlertCircle, Trash2 } from "lucide-react"
+import { ArrowLeft, Loader2, Globe, Linkedin, MapPin, ExternalLink, Users, Check, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 

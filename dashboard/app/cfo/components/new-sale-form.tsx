@@ -33,27 +33,24 @@ export function NewSaleForm({ onSuccess, defaultContactId, initialData }: NewSal
     const [price, setPrice] = useState(initialData?.price_ht?.toString() || "")
     const [vat, setVat] = useState(initialData?.vat_rate?.toString() || "8.1")
     const [quantity, setQuantity] = useState(initialData?.quantity?.toString() || "1")
-    const [paymentTerms, setPaymentTerms] = useState("commande_100")
+    const initialTerms = initialData?.payment_terms || "commande_100"
+    const [paymentTerms, setPaymentTerms] = useState(
+        initialTerms.includes("% commande / solde fin")
+            ? "staggered"
+            : initialTerms.startsWith("Échelonné") && initialTerms.endsWith("mois")
+                ? "installments"
+                : initialTerms
+    )
     const [paymentDelay, setPaymentDelay] = useState(initialData?.payment_delay || "immediat")
     const [contactId, setContactId] = useState(initialData?.contact_id || defaultContactId || "")
-    const [staggeredValue, setStaggeredValue] = useState("50")
-    const [installmentsValue, setInstallmentsValue] = useState("3")
-
-    // Parse existing payment terms if editing
-    useEffect(() => {
-        if (initialData?.payment_terms) {
-            const terms = initialData.payment_terms
-            if (terms.includes("% commande / solde fin")) {
-                setPaymentTerms("staggered")
-                setStaggeredValue(terms.split("%")[0])
-            } else if (terms.startsWith("Échelonné") && terms.endsWith("mois")) {
-                setPaymentTerms("installments")
-                setInstallmentsValue(terms.match(/\d+/)?.[0] || "3")
-            } else {
-                setPaymentTerms(terms)
-            }
-        }
-    }, [initialData])
+    const [staggeredValue, setStaggeredValue] = useState(
+        initialTerms.includes("% commande / solde fin") ? initialTerms.split("%")[0] : "50"
+    )
+    const [installmentsValue, setInstallmentsValue] = useState(
+        initialTerms.startsWith("Échelonné") && initialTerms.endsWith("mois")
+            ? (initialTerms.match(/\d+/)?.[0] || "3")
+            : "3"
+    )
 
     useEffect(() => {
         async function fetchData() {

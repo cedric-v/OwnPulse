@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { Contact } from "@/types"
@@ -17,6 +17,8 @@ import { Download } from "lucide-react"
 import { AddLeadDialog } from "@/components/contacts/add-lead-dialog"
 
 function HomeContent() {
+  type ContactWithSales = Contact & { sales?: { price_ht: number | null }[] }
+
   const { t } = useLanguage()
   const [data, setData] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
@@ -27,7 +29,7 @@ function HomeContent() {
   const listFilter = searchParams.get('list')
   const supabase = createClient()
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true)
     const { data: contacts, error } = await supabase
       .from('contacts')
@@ -38,18 +40,19 @@ function HomeContent() {
       console.error('Error fetching contacts:', error)
       setError(error.message)
     } else {
-      const enrichedContacts = (contacts || []).map((c: any) => ({
+      const enrichedContacts = ((contacts || []) as ContactWithSales[]).map((c) => ({
         ...c,
-        total_sales: (c.sales || []).reduce((acc: number, s: any) => acc + (s.price_ht || 0), 0)
+        total_sales: (c.sales || []).reduce((acc, s) => acc + (s.price_ht || 0), 0)
       }))
       setData(enrichedContacts)
     }
     setLoading(false)
-  }
+  }, [supabase])
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchData()
+  }, [fetchData])
 
   const filteredData = data.filter(contact => {
     if (listFilter) {

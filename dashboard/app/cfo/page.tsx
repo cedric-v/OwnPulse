@@ -1,12 +1,12 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useLanguage } from "@/components/i18n/language-context"
 import { Sale, Expense } from "@/types"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { DollarSign, TrendingUp, TrendingDown, Target, Wallet } from "lucide-react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { DollarSign, TrendingDown, Target, Wallet } from "lucide-react"
 import { NetResult } from "@/app/cfo/components/net-result"
 import { NewSaleForm } from "@/app/cfo/components/new-sale-form"
 import { NewExpenseForm } from "@/app/cfo/components/new-expense-form"
@@ -20,7 +20,6 @@ export default function CFODashboard() {
     const { t } = useLanguage()
     const [sales, setSales] = useState<Sale[]>([])
     const [expenses, setExpenses] = useState<Expense[]>([])
-    const [loading, setLoading] = useState(true)
     const [currency, setCurrency] = useState("CHF")
     const [period, setPeriod] = useState<Period>("12m")
     const [socialRate, setSocialRate] = useState(45)
@@ -29,8 +28,7 @@ export default function CFODashboard() {
     const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
     const supabase = createClient()
 
-    const fetchFinancials = async () => {
-        setLoading(true)
+    const fetchFinancials = useCallback(async () => {
         const salesRes = await supabase.from('sales').select('*, contacts(first_name, last_name)').order('created_at', { ascending: false })
         const expensesRes = await supabase.from('expenses').select('*').order('created_at', { ascending: false })
 
@@ -49,13 +47,12 @@ export default function CFODashboard() {
         if (socialRes.data) setSocialRate(parseFloat(socialRes.data.value))
         if (taxRes.data) setTaxRate(parseFloat(taxRes.data.value))
         if (salaryRes.data) setTargetMonthlySalary(parseFloat(salaryRes.data.value))
-
-        setLoading(false)
-    }
+    }, [supabase])
 
     useEffect(() => {
-        fetchFinancials()
-    }, [supabase])
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        void fetchFinancials()
+    }, [fetchFinancials])
 
     const isWithinPeriod = (dateString: string | null | undefined) => {
         if (!dateString) return false

@@ -7,10 +7,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
+import { Expense } from "@/types"
 
 interface NewExpenseFormProps {
     onSuccess: () => void
-    initialData?: any // Added for editing support
+    initialData?: Expense | null
 }
 
 import { useLanguage } from "@/components/i18n/language-context"
@@ -22,6 +23,15 @@ export function NewExpenseForm({ onSuccess, initialData }: NewExpenseFormProps) 
     const { toast } = useToast()
     const supabase = createClient()
 
+    // Form state
+    const [description, setDescription] = useState(initialData?.description || "")
+    const [category, setCategory] = useState(initialData?.category || "")
+    const [importance, setImportance] = useState<"Mandatory" | "Important" | "Optional">(initialData?.importance || "Mandatory")
+    const [price, setPrice] = useState(initialData?.price_ht?.toString() || "")
+    const [vat, setVat] = useState(initialData?.vat_rate?.toString() || "8.1")
+    const [date, setDate] = useState(initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0])
+    const [frequency, setFrequency] = useState(initialData?.payment_frequency || "unique")
+
     useEffect(() => {
         async function fetchSettings() {
             const [currencyRes, vatRes] = await Promise.all([
@@ -31,17 +41,8 @@ export function NewExpenseForm({ onSuccess, initialData }: NewExpenseFormProps) 
             if (currencyRes.data) setCurrency(currencyRes.data.value)
             if (vatRes.data) setVat(vatRes.data.value)
         }
-        fetchSettings()
+        void fetchSettings()
     }, [supabase])
-
-    // Form state
-    const [description, setDescription] = useState(initialData?.description || "")
-    const [category, setCategory] = useState(initialData?.category || "")
-    const [importance, setImportance] = useState<"Mandatory" | "Important" | "Optional">(initialData?.importance || "Mandatory")
-    const [price, setPrice] = useState(initialData?.price_ht?.toString() || "")
-    const [vat, setVat] = useState(initialData?.vat_rate?.toString() || "8.1")
-    const [date, setDate] = useState(initialData?.date ? new Date(initialData.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0])
-    const [frequency, setFrequency] = useState(initialData?.payment_frequency || "unique")
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -115,7 +116,7 @@ export function NewExpenseForm({ onSuccess, initialData }: NewExpenseFormProps) 
                 </div>
                 <div className="space-y-2">
                     <Label>{t('cfo.importance')}</Label>
-                    <Select onValueChange={(v: any) => setImportance(v)} value={importance}>
+                    <Select onValueChange={(v) => setImportance(v as Expense["importance"])} value={importance}>
                         <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                             <SelectItem value="Mandatory">{t('cfo.mandatory')}</SelectItem>

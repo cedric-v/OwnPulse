@@ -1,33 +1,26 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useLanguage } from "@/components/i18n/language-context"
-import { Card, CardContent } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { PeriodSelector } from "@/components/dashboard/period-selector"
+import { Card } from "@/components/ui/card"
+import { PeriodSelector, Period } from "@/components/dashboard/period-selector"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { Plus, MoreVertical, Filter } from "lucide-react"
+import { Plus, MoreVertical } from "lucide-react"
 import Link from "next/link"
 import { Offer, Sale } from "@/types"
 
 export default function OffersPage() {
     const { t, language } = useLanguage()
-    const [period, setPeriod] = useState("ytd")
+    const [period, setPeriod] = useState<Period>("ytd")
     const [offers, setOffers] = useState<Offer[]>([])
     const [sales, setSales] = useState<Sale[]>([])
     const [showOnlyWithGoals, setShowOnlyWithGoals] = useState(true)
-    const [loading, setLoading] = useState(true)
     const [currency, setCurrency] = useState("EUR")
     const supabase = createClient()
 
-    useEffect(() => {
-        fetchData()
-    }, [])
-
-    const fetchData = async () => {
-        setLoading(true)
+    const fetchData = useCallback(async () => {
         const [offersRes, salesRes, currencyRes] = await Promise.all([
             supabase.from('offers').select('*'),
             supabase.from('sales').select('*'),
@@ -37,8 +30,12 @@ export default function OffersPage() {
         if (offersRes.data) setOffers(offersRes.data)
         if (salesRes.data) setSales(salesRes.data)
         if (currencyRes.data) setCurrency(currencyRes.data.value)
-        setLoading(false)
-    }
+    }, [supabase])
+
+    useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchData()
+    }, [fetchData])
 
     // Hepler to filter sales by date
     const filterSalesByPeriod = (salesArray: Sale[], period: string) => {
@@ -171,8 +168,6 @@ export default function OffersPage() {
         // Sales for this SPECIFIC offer in the period
         const offerSales = filteredSales.filter(s => s.offer_name === offer.name)
         const realizedQty = offerSales.reduce((sum, s) => sum + (s.quantity || 1), 0)
-        const realizedRevenue = offerSales.reduce((sum, s) => sum + (s.price_ht || 0), 0)
-
         const salesRemaining = Math.max(0, totalQtyGoal - realizedQty)
 
         // Theoretical Hourly Rate (requested by user)
@@ -201,15 +196,11 @@ export default function OffersPage() {
         }).format(amount)
     }
 
-    const formatNumber = (num: number) => {
-        return new Intl.NumberFormat(language === 'fr' ? 'fr-FR' : 'en-US', { maximumFractionDigits: 2 }).format(num)
-    }
-
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-8">
             <div className="flex justify-between items-center">
                 <h1 className="text-3xl font-bold tracking-tight">{t('offersDashboard.title')}</h1>
-                <PeriodSelector value={period as any} onValueChange={setPeriod} />
+                <PeriodSelector value={period} onValueChange={setPeriod} />
             </div>
 
             {/* KPI Cards */}

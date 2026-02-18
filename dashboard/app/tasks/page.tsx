@@ -1,10 +1,10 @@
 
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Task, Contact } from "@/types"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
@@ -24,7 +24,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { Loader2, Calendar, User, Tag, AlertCircle, Pencil } from "lucide-react"
+import { Loader2, Calendar, User, AlertCircle, Pencil } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 
@@ -41,15 +41,100 @@ import {
     TabsTrigger,
 } from "@/components/ui/tabs"
 
+type TaskWithContact = Task & { contact: Contact }
+
+function TaskList({
+    items,
+    onToggleTask,
+    onEdit,
+}: {
+    items: TaskWithContact[]
+    onToggleTask: (taskId: string, currentStatus: boolean) => void
+    onEdit: (task: TaskWithContact) => void
+}) {
+    return (
+        <div className="grid gap-4">
+            {items.length === 0 ? (
+                <p className="text-center text-muted-foreground py-12">No tasks found.</p>
+            ) : (
+                items.map(task => (
+                    <Card key={task.id} className={cn(
+                        "transition-all",
+                        task.completed ? "opacity-60 bg-muted/30" : "hover:shadow-md"
+                    )}>
+                        <CardContent className="p-4 flex items-center gap-4">
+                            <Checkbox
+                                checked={task.completed}
+                                onCheckedChange={() => onToggleTask(task.id, task.completed)}
+                            />
+
+                            <div className="flex-1 space-y-1">
+                                <div className="flex items-center gap-2">
+                                    <span className={task.completed ? "line-through text-muted-foreground" : "font-medium"}>
+                                        {task.description}
+                                    </span>
+                                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${PRIORITY_COLORS[task.priority] || ""}`}>
+                                        {task.priority}
+                                    </Badge>
+                                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                                        {task.category}
+                                    </Badge>
+                                </div>
+
+                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                    <div className="flex items-center gap-1">
+                                        <User className="h-3 w-3" />
+                                        <Link href={`/contacts/${task.contact_id}`} className="hover:underline">
+                                            {task.contact?.first_name} {task.contact?.last_name}
+                                        </Link>
+                                    </div>
+                                    {task.due_date ? (
+                                        <button
+                                            onClick={() => onEdit(task)}
+                                            className="flex items-center gap-1 hover:bg-muted px-1.5 py-0.5 rounded transition-colors group"
+                                        >
+                                            <Calendar className="h-3 w-3 group-hover:text-blue-500" />
+                                            <span className="group-hover:text-blue-600 group-hover:underline">
+                                                {new Date(task.due_date).toLocaleDateString()}
+                                            </span>
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => onEdit(task)}
+                                            className="flex items-center gap-1 text-gray-400 hover:bg-muted px-1.5 py-0.5 rounded transition-colors group"
+                                        >
+                                            <Calendar className="h-3 w-3 group-hover:text-amber-500" />
+                                            <span className="group-hover:text-amber-600 group-hover:underline">
+                                                No date
+                                            </span>
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                {task.priority === 'High' && !task.completed && <AlertCircle className="h-4 w-4 text-red-500" />}
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(task)}>
+                                    <Pencil className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                ))
+            )}
+        </div>
+    )
+}
+
 export default function TasksPage() {
-    const [tasks, setTasks] = useState<(Task & { contact: Contact })[]>([])
+    const [tasks, setTasks] = useState<TaskWithContact[]>([])
     const [loading, setLoading] = useState(true)
-    const [editingTask, setEditingTask] = useState<(Task & { contact: Contact }) | null>(null)
+    const [editingTask, setEditingTask] = useState<TaskWithContact | null>(null)
     const [editForm, setEditForm] = useState({ description: "", priority: "", category: "", due_date: "" })
     const [searchQuery, setSearchQuery] = useState("")
     const supabase = createClient()
 
-    const fetchTasks = async () => {
+    const fetchTasks = useCallback(async () => {
         const { data, error } = await supabase
             .from('tasks')
             .select('*, contact:contacts(*)')
@@ -73,13 +158,14 @@ export default function TasksPage() {
             setTasks(sorted)
         }
         setLoading(false)
-    }
-
-    useEffect(() => {
-        fetchTasks()
     }, [supabase])
 
-    const handleEdit = (task: Task & { contact: Contact }) => {
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        void fetchTasks()
+    }, [fetchTasks])
+
+    const handleEdit = (task: TaskWithContact) => {
         setEditingTask(task)
         setEditForm({
             description: task.description || "",
@@ -106,7 +192,7 @@ export default function TasksPage() {
             alert("Error updating task: " + error.message)
         } else {
             setEditingTask(null)
-            fetchTasks()
+            void fetchTasks()
         }
     }
 
@@ -134,79 +220,6 @@ export default function TasksPage() {
     const activeTasks = filteredTasks.filter(t => !t.completed)
     const archivedTasks = filteredTasks.filter(t => t.completed)
 
-    const TaskList = ({ items }: { items: (Task & { contact: Contact })[] }) => (
-        <div className="grid gap-4">
-            {items.length === 0 ? (
-                <p className="text-center text-muted-foreground py-12">No tasks found.</p>
-            ) : (
-                items.map(task => (
-                    <Card key={task.id} className={cn(
-                        "transition-all",
-                        task.completed ? "opacity-60 bg-muted/30" : "hover:shadow-md"
-                    )}>
-                        <CardContent className="p-4 flex items-center gap-4">
-                            <Checkbox
-                                checked={task.completed}
-                                onCheckedChange={() => toggleTask(task.id, task.completed)}
-                            />
-
-                            <div className="flex-1 space-y-1">
-                                <div className="flex items-center gap-2">
-                                    <span className={task.completed ? "line-through text-muted-foreground" : "font-medium"}>
-                                        {task.description}
-                                    </span>
-                                    <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${PRIORITY_COLORS[task.priority] || ""}`}>
-                                        {task.priority}
-                                    </Badge>
-                                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                                        {task.category}
-                                    </Badge>
-                                </div>
-
-                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                                    <div className="flex items-center gap-1">
-                                        <User className="h-3 w-3" />
-                                        <Link href={`/contacts/${task.contact_id}`} className="hover:underline">
-                                            {task.contact?.first_name} {task.contact?.last_name}
-                                        </Link>
-                                    </div>
-                                    {task.due_date ? (
-                                        <button
-                                            onClick={() => handleEdit(task)}
-                                            className="flex items-center gap-1 hover:bg-muted px-1.5 py-0.5 rounded transition-colors group"
-                                        >
-                                            <Calendar className="h-3 w-3 group-hover:text-blue-500" />
-                                            <span className="group-hover:text-blue-600 group-hover:underline">
-                                                {new Date(task.due_date).toLocaleDateString()}
-                                            </span>
-                                        </button>
-                                    ) : (
-                                        <button
-                                            onClick={() => handleEdit(task)}
-                                            className="flex items-center gap-1 text-gray-400 hover:bg-muted px-1.5 py-0.5 rounded transition-colors group"
-                                        >
-                                            <Calendar className="h-3 w-3 group-hover:text-amber-500" />
-                                            <span className="group-hover:text-amber-600 group-hover:underline">
-                                                No date
-                                            </span>
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-2">
-                                {task.priority === 'High' && !task.completed && <AlertCircle className="h-4 w-4 text-red-500" />}
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEdit(task)}>
-                                    <Pencil className="h-4 w-4 text-muted-foreground" />
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                ))
-            )}
-        </div>
-    )
-
     return (
         <div className="container mx-auto p-6 space-y-6">
             <div className="flex justify-between items-center">
@@ -228,10 +241,10 @@ export default function TasksPage() {
                     <TabsTrigger value="archive">Archive ({archivedTasks.length})</TabsTrigger>
                 </TabsList>
                 <TabsContent value="active">
-                    <TaskList items={activeTasks} />
+                    <TaskList items={activeTasks} onToggleTask={toggleTask} onEdit={handleEdit} />
                 </TabsContent>
                 <TabsContent value="archive">
-                    <TaskList items={archivedTasks} />
+                    <TaskList items={archivedTasks} onToggleTask={toggleTask} onEdit={handleEdit} />
                 </TabsContent>
             </Tabs>
 

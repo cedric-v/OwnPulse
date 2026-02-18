@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Contact } from "@/types"
 import { createClient } from "@/lib/supabase/client"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { StatusCell } from "@/components/contacts/status-cell"
 import Link from "next/link"
@@ -24,7 +24,7 @@ const groupContacts = (contacts: Contact[]) => {
     STAGES.forEach(stage => groups[stage] = [])
 
     contacts.forEach(contact => {
-        let status = contact.status || "N/A"
+        const status = contact.status || "N/A"
         // Normalize status match
         const match = STAGES.find(s => s.toLowerCase() === status.toLowerCase())
         if (match) {
@@ -44,12 +44,11 @@ export default function PipelinePage() {
     const [currency, setCurrency] = useState("CHF")
     const supabase = createClient()
 
-    useEffect(() => {
-        async function fetchData() {
+    const fetchData = useCallback(async () => {
             const { data: contacts, error } = await supabase
                 .from('contacts')
                 .select('*')
-                .order('created_at', { ascending: false }) // TODO: Maybe order by updated_at?
+                .order('created_at', { ascending: false })
 
             if (!error) {
                 setData(contacts || [])
@@ -59,9 +58,12 @@ export default function PipelinePage() {
             if (settingsData) setCurrency(settingsData.value)
 
             setLoading(false)
-        }
-        fetchData()
-    }, [])
+    }, [supabase])
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        void fetchData()
+    }, [fetchData])
 
     const grouped = groupContacts(data)
 

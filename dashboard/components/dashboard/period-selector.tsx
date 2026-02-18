@@ -2,7 +2,6 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Calendar } from "lucide-react"
-import { createClient } from "@/lib/supabase/client"
 import { useLanguage } from "@/components/i18n/language-context"
 
 export type Period = "30d" | "90d" | "6m" | "12m" | "ytd" | "lastYear" | "all" | "next30d" | "next90d" | "nextYear" | "lastQuarter" | "currentQuarter" | "nextQuarter" | "Q1" | "Q2" | "Q3" | "Q4"

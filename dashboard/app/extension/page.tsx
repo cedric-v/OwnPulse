@@ -71,8 +71,8 @@ export default function ExtensionPage() {
                     </CardHeader>
                     <CardContent>
                         <p className="text-sm text-muted-foreground">
-                            Click the "Puzzle" icon in Chrome and <strong>pin</strong> OwnPulse.
-                            Then, navigate to any LinkedIn profile to see the "Add to OwnPulse" button.
+                            Click the &quot;Puzzle&quot; icon in Chrome and <strong>pin</strong> OwnPulse.
+                            Then, navigate to any LinkedIn profile to see the &quot;Add to OwnPulse&quot; button.
                         </p>
                     </CardContent>
                 </Card>

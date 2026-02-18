@@ -39,13 +39,6 @@ export function ExpensesAnalysis({ expenses, currency }: ExpensesAnalysisProps) 
         }
     })
 
-    const getImportanceLabel = (key: string) => {
-        if (key === 'Mandatory') return t('cfo.mandatory')
-        if (key === 'Important') return t('cfo.important')
-        if (key === 'Optional') return t('cfo.optional')
-        return key
-    }
-
     const getCategoryLabel = (key: string) => {
         const catMap: Record<string, string> = {
             "Logiciels": "software",
@@ -59,7 +52,7 @@ export function ExpensesAnalysis({ expenses, currency }: ExpensesAnalysisProps) 
             "Divers": "others"
         }
         const transKey = catMap[key] || key.toLowerCase()
-        const translated = t(`cfo.${transKey}` as any)
+        const translated = t(`cfo.${transKey}`)
         return translated === `cfo.${transKey}` ? key : translated
     }
 

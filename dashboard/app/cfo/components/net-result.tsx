@@ -18,7 +18,6 @@ interface NetResultProps {
 export function NetResult({ sales, expenses, currency, socialRate, taxRate, targetMonthlySalary, period }: NetResultProps) {
     const { t } = useLanguage()
     const totalSales = sales.reduce((acc, s) => acc + (s.price_ht || 0), 0)
-    const totalExpenses = expenses.reduce((acc, e) => acc + (e.price_ht || 0), 0)
 
     const getMonthCount = () => {
         if (period === "30d") return 1

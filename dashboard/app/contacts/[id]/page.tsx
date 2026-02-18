@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Save, Loader2, Phone, Mail, MapPin, Globe, Linkedin, Check, Building, Pencil } from "lucide-react"
+import { ArrowLeft, Loader2, Phone, Mail, MapPin, Globe, Linkedin, Check, Building, Pencil } from "lucide-react"
 import Link from "next/link"
 import { StatusCell } from "@/components/contacts/status-cell"
 import {
@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/select"
 
 import { Checkbox } from "@/components/ui/checkbox"
-import { Calendar as CalendarIcon, Plus, Tag, AlertCircle, ShoppingCart } from "lucide-react"
+import { Calendar as CalendarIcon, Plus, AlertCircle } from "lucide-react"
 import { NewSaleForm } from "@/app/cfo/components/new-sale-form"
 
 export default function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -54,7 +54,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
     // Task form state
     const [newTaskDesc, setNewTaskDesc] = useState("")
     const [newTaskPriority, setNewTaskPriority] = useState<"Low" | "Medium" | "High">("Medium")
-    const [newTaskCategory, setNewTaskCategory] = useState("Follow-up")
+    const [newTaskCategory] = useState("Follow-up")
     const [newTaskDueDate, setNewTaskDueDate] = useState("")
 
     // Task edit state
@@ -153,7 +153,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
         e.preventDefault()
         if (!newTaskDesc.trim()) return
 
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('tasks')
             .insert({
                 contact_id: id,
@@ -230,8 +230,9 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
             if (error) throw error
 
             router.push('/')
-        } catch (error: any) {
-            alert("Error deleting contact: " + error.message)
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Unknown error"
+            alert("Error deleting contact: " + message)
             setIsDeleting(false)
             setShowDeleteDialog(false)
         }
@@ -525,7 +526,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                         <CardContent>
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label>Canal d'acquisition</Label>
+                                    <Label>Canal d&apos;acquisition</Label>
                                     <Select
                                         value={contact.acquisition_channel || ""}
                                         onValueChange={v => setContact({ ...contact, acquisition_channel: v })}
@@ -656,7 +657,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                     <select
                                         className="text-xs border rounded p-1 h-8"
                                         value={newTaskPriority}
-                                        onChange={e => setNewTaskPriority(e.target.value as any)}
+                                        onChange={e => setNewTaskPriority(e.target.value as Task["priority"])}
                                     >
                                         <option value="Low">Low</option>
                                         <option value="Medium">Medium</option>

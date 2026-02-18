@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useLanguage } from "@/components/i18n/language-context"
 import { Offer, OfferType, OfferActivity, SalesGoal, PaymentTerms } from "@/types"
 import { Button } from "@/components/ui/button"
@@ -10,8 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Checkbox } from "@/components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Card, CardContent } from "@/components/ui/card"
-import { GripVertical, Plus, Trash2, Info } from "lucide-react"
+import { GripVertical, Trash2, Info } from "lucide-react"
 
 interface OfferFormProps {
     offer?: Offer
@@ -54,7 +53,7 @@ export function OfferForm({ offer, onSave, onCancel, currency }: OfferFormProps)
         if (initial.some(g => g.year === currentYear)) return initial
         return [...initial, { year: currentYear, monthly_counts: Array(12).fill(0) }]
     })
-    const [selectedYear, setSelectedYear] = useState(currentYear)
+    const [selectedYear] = useState(currentYear)
 
     // Terms
     const [terms, setTerms] = useState<PaymentTerms>(offer?.payment_terms || {
@@ -250,7 +249,7 @@ export function OfferForm({ offer, onSave, onCancel, currency }: OfferFormProps)
                     <h3 className="text-lg font-semibold text-primary">{t('offers.paymentTerms')}</h3>
                     <RadioGroup
                         value={terms.mode}
-                        onValueChange={(v) => setTerms({ ...terms, mode: v as any })}
+                        onValueChange={(v) => setTerms({ ...terms, mode: v as PaymentTerms["mode"] })}
                         className="space-y-2"
                     >
                         <div className="flex items-center space-x-2">
@@ -285,7 +284,7 @@ export function OfferForm({ offer, onSave, onCancel, currency }: OfferFormProps)
                 </div>
                 <div className="space-y-4">
                     <h3 className="text-lg font-semibold text-primary">{t('offers.paymentDelay')}</h3>
-                    <Select value={terms.delay} onValueChange={(v) => setTerms({ ...terms, delay: v as any })}>
+                    <Select value={terms.delay} onValueChange={(v) => setTerms({ ...terms, delay: v as PaymentTerms["delay"] })}>
                         <SelectTrigger className="bg-slate-50 border-none">
                             <SelectValue />
                         </SelectTrigger>

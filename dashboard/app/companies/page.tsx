@@ -7,10 +7,12 @@ import { Company } from "@/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Building, Search, ExternalLink, Users, Globe, Linkedin, MapPin, Plus } from "lucide-react"
+import { Building, Search, ExternalLink, Users, Globe, Linkedin, MapPin } from "lucide-react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { AddCompanyDialog } from "@/components/companies/add-company-dialog"
+
+type CompanyWithContacts = Company & { contacts?: { id: string }[]; contactCount?: number }
 
 const formatCurrency = (value: number, currency: string) => {
     return new Intl.NumberFormat('fr-CH', {
@@ -20,7 +22,7 @@ const formatCurrency = (value: number, currency: string) => {
 }
 
 export default function CompaniesPage() {
-    const [companies, setCompanies] = useState<(Company & { _count?: { contacts: number } })[]>([])
+    const [companies, setCompanies] = useState<CompanyWithContacts[]>([])
     const [searchQuery, setSearchQuery] = useState("")
     const [loading, setLoading] = useState(true)
     const [currency, setCurrency] = useState("CHF")
@@ -37,7 +39,7 @@ export default function CompaniesPage() {
                 .order('name')
 
             if (!error && data) {
-                const formatted = data.map((c: any) => ({
+                const formatted = (data as CompanyWithContacts[]).map((c) => ({
                     ...c,
                     contactCount: c.contacts?.length || 0
                 }))
@@ -112,7 +114,7 @@ export default function CompaniesPage() {
                                     <div className="flex justify-between items-center text-sm">
                                         <div className="flex items-center gap-2 text-muted-foreground">
                                             <Users className="h-4 w-4" />
-                                            <span>{(company as any).contactCount} Leads</span>
+                                            <span>{company.contactCount || 0} Leads</span>
                                         </div>
                                         <Badge variant="secondary" className="font-bold text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/50">
                                             {formatCurrency(Number(company.value) || 0, currency)}
