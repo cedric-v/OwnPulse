@@ -65,7 +65,7 @@ export const translations = {
         marketing: {
             title: "Marketing Dashboard",
             avgConversion: "Temps moyen de conversion",
-            acquisitionChannels: "Canaux d'acquisition",
+            acquisitionChannels: "Customers Acquisition Channels",
             acquisitionNote: "Répartition des clients par canal sur la période.",
             days: "jours",
             fromContactToClient: "Du premier contact à la conversion",
@@ -284,7 +284,7 @@ export const translations = {
         marketing: {
             title: "Marketing Dashboard",
             avgConversion: "Avg. Conversion Time",
-            acquisitionChannels: "Acquisition Channels",
+            acquisitionChannels: "Customers Acquisition Channels",
             acquisitionNote: "Distribution of customers by channel over the period.",
             days: "days",
             fromContactToClient: "From first contact to conversion",

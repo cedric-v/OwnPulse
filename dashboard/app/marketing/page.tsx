@@ -104,14 +104,31 @@ export default function MarketingPage() {
 
     const filteredSales = sales.filter(s => isWithinPeriod(s.sale_date))
 
-    // 1. Acquisition Channels (Filtered for Customers only & Period)
+    // 1. Acquisition Channels (Driven by Transactions and Customer List)
     const channelCounts: Record<string, number> = {}
-    filteredContacts
-        .filter(c => (c.status || "").toLowerCase() === 'client')
-        .forEach(c => {
+    const wonStatuses = ['client', 'customer', 'closed', 'deal won']
+    const contactIdsWithRecentSales = new Set(filteredSales.map(s => s.contact_id).filter(Boolean))
+
+    const convertedWonContactIds = new Set(
+        filteredContacts
+            .filter(c => {
+                const isWon = wonStatuses.some(status => (c.status || "").toLowerCase().includes(status)) || 
+                              (c.list || "").toLowerCase().includes('customer') ||
+                              (c.list || "").toLowerCase().includes('client')
+                return isWon
+            })
+            .map(c => c.id)
+    )
+
+    const allWonContactIds = new Set([...Array.from(contactIdsWithRecentSales), ...Array.from(convertedWonContactIds)])
+
+    allWonContactIds.forEach(id => {
+        const c = contacts.find(contact => contact.id === id)
+        if (c) {
             const channel = c.acquisition_channel || 'Unknown'
             channelCounts[channel] = (channelCounts[channel] || 0) + 1
-        })
+        }
+    })
     const acquisitionData = Object.entries(channelCounts).map(([name, value]) => ({ name, value }))
 
     // 2. Conversion Time (Based on period)
