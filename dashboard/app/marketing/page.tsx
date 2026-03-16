@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts"
 import { Loader2, Users, Clock } from "lucide-react"
@@ -12,6 +13,7 @@ import { Contact, Sale } from "@/types"
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d']
 
 export default function MarketingPage() {
+    const router = useRouter()
     const { t } = useLanguage()
     const [contacts, setContacts] = useState<Contact[]>([])
     const [sales, setSales] = useState<Sale[]>([])
@@ -285,8 +287,18 @@ export default function MarketingPage() {
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="name" />
                                     <YAxis />
-                                    <RechartsTooltip />
-                                    <Bar dataKey="count" fill="#82ca9d" name="Sales Count" />
+                                    <RechartsTooltip cursor={{ fill: 'transparent' }} />
+                                    <Bar
+                                        dataKey="count"
+                                        fill="#82ca9d"
+                                        name="Sales Count"
+                                        className="cursor-pointer"
+                                        onClick={(data) => {
+                                            if (data && data.name) {
+                                                router.push(`/?list=Customers&offer=${encodeURIComponent(data.name)}`)
+                                            }
+                                        }}
+                                    />
                                 </BarChart>
                             </ResponsiveContainer>
                         </div>

@@ -1,50 +1,56 @@
 
 "use client"
 
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, Suspense } from "react"
 import Link from "next/link"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import { Contact } from "@/types"
 import { columns } from "@/components/contacts/columns"
 import { DataTable } from "@/components/contacts/data-table"
 import { createClient } from "@/lib/supabase/client"
 import { useLanguage } from "@/components/i18n/language-context"
 import { Input } from "@/components/ui/input"
-
-import { Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Download } from "lucide-react"
 import { AddLeadDialog } from "@/components/contacts/add-lead-dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 function HomeContent() {
-  type ContactWithSales = Contact & { sales?: { price_ht: number | null }[] }
+  const router = useRouter()
+  type ContactWithSales = Contact & { sales?: { price_ht: number | null, offer_name: string | null }[] }
 
   const { t } = useLanguage()
   const [data, setData] = useState<Contact[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
+  const [offers, setOffers] = useState<{ name: string }[]>([])
 
   const searchParams = useSearchParams()
   const listFilter = searchParams.get('list')
+  const offerFilter = searchParams.get('offer')
   const supabase = createClient()
 
   const fetchData = useCallback(async () => {
     setLoading(true)
-    const { data: contacts, error } = await supabase
-      .from('contacts')
-      .select('*, sales(price_ht)')
-      .order('created_at', { ascending: false })
+    const [contactsRes, offersRes] = await Promise.all([
+      supabase.from('contacts').select('*, sales(price_ht, offer_name)').order('created_at', { ascending: false }),
+      supabase.from('offers').select('name').order('name')
+    ])
 
-    if (error) {
-      console.error('Error fetching contacts:', error)
-      setError(error.message)
+    if (contactsRes.error) {
+      console.error('Error fetching contacts:', contactsRes.error)
+      setError(contactsRes.error.message)
     } else {
-      const enrichedContacts = ((contacts || []) as ContactWithSales[]).map((c) => ({
+      const enrichedContacts = ((contactsRes.data || []) as ContactWithSales[]).map((c) => ({
         ...c,
         total_sales: (c.sales || []).reduce((acc, s) => acc + (s.price_ht || 0), 0)
       }))
       setData(enrichedContacts)
+    }
+
+    if (offersRes.data) {
+      setOffers(offersRes.data)
     }
     setLoading(false)
   }, [supabase])
@@ -55,6 +61,7 @@ function HomeContent() {
   }, [fetchData])
 
   const filteredData = data.filter(contact => {
+    // 1. List / Status Filter
     if (listFilter) {
       const target = listFilter.toLowerCase().trim().replace(/s$/, '')
       const status = (contact.status || "").toLowerCase().trim()
@@ -70,7 +77,14 @@ function HomeContent() {
       if (!match) return false
     }
 
-    // 2. Search Query
+    // 2. Offer Filter
+    if (offerFilter) {
+      const contactSales = (contact as ContactWithSales).sales || []
+      const hasMatchingOffer = contactSales.some(s => s.offer_name === offerFilter)
+      if (!hasMatchingOffer) return false
+    }
+
+    // 3. Search Query
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       return (
@@ -128,6 +142,16 @@ function HomeContent() {
     document.body.removeChild(link)
   }
 
+  const handleOfferChange = (offer: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    if (offer === "all") {
+      params.delete('offer')
+    } else {
+      params.set('offer', offer)
+    }
+    router.push(`/?${params.toString()}`)
+  }
+
   return (
     <div className="flex-1 space-y-4 p-8 pt-6">
       <div className="flex items-center justify-between space-y-2 mb-6">
@@ -135,6 +159,17 @@ function HomeContent() {
           {listFilter ? t(`sidebar.${listFilter.toLowerCase()}`) : t('sidebar.allLeads')}
         </h1>
         <div className="flex items-center gap-4">
+          <Select value={offerFilter || "all"} onValueChange={handleOfferChange}>
+            <SelectTrigger className="w-64">
+              <SelectValue placeholder={t('common.filterByOffer')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t('common.allOffers')}</SelectItem>
+              {offers.map((o) => (
+                <SelectItem key={o.name} value={o.name}>{o.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Input
             placeholder={t('common.search')}
             value={searchQuery}

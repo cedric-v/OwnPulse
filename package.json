@@ -1,0 +1,12 @@
+{
+  "name": "ownpulse-root",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install && npm install --prefix dashboard",
+    "dev": "npm run dev --prefix dashboard",
+    "build": "npm run build --prefix dashboard",
+    "start": "npm run start --prefix dashboard",
+    "lint": "npm run lint --prefix dashboard"
+  }
+}

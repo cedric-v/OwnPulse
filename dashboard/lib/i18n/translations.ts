@@ -23,6 +23,8 @@ export const translations = {
             downloadExtension: "Télécharger l'extension",
             week: "Semaine",
             optional: "Optionnel",
+            allOffers: "Toutes les offres",
+            filterByOffer: "Filtrer par offre",
         },
         sidebar: {
             dashboard: "Dashboard",
@@ -242,6 +244,8 @@ export const translations = {
             downloadExtension: "Download Extension",
             week: "Week",
             optional: "Optional",
+            allOffers: "All Offers",
+            filterByOffer: "Filter by Offer",
         },
         sidebar: {
             dashboard: "Dashboard",

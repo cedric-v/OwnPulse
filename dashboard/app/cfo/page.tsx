@@ -130,7 +130,7 @@ export default function CFODashboard() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
-                            {filteredSales.reduce((acc, sale) => acc + (sale.price_ht || 0), 0).toLocaleString('fr-CH', { style: 'currency', currency: currency })}
+                            {filteredSales.reduce((acc, sale) => acc + (sale.price_ht || 0), 0).toLocaleString('fr-CH', { style: 'currency', currency: currency, maximumFractionDigits: 0 })}
                         </div>
                     </CardContent>
                 </Card>
@@ -141,7 +141,7 @@ export default function CFODashboard() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">
-                            {filteredExpenses.reduce((acc, exp) => acc + (exp.price_ht || 0), 0).toLocaleString('fr-CH', { style: 'currency', currency: currency })}
+                            {filteredExpenses.reduce((acc, exp) => acc + (exp.price_ht || 0), 0).toLocaleString('fr-CH', { style: 'currency', currency: currency, maximumFractionDigits: 0 })}
                         </div>
                     </CardContent>
                 </Card>
@@ -153,7 +153,7 @@ export default function CFODashboard() {
                     <CardContent>
                         <div className="text-2xl font-bold">
                             {(filteredSales.reduce((acc, s) => acc + (s.price_ht || 0), 0) - filteredExpenses.reduce((acc, e) => acc + (e.price_ht || 0), 0))
-                                .toLocaleString('fr-CH', { style: 'currency', currency: currency })}
+                                .toLocaleString('fr-CH', { style: 'currency', currency: currency, maximumFractionDigits: 0 })}
                         </div>
                     </CardContent>
                 </Card>
