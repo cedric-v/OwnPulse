@@ -18,6 +18,8 @@ create table companies (
   updated_at timestamptz default now()
 );
 
+grant select, insert, update, delete on public.companies to authenticated, service_role;
+
 -- Migration: Create companies from existing contacts
 -- insert into companies (name) 
 -- select distinct company from contacts where company is not null 
@@ -48,6 +50,9 @@ create table contacts (
   updated_at timestamptz default now()
 );
 
+grant select, insert on public.contacts to anon;
+grant select, insert, update, delete on public.contacts to authenticated, service_role;
+
 -- Tasks Table
 create table tasks (
   id uuid primary key default uuid_generate_v4(),
@@ -60,6 +65,8 @@ create table tasks (
   created_at timestamptz default now()
 );
 
+grant select, insert, update, delete on public.tasks to authenticated, service_role;
+
 -- Enable Row Level Security (RLS)
 alter table companies enable row level security;
 alter table contacts enable row level security;
@@ -69,3 +76,5 @@ alter table tasks enable row level security;
 create policy "authenticated_access" on companies for all to authenticated using (true) with check (true);
 create policy "authenticated_access" on contacts for all to authenticated using (true) with check (true);
 create policy "authenticated_access" on tasks for all to authenticated using (true) with check (true);
+create policy "anon_capture_read" on contacts for select to anon using (true);
+create policy "anon_capture_insert" on contacts for insert to anon with check (true);

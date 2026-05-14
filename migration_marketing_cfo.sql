@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS sales (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.sales TO anon, authenticated, service_role;
+
 -- Create expenses table
 CREATE TABLE IF NOT EXISTS expenses (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -30,6 +32,8 @@ CREATE TABLE IF NOT EXISTS expenses (
     date TIMESTAMP WITH TIME ZONE NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.expenses TO anon, authenticated, service_role;
 
 -- Add RLS policies (simple public/anon access for now as per project style)
 ALTER TABLE sales ENABLE ROW LEVEL SECURITY;

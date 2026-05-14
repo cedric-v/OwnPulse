@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Loader2, Phone, Mail, MapPin, Globe, Linkedin, Check, Building, Pencil } from "lucide-react"
+import { ArrowLeft, Loader2, Phone, Mail, MapPin, Globe, ExternalLink, Check, Building, Pencil } from "lucide-react"
 import Link from "next/link"
 import { StatusCell } from "@/components/contacts/status-cell"
 import {
@@ -442,7 +442,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
 
                                 <div className="grid grid-cols-1 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="linkedin_url" className="flex items-center gap-2"><Linkedin className="h-3 w-3" /> LinkedIn Profile</Label>
+                                        <Label htmlFor="linkedin_url" className="flex items-center gap-2"><ExternalLink className="h-3 w-3" /> LinkedIn Profile</Label>
                                         <div className="flex gap-2">
                                             <Input
                                                 id="linkedin_url"
@@ -456,7 +456,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                                         target="_blank"
                                                         rel="noreferrer"
                                                     >
-                                                        <Linkedin className="h-4 w-4" />
+                                                        <ExternalLink className="h-4 w-4" />
                                                     </a>
                                                 </Button>
                                             )}

@@ -5,6 +5,8 @@ CREATE TABLE IF NOT EXISTS acquisition_channels (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.acquisition_channels TO anon, authenticated, service_role;
+
 -- Enable RLS
 ALTER TABLE acquisition_channels ENABLE ROW LEVEL SECURITY;
 

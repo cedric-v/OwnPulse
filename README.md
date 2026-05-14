@@ -48,6 +48,8 @@
 3. Retrieve your `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
 4. *Existing users:* If you are upgrading from a version before Threads/Instagram support, run `migration_social_fields.sql`.
 
+Note: Supabase's Data API no longer exposes newly created `public` tables automatically by default on new projects starting May 30, 2026. Keep explicit `GRANT` statements alongside each `CREATE TABLE` migration.
+
 ### 2. Web App Installation (Local)
 1. Clone the repository.
 2. Go to the dashboard directory: `cd dashboard`.

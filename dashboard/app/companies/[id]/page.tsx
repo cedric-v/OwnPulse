@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Loader2, Globe, Linkedin, MapPin, ExternalLink, Users, Check, Trash2 } from "lucide-react"
+import { ArrowLeft, Loader2, Globe, MapPin, ExternalLink, Users, Check, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
@@ -176,7 +176,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="linkedin" className="flex items-center gap-2"><Linkedin className="h-3 w-3" /> LinkedIn Page</Label>
+                                <Label htmlFor="linkedin" className="flex items-center gap-2"><ExternalLink className="h-3 w-3" /> LinkedIn Page</Label>
                                 <div className="flex gap-2">
                                     <Input
                                         id="linkedin"
@@ -186,7 +186,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                                     />
                                     {company.linkedin_url && (
                                         <Button variant="outline" size="icon" asChild>
-                                            <a href={company.linkedin_url} target="_blank" rel="noreferrer"><Linkedin className="h-4 w-4" /></a>
+                                            <a href={company.linkedin_url} target="_blank" rel="noreferrer"><ExternalLink className="h-4 w-4" /></a>
                                         </Button>
                                     )}
                                 </div>

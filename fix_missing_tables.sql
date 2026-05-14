@@ -10,6 +10,8 @@ CREATE TABLE IF NOT EXISTS settings (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.settings TO anon, authenticated, service_role;
+
 -- Offers table for product/service management
 CREATE TABLE IF NOT EXISTS offers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -18,6 +20,8 @@ CREATE TABLE IF NOT EXISTS offers (
     default_price NUMERIC NOT NULL DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.offers TO anon, authenticated, service_role;
 
 -- Insert default currency if not exists
 INSERT INTO settings (key, value) VALUES ('currency', 'CHF') 

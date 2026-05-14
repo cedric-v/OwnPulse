@@ -5,7 +5,7 @@ import Link from "next/link"
 import { ColumnDef } from "@tanstack/react-table"
 import { Contact } from "@/types"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { MoreHorizontal, Linkedin, Globe, Instagram } from "lucide-react"
+import { MoreHorizontal, Globe, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
@@ -65,7 +65,7 @@ function ActionsCell({
                             if (url) window.open(url, "_blank")
                         }}
                     >
-                        <Linkedin className="mr-2 h-4 w-4" /> Open LinkedIn
+                        <ExternalLink className="mr-2 h-4 w-4" /> Open LinkedIn
                     </DropdownMenuItem>
                     <DropdownMenuItem
                         disabled={!contact.threads_url}
@@ -89,7 +89,7 @@ function ActionsCell({
                             if (url) window.open(url, "_blank")
                         }}
                     >
-                        <Instagram className="mr-2 h-4 w-4" /> Open Instagram
+                        <Globe className="mr-2 h-4 w-4" /> Open Instagram
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem

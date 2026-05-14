@@ -7,7 +7,7 @@ import { Company } from "@/types"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Building, Search, ExternalLink, Users, Globe, Linkedin, MapPin } from "lucide-react"
+import { Building, Search, ExternalLink, Users, Globe, MapPin } from "lucide-react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { AddCompanyDialog } from "@/components/companies/add-company-dialog"
@@ -124,7 +124,7 @@ export default function CompaniesPage() {
                                     <div className="flex gap-2">
                                         {company.linkedin_url && (
                                             <Button variant="outline" size="sm" className="h-8 w-8 p-0" asChild>
-                                                <a href={company.linkedin_url} target="_blank" rel="noreferrer"><Linkedin className="h-3.5 w-3.5" /></a>
+                                                <a href={company.linkedin_url} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5" /></a>
                                             </Button>
                                         )}
                                         {company.website_url && (
