@@ -1,6 +1,6 @@
 # OwnPulse Dashboard
 
-The core management interface for OwnPulse. Built with Next.js for speed, security, and a premium "Vibe" experience.
+The core management interface for OwnPulse. Built with Next.js 16 for speed, security, and a premium "Vibe" experience.
 
 ## 🚀 Getting Started
 
@@ -19,9 +19,17 @@ The core management interface for OwnPulse. Built with Next.js for speed, securi
 3. **Database Schema**:
    Apply the SQL schema found in [../supabase/schema.sql](../supabase/schema.sql) to your Supabase project.
 
+   Note: newly created tables in Supabase `public` schema must include explicit `GRANT` statements if they need to stay accessible through the Data API.
+
 4. **Run Locally**:
    ```bash
    npm run dev
+   ```
+
+5. **Validate Changes**:
+   ```bash
+   npm run lint
+   npm run build
    ```
 
 ## ✨ Premium Features
@@ -35,6 +43,12 @@ The core management interface for OwnPulse. Built with Next.js for speed, securi
 ## 🛡 Security
 
 Data access is controlled via **Supabase Row Level Security (RLS)**. Ensure you have enabled RLS and applied the policies from the schema file before deploying.
+
+## 🔧 Tooling
+
+- Keep `eslint` compatible with `eslint-config-next`.
+- Do not force a newer ESLint major unless `eslint-config-next` supports it cleanly in this project.
+- When upgrading dependencies, prefer a passing `lint` and `build` over adopting every latest major immediately.
 
 ---
 Part of the [OwnPulse](../README.md) project.

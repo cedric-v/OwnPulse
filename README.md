@@ -33,7 +33,7 @@
 - **Runway Analysis:** Know exactly how many months of operation you have left based on current cash flow.
 
 ## 🛠️ Tech Stack
-- **Frontend/Backend:** [Next.js 15](https://nextjs.org/) (App Router, Turbopack)
+- **Frontend/Backend:** [Next.js 16](https://nextjs.org/) (App Router, Turbopack)
 - **Database:** [Supabase](https://supabase.com/) (PostgreSQL, Real-time sync, Row-Level Security)
 - **Styling & Components:** [Tailwind CSS](https://tailwindcss.com/) + [Shadcn UI](https://ui.shadcn.com/)
 - **i18n:** Custom localized experience (FR/EN) with persistent settings.
@@ -69,6 +69,12 @@ Note: Supabase's Data API no longer exposes newly created `public` tables automa
 2. Enable **Developer Mode**.
 3. Click **Load unpacked** and select the `/extension` folder from this repository.
 4. Update the extension's configuration (in `popup.js` or `content.js`) with your Supabase endpoint.
+
+### 4. Tooling Maintenance
+- Keep `eslint` aligned with `eslint-config-next` compatibility, not simply with the latest ESLint major.
+- If a new ESLint major is released before `eslint-config-next` fully supports it, keep the last compatible ESLint major in place.
+- For this project, `npm run lint` must remain green before and after dependency upgrades; if `eslint` and `eslint-config-next` diverge, prefer keeping Next.js tooling compatibility first.
+- Revisit ESLint major upgrades as a dedicated maintenance task after Next.js and `eslint-config-next` have published compatible releases.
 
 ---
 
