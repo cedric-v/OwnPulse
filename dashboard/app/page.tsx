@@ -200,6 +200,7 @@ function HomeContent() {
         <DataTable
           columns={columns}
           data={filteredData}
+          showGlobalFilter={false}
           meta={{
             refreshData: fetchData
           }}

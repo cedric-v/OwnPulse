@@ -33,6 +33,7 @@ interface DataTableProps<TData, TValue> {
     data: TData[]
     meta?: TableMeta<TData>
     mobileRowRenderer?: (row: Row<TData>) => React.ReactNode
+    showGlobalFilter?: boolean
 }
 
 export function DataTable<TData, TValue>({
@@ -40,6 +41,7 @@ export function DataTable<TData, TValue>({
     data,
     meta,
     mobileRowRenderer,
+    showGlobalFilter = true,
 }: DataTableProps<TData, TValue>) {
     const [globalFilter, setGlobalFilter] = React.useState("")
     const [sorting, setSorting] = React.useState<SortingState>([])
@@ -63,14 +65,16 @@ export function DataTable<TData, TValue>({
 
     return (
         <div>
-            <div className="flex items-center py-4">
-                <Input
-                    placeholder="Filtrer..."
-                    value={globalFilter ?? ""}
-                    onChange={(event) => setGlobalFilter(event.target.value)}
-                    className="max-w-sm"
-                />
-            </div>
+            {showGlobalFilter ? (
+                <div className="flex items-center py-4">
+                    <Input
+                        placeholder="Filtrer..."
+                        value={globalFilter ?? ""}
+                        onChange={(event) => setGlobalFilter(event.target.value)}
+                        className="max-w-sm"
+                    />
+                </div>
+            ) : null}
             {mobileRowRenderer ? (
                 <div className="space-y-3 md:hidden">
                     {table.getRowModel().rows?.length ? (
