@@ -24,7 +24,7 @@ type ContactsTableMeta = {
     refreshData?: () => void
 }
 
-function ActionsCell({
+export function ActionsCell({
     contact,
     onRefresh,
 }: {

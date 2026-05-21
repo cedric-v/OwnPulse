@@ -1,7 +1,7 @@
 
 import type { Metadata } from "next";
 import "./globals.css";
-import { Sidebar } from "@/components/sidebar";
+import { MobileSidebar, Sidebar } from "@/components/sidebar";
 import { LanguageProvider } from "@/components/i18n/language-context";
 
 export const metadata: Metadata = {
@@ -17,11 +17,14 @@ export default function RootLayout({
     <html lang="fr">
       <body className="font-sans">
         <LanguageProvider>
-          <div className="flex h-screen bg-slate-50">
-            <Sidebar />
-            <main className="flex-1 overflow-y-auto w-full">
-              {children}
-            </main>
+          <div className="min-h-dvh bg-slate-50">
+            <MobileSidebar />
+            <div className="flex min-h-[calc(100dvh-4rem)] md:min-h-dvh">
+              <Sidebar />
+              <main className="min-w-0 flex-1 overflow-y-auto">
+                {children}
+              </main>
+            </div>
           </div>
         </LanguageProvider>
       </body>

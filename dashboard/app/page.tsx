@@ -7,6 +7,7 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { Contact } from "@/types"
 import { columns } from "@/components/contacts/columns"
 import { DataTable } from "@/components/contacts/data-table"
+import { MobileContactCard } from "@/components/contacts/mobile-contact-card"
 import { createClient } from "@/lib/supabase/client"
 import { useLanguage } from "@/components/i18n/language-context"
 import { Input } from "@/components/ui/input"
@@ -153,14 +154,15 @@ function HomeContent() {
   }
 
   return (
-    <div className="flex-1 space-y-4 p-8 pt-6">
-      <div className="flex items-center justify-between space-y-2 mb-6">
-        <h1 className="text-3xl font-bold tracking-tight">
+    <div className="flex-1 space-y-4 p-4 pt-4 sm:p-6 lg:p-8 lg:pt-6">
+      <div className="mb-6 flex flex-col gap-4">
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
           {listFilter ? t(`sidebar.${listFilter.toLowerCase()}`) : t('sidebar.allLeads')}
         </h1>
-        <div className="flex items-center gap-4">
+        <div className="sticky top-16 z-20 -mx-4 border-y bg-slate-50/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-slate-50/80 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-end">
           <Select value={offerFilter || "all"} onValueChange={handleOfferChange}>
-            <SelectTrigger className="w-64">
+            <SelectTrigger className="w-full sm:w-64">
               <SelectValue placeholder={t('common.filterByOffer')} />
             </SelectTrigger>
             <SelectContent>
@@ -174,14 +176,17 @@ function HomeContent() {
             placeholder={t('common.search')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-80"
+            className="w-full sm:w-80"
           />
-          <Button variant="outline" size="sm" onClick={exportToCSV} className="gap-2">
+          <Button variant="outline" size="sm" onClick={exportToCSV} className="w-full gap-2 sm:w-auto">
             <Download className="h-4 w-4" />
             {t('common.exportCsv') || "Export CSV"}
           </Button>
           <AddLeadDialog />
-          <Link href="/extension" className="text-sm text-blue-500 hover:underline">{t('common.downloadExtension') || "Download Extension"}</Link>
+          <Link href="/extension" className="text-sm text-blue-500 hover:underline sm:ml-1">
+            {t('common.downloadExtension') || "Download Extension"}
+          </Link>
+        </div>
         </div>
       </div>
 
@@ -198,6 +203,12 @@ function HomeContent() {
           meta={{
             refreshData: fetchData
           }}
+          mobileRowRenderer={(row) => (
+            <MobileContactCard
+              contact={row.original}
+              onRefresh={fetchData}
+            />
+          )}
         />
       )}
     </div>

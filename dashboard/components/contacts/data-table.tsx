@@ -4,6 +4,7 @@
 import * as React from "react"
 import {
     ColumnDef,
+    Row,
     TableMeta,
     flexRender,
     getCoreRowModel,
@@ -31,12 +32,14 @@ interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
     meta?: TableMeta<TData>
+    mobileRowRenderer?: (row: Row<TData>) => React.ReactNode
 }
 
 export function DataTable<TData, TValue>({
     columns,
     data,
     meta,
+    mobileRowRenderer,
 }: DataTableProps<TData, TValue>) {
     const [globalFilter, setGlobalFilter] = React.useState("")
     const [sorting, setSorting] = React.useState<SortingState>([])
@@ -62,13 +65,28 @@ export function DataTable<TData, TValue>({
         <div>
             <div className="flex items-center py-4">
                 <Input
-                    placeholder="Filter..."
+                    placeholder="Filtrer..."
                     value={globalFilter ?? ""}
                     onChange={(event) => setGlobalFilter(event.target.value)}
                     className="max-w-sm"
                 />
             </div>
-            <div className="rounded-md border">
+            {mobileRowRenderer ? (
+                <div className="space-y-3 md:hidden">
+                    {table.getRowModel().rows?.length ? (
+                        table.getRowModel().rows.map((row) => (
+                            <React.Fragment key={row.id}>
+                                {mobileRowRenderer(row)}
+                            </React.Fragment>
+                        ))
+                    ) : (
+                        <div className="rounded-md border px-4 py-10 text-center text-sm text-muted-foreground">
+                            Aucun résultat.
+                        </div>
+                    )}
+                </div>
+            ) : null}
+            <div className="hidden rounded-md border md:block">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
@@ -123,26 +141,29 @@ export function DataTable<TData, TValue>({
                                     colSpan={columns.length}
                                     className="h-24 text-center"
                                 >
-                                    No results.
+                                    Aucun résultat.
                                 </TableCell>
                             </TableRow>
                         )}
                     </TableBody>
                 </Table>
             </div>
-            <div className="flex items-center justify-end space-x-2 py-4">
+            <div className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-end sm:space-x-2">
                 <div className="flex-1 text-sm text-muted-foreground">
-                    Page {table.getState().pagination.pageIndex + 1} of{" "}
+                    Page {table.getState().pagination.pageIndex + 1} sur{" "}
                     {table.getPageCount()}
                 </div>
-                <div className="space-x-2">
+                <div className="text-sm text-muted-foreground md:hidden">
+                    {table.getFilteredRowModel().rows.length} résultat{table.getFilteredRowModel().rows.length > 1 ? "s" : ""}
+                </div>
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:space-x-2">
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={() => table.previousPage()}
                         disabled={!table.getCanPreviousPage()}
                     >
-                        Previous
+                        Précédent
                     </Button>
                     <Button
                         variant="outline"
@@ -150,7 +171,7 @@ export function DataTable<TData, TValue>({
                         onClick={() => table.nextPage()}
                         disabled={!table.getCanNextPage()}
                     >
-                        Next
+                        Suivant
                     </Button>
                 </div>
             </div>

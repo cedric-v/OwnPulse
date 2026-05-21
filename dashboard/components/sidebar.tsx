@@ -1,11 +1,20 @@
 
 "use client"
 
+import { Suspense, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
+import {
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
+    SheetTrigger,
+} from "@/components/ui/sheet"
 import {
     Users,
     Kanban,
@@ -18,16 +27,18 @@ import {
     LogOut,
     Building,
     BarChart3,
-    Wallet
+    Wallet,
+    Menu,
 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useLanguage } from "@/components/i18n/language-context"
 
 type SidebarProps = React.HTMLAttributes<HTMLDivElement>
+type SidebarContentProps = SidebarProps & {
+    onNavigate?: () => void
+}
 
-import { Suspense } from "react"
-
-function SidebarContent({ className }: SidebarProps) {
+function SidebarContent({ className, onNavigate }: SidebarContentProps) {
     const pathname = usePathname()
     const router = useRouter()
     const searchParams = useSearchParams()
@@ -37,16 +48,18 @@ function SidebarContent({ className }: SidebarProps) {
 
     const handleLogout = async () => {
         await supabase.auth.signOut()
+        onNavigate?.()
         router.push('/login')
         router.refresh()
     }
 
     const navigateToList = (list: string) => {
+        onNavigate?.()
         router.push(`/?list=${list}`)
     }
 
     return (
-        <div className={cn("pb-12 w-64 border-r min-h-screen bg-gray-50/40 dark:bg-zinc-900/10", className)}>
+        <div className={cn("w-64 min-h-screen overflow-y-auto border-r bg-gray-50/40 pb-12 dark:bg-zinc-900/10", className)}>
             <div className="space-y-4 py-4">
                 <div className="px-4 py-2">
                     <h2 className="mb-2 px-2 text-lg font-semibold tracking-tight">
@@ -54,25 +67,25 @@ function SidebarContent({ className }: SidebarProps) {
                     </h2>
                     <div className="space-y-1">
                         <Button variant={pathname === "/" && !currentList ? "secondary" : "ghost"} className="w-full justify-start" asChild>
-                            <Link href="/">
+                            <Link href="/" onClick={onNavigate}>
                                 <Users className="mr-2 h-4 w-4" />
                                 {t('sidebar.allLeads')}
                             </Link>
                         </Button>
                         <Button variant={pathname === "/tasks" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
-                            <Link href="/tasks">
+                            <Link href="/tasks" onClick={onNavigate}>
                                 <CheckSquare className="mr-2 h-4 w-4" />
                                 {t('sidebar.tasks')}
                             </Link>
                         </Button>
                         <Button variant={pathname === "/pipeline" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
-                            <Link href="/pipeline">
+                            <Link href="/pipeline" onClick={onNavigate}>
                                 <Kanban className="mr-2 h-4 w-4" />
                                 {t('sidebar.pipeline')}
                             </Link>
                         </Button>
                         <Button variant={pathname === "/companies" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
-                            <Link href="/companies">
+                            <Link href="/companies" onClick={onNavigate}>
                                 <Building className="mr-2 h-4 w-4" />
                                 {t('sidebar.companies')}
                             </Link>
@@ -134,19 +147,19 @@ function SidebarContent({ className }: SidebarProps) {
                     </h2>
                     <div className="space-y-1">
                         <Button variant={pathname === "/marketing" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
-                            <Link href="/marketing">
+                            <Link href="/marketing" onClick={onNavigate}>
                                 <BarChart3 className="mr-2 h-4 w-4" />
                                 {t('sidebar.marketing')}
                             </Link>
                         </Button>
                         <Button variant={pathname === "/cfo" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
-                            <Link href="/cfo">
+                            <Link href="/cfo" onClick={onNavigate}>
                                 <Wallet className="mr-2 h-4 w-4" />
                                 {t('sidebar.cfo')}
                             </Link>
                         </Button>
                         <Button variant={pathname === "/offers" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
-                            <Link href="/offers">
+                            <Link href="/offers" onClick={onNavigate}>
                                 <Users className="mr-2 h-4 w-4" />
                                 {t('sidebar.offers')}
                             </Link>
@@ -155,7 +168,7 @@ function SidebarContent({ className }: SidebarProps) {
                 </div>
                 <div className="mt-auto p-4 space-y-2">
                     <Button variant={pathname === "/settings" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
-                        <Link href="/settings">
+                        <Link href="/settings" onClick={onNavigate}>
                             <Settings className="mr-2 h-4 w-4" />
                             {t('sidebar.settings')}
                         </Link>
@@ -172,8 +185,42 @@ function SidebarContent({ className }: SidebarProps) {
 
 export function Sidebar(props: SidebarProps) {
     return (
-        <Suspense fallback={<div className="w-64 border-r min-h-screen bg-gray-50/40" />}>
-            <SidebarContent {...props} />
+        <Suspense fallback={<div className="hidden w-64 min-h-screen border-r bg-gray-50/40 md:block" />}>
+            <div className="hidden md:block">
+                <SidebarContent {...props} />
+            </div>
+        </Suspense>
+    )
+}
+
+export function MobileSidebar() {
+    const [open, setOpen] = useState(false)
+
+    return (
+        <Suspense fallback={<div className="h-16 border-b bg-background/95" />}>
+            <div className="sticky top-0 z-30 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 md:hidden">
+                <div className="flex h-16 items-center justify-between px-4">
+                    <Sheet open={open} onOpenChange={setOpen}>
+                        <SheetTrigger asChild>
+                            <Button variant="outline" size="icon" aria-label="Open navigation menu">
+                                <Menu className="h-5 w-5" />
+                            </Button>
+                        </SheetTrigger>
+                        <SheetContent side="left" className="w-[calc(100vw-3rem)] max-w-xs p-0">
+                            <SheetHeader className="sr-only">
+                                <SheetTitle>Navigation</SheetTitle>
+                                <SheetDescription>Open the main sections of OwnPulse.</SheetDescription>
+                            </SheetHeader>
+                            <SidebarContent
+                                className="h-full min-h-full w-full border-r-0 bg-background pb-6"
+                                onNavigate={() => setOpen(false)}
+                            />
+                        </SheetContent>
+                    </Sheet>
+                    <div className="text-base font-semibold tracking-tight">OwnPulse</div>
+                    <div className="w-9" aria-hidden="true" />
+                </div>
+            </div>
         </Suspense>
     )
 }

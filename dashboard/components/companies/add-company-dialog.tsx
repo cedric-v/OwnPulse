@@ -54,18 +54,18 @@ export function AddCompanyDialog() {
     return (
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-                <Button className="gap-2">
+                <Button className="w-full gap-2 sm:w-auto">
                     <Building className="h-4 w-4" />
-                    Add a Company
+                    Ajouter une entreprise
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Add a New Company</DialogTitle>
+                    <DialogTitle>Ajouter une entreprise</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4 pt-4">
                     <div className="space-y-2">
-                        <Label htmlFor="name">Company Name</Label>
+                        <Label htmlFor="name">Nom de l&apos;entreprise</Label>
                         <Input
                             id="name"
                             value={formData.name}
@@ -75,7 +75,7 @@ export function AddCompanyDialog() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="city">City</Label>
+                        <Label htmlFor="city">Ville</Label>
                         <Input
                             id="city"
                             value={formData.city}
@@ -84,7 +84,7 @@ export function AddCompanyDialog() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="website">Website</Label>
+                        <Label htmlFor="website">Site web</Label>
                         <Input
                             id="website"
                             type="url"
@@ -96,7 +96,7 @@ export function AddCompanyDialog() {
                     <DialogFooter className="pt-4">
                         <Button type="submit" disabled={loading} className="w-full">
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Create Company
+                            Créer l&apos;entreprise
                         </Button>
                     </DialogFooter>
                 </form>
