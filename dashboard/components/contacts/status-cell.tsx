@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
     Select,
     SelectContent,
@@ -17,6 +17,11 @@ export function StatusCell({ contact }: { contact: Contact }) {
     const [status, setStatus] = useState(contact.status)
     const [loading, setLoading] = useState(false)
     const supabase = createClient()
+
+    useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setStatus(contact.status)
+    }, [contact.status])
 
     const handleValueChange = async (value: string) => {
         setStatus(value)
