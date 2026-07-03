@@ -558,6 +558,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                                 type="date"
                                                 value={contact.customer_conversion_date?.slice(0, 10) || ""}
                                                 onChange={e => setContact({ ...contact, customer_conversion_date: e.target.value || null })}
+                                                className={!contact.customer_conversion_date ? "text-transparent" : ""}
                                             />
                                             {!contact.customer_conversion_date && (
                                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
