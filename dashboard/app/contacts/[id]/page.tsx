@@ -553,17 +553,11 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Date devenu client</Label>
-                                        {contact.customer_conversion_date ? (
-                                            <Input
-                                                type="date"
-                                                value={contact.customer_conversion_date.slice(0, 10)}
-                                                onChange={e => setContact({ ...contact, customer_conversion_date: e.target.value || null })}
-                                            />
-                                        ) : (
-                                            <div className="flex h-10 items-center rounded-md border border-input bg-muted/50 px-3 py-2 text-sm text-muted-foreground">
-                                                Pas encore client
-                                            </div>
-                                        )}
+                                        <Input
+                                            type="date"
+                                            value={contact.customer_conversion_date?.slice(0, 10) || ""}
+                                            onChange={e => setContact({ ...contact, customer_conversion_date: e.target.value || null })}
+                                        />
                                     </div>
                                 </div>
 

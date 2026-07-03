@@ -106,6 +106,19 @@ export function NewSaleForm({ onSuccess, defaultContactId, initialData }: NewSal
         if (error) {
             toast({ title: t('common.error'), description: error.message, variant: "destructive" })
         } else {
+            if (!initialData && contactId && contactId !== "none") {
+                const { data: currentContact } = await supabase
+                    .from('contacts')
+                    .select('customer_conversion_date')
+                    .eq('id', contactId)
+                    .single()
+                if (currentContact && !currentContact.customer_conversion_date) {
+                    await supabase
+                        .from('contacts')
+                        .update({ customer_conversion_date: new Date(date).toISOString() })
+                        .eq('id', contactId)
+                }
+            }
             toast({ title: t('common.success'), description: initialData ? "Sale updated successfully" : "Sale recorded successfully" })
             if (!initialData) {
                 setOfferName("")
