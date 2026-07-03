@@ -50,6 +50,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
     const [currency, setCurrency] = useState("CHF")
     const [error, setError] = useState<string | null>(null)
     const [channels, setChannels] = useState<{ id: string, name: string }[]>([])
+    const [isEditingDate, setIsEditingDate] = useState(false)
 
     // Task form state
     const [newTaskDesc, setNewTaskDesc] = useState("")
@@ -553,19 +554,30 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Date devenu client</Label>
-                                        <div className="relative">
+                                        {contact.customer_conversion_date || isEditingDate ? (
                                             <Input
                                                 type="date"
                                                 value={contact.customer_conversion_date?.slice(0, 10) || ""}
-                                                onChange={e => setContact({ ...contact, customer_conversion_date: e.target.value || null })}
-                                                className={!contact.customer_conversion_date ? "text-transparent" : ""}
+                                                onChange={e => {
+                                                    setContact({ ...contact, customer_conversion_date: e.target.value || null })
+                                                    if (!e.target.value) setIsEditingDate(false)
+                                                }}
+                                                onBlur={() => {
+                                                    if (!contact.customer_conversion_date) setIsEditingDate(false)
+                                                }}
+                                                autoFocus={isEditingDate}
                                             />
-                                            {!contact.customer_conversion_date && (
-                                                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
-                                                    Pas encore client
-                                                </span>
-                                            )}
-                                        </div>
+                                        ) : (
+                                            <div
+                                                className="flex h-9 cursor-pointer items-center rounded-md border border-input bg-transparent px-3 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+                                                onClick={() => setIsEditingDate(true)}
+                                                tabIndex={0}
+                                                onKeyDown={e => e.key === 'Enter' && setIsEditingDate(true)}
+                                                role="button"
+                                            >
+                                                Pas encore client
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
