@@ -17,8 +17,10 @@
 
 ## ⏳ Reste à faire (une autre fois)
 
-### 1. Créer `dashboard/.env.local` (prérequis dashboard local)
-Le dashboard ne tourne pas localement sans lui (build échoue).
+### 1. ~~Créer `dashboard/.env.local`~~ ✅ FAIT (03/08/2026)
+Fichier créé avec les valeurs réelles du projet (URL + clé anon publishable), gitignoré. Vérifié : build ✓, `npm run dev` → `/login` HTTP 200 ✓.
+
+Rappel :
 ```bash
 cd dashboard
 cp .env.local.example .env.local
