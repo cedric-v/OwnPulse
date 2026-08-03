@@ -38,7 +38,7 @@ export default {
 };
 
 async function runKeepAlive(env) {
-  const { SUPABASE_URL, SUPABASE_ANON_KEY, KEEPALIVE_TABLE = "contacts" } = env;
+  const { SUPABASE_URL, SUPABASE_ANON_KEY, KEEPALIVE_TABLE = "contact_urls" } = env;
   const results = { restStatus: null, healthStatus: null };
 
   if (!SUPABASE_URL) {

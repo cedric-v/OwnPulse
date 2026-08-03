@@ -37,7 +37,6 @@ function createFloatingButton() {
             }
 
             const profileData = scrapeProfile();
-            console.log('Scraped Data:', profileData);
 
             if (!profileData || (!profileData.first_name && !profileData.instagram_url)) {
                 throw new Error('Failed to scrape meaningful data');
@@ -78,8 +77,6 @@ function scrapeProfile() {
     let avatarUrl = null;
     let platformUrl = url;
 
-    console.log('[OwnPulse] Scraping starting. URL:', url);
-
     // Helper to safely get unique string value
     const getSafeString = (val) => {
         if (typeof val === 'string') return val.trim();
@@ -101,7 +98,6 @@ function scrapeProfile() {
             }
             companyRole = getSafeString(roleEl?.innerText) || 'LinkedIn Profile';
             avatarUrl = avatarEl?.src || null;
-            console.log('[OwnPulse] LinkedIn data found:', { name, companyRole });
 
         } else if (url.includes('threads.net/') || url.includes('threads.com/')) {
             // STRICT THREADS LOGIC - Only runs if threads.net/ is in URL
@@ -217,7 +213,6 @@ function scrapeProfile() {
             status: 'N/A',
             list: 'Prospects'
         };
-        console.log('[OwnPulse] Final scrape result:', finalData);
         return finalData;
 
     } catch (e) {
@@ -239,8 +234,10 @@ async function saveToSupabase(data) {
         throw new Error('Missing Config');
     }
 
-    // Check if contact exists by any social URL
-    const searchUrl = `${SUPABASE_URL}/rest/v1/contacts?or=(linkedin_url.eq.${encodeURIComponent(data.linkedin_url || 'null')},threads_url.eq.${encodeURIComponent(data.threads_url || 'null')},instagram_url.eq.${encodeURIComponent(data.instagram_url || 'null')})`;
+    // Check if contact exists by any social URL.
+    // Queries the minimal `contact_urls` view (RLS hardening): the anonymous
+    // key no longer has read access to the full `contacts` table.
+    const searchUrl = `${SUPABASE_URL}/rest/v1/contact_urls?or=(linkedin_url.eq.${encodeURIComponent(data.linkedin_url || 'null')},threads_url.eq.${encodeURIComponent(data.threads_url || 'null')},instagram_url.eq.${encodeURIComponent(data.instagram_url || 'null')})`;
     const searchRes = await fetch(searchUrl, {
         method: 'GET',
         headers: {
@@ -252,7 +249,6 @@ async function saveToSupabase(data) {
 
     const existing = await searchRes.json();
     if (existing && existing.length > 0) {
-        console.log('Contact already exists, skipping create.');
         // Optional: Update logic here
         return;
     }

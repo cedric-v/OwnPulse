@@ -7,7 +7,7 @@ the Cloudflare free plan (4 tiny requests/day).
 
 ## What it pings (hybrid, belt-and-suspenders)
 
-1. **A real Postgres query via PostgREST** — `GET /rest/v1/contacts?select=id&limit=1`
+1. **A real Postgres query via PostgREST** — `GET /rest/v1/contact_urls?select=id&limit=1`
    with the anon key. This is the conservative, unambiguous "activity" signal:
    it exercises both the REST API and the Postgres engine, which is the safest
    way to be counted as activity by the pause logic.
@@ -30,7 +30,8 @@ npx wrangler@latest deploy
 
 ## Requirements & caveats
 
-- The ping table (`KEEPALIVE_TABLE`, default `contacts`) must exist **and be
+- The ping view (`KEEPALIVE_TABLE`, default `contact_urls` from
+  `hardening_security_rls.sql`) must exist **and be
   exposed to the `anon` role**: new Supabase projects no longer expose `public`
   tables to the Data API by default (since May 30, 2026), so keep the explicit
   `GRANT` statements alongside each `CREATE TABLE`.

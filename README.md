@@ -50,6 +50,11 @@
 
 Note: Supabase's Data API no longer exposes newly created `public` tables automatically by default on new projects starting May 30, 2026. Keep explicit `GRANT` statements alongside each `CREATE TABLE` migration.
 
+**Security hardening (required for GDPR/LPD):** run `hardening_security_rls.sql` once. It revokes anonymous read access to personal data and restricts all financial/config tables to `authenticated` only. Then, in the Supabase dashboard:
+- **Authentication > Providers > Email > "Allow new users to sign up" = OFF** (otherwise anyone can create an account and read all data — RLS grants `authenticated` full access).
+- Enable **2FA/MFA** on your account.
+- Rotate the anon key if it was ever shared outside the extension.
+
 ### 2. Web App Installation (Local)
 1. Clone the repository.
 2. Go to the dashboard directory: `cd dashboard`.
@@ -81,12 +86,21 @@ Note: Supabase's Data API no longer exposes newly created `public` tables automa
 - **Dependabot is disabled**: no `.github/dependabot.yml` exists and GitHub's *Automated security fixes* setting is turned off, so Dependabot will not open PRs.
 - Security-sensitive dependency floors live in `dashboard/package.json` `overrides` (e.g. `next`, `postcss`, `hono`, `@hono/node-server`, `sharp`, `fast-uri`, `body-parser`). When a new advisory affects a transitive dependency, bump the matching override floor to the patched version and verify with `npm audit` (target: `found 0 vulnerabilities`) + `npm run lint` + `npm run build`.
 
-### 5. Keep-Alive (Free Plan Anti-Pause)
+### 5. Security & Privacy (GDPR / LPD)
+
+OwnPulse stores personal data (contacts, notes, finances) and business secrets (offers, rates). Baseline practices:
+- **Data access**: the dashboard talks to Supabase only with the user session (`authenticated` role); RLS is the single enforcement point — keep policies aligned with `hardening_security_rls.sql`. The extension uses the publishable key and is restricted to INSERT + a minimal `contact_urls` view (no read of emails/phones/notes).
+- **No secret keys in the repo**: only publishable keys appear in `extension/content.js`; the `service_role` key must never be committed, used in the browser, or put in the extension.
+- **Env vars**: copy `dashboard/.env.local.example` → `.env.local`; never commit `.env.local` (already gitignored).
+- **HTTP headers**: `dashboard/next.config.ts` sets CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and disables the `X-Powered-By` banner.
+- **Git hygiene**: gitleaks pre-commit hook (`.pre-commit-config.yaml`) blocks secret commits.
+
+### 6. Keep-Alive (Free Plan Anti-Pause)
 
 On the Supabase free plan, projects are **paused after 7 days of inactivity**. A zero-cost **Cloudflare Worker** (`keepalive-worker/`) keeps the project active every 6 hours via cron, fully independent of repo activity and GitHub.
 
 Each run sends two pings (belt-and-suspenders):
-- **A real Postgres query** — `GET /rest/v1/contacts?select=id&limit=1` with the anon key: the unambiguous activity signal (REST API + Postgres engine), i.e. the most conservative guarantee against pausing.
+- **A real Postgres query** — `GET /rest/v1/contact_urls?select=id&limit=1` with the anon key: the unambiguous activity signal (REST API + Postgres engine), i.e. the most conservative guarantee against pausing.
 - **The health endpoint fallback** — `GET /auth/v1/health` (no key): keeps the watcher green even if the table is renamed or its grants change.
 
 **Deploy (one time, ~3 min):**
@@ -98,7 +112,7 @@ Each run sends two pings (belt-and-suspenders):
 
 **Verify:** `curl "https://ownpulse-supabase-keepalive.<your-subdomain>.workers.dev/ping"` → `OK`. Scheduled runs are visible under **Workers & Pages > ownpulse-supabase-keepalive > Logs**.
 
-**Caveat:** the ping table (default `contacts`) must be exposed to `anon` with an explicit `GRANT` — new Supabase projects no longer expose `public` tables to the Data API by default (see AGENTS.md). If you need a different frequency, edit `[triggers] crons` in `keepalive-worker/wrangler.toml` and redeploy.
+**Caveat:** the ping view (default `contact_urls`, from `hardening_security_rls.sql`) must be exposed to `anon` with an explicit `GRANT` — new Supabase projects no longer expose `public` objects to the Data API by default (see AGENTS.md). If you need a different frequency, edit `[triggers] crons` in `keepalive-worker/wrangler.toml` and redeploy.
 
 ---
 

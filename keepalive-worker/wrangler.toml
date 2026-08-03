@@ -22,7 +22,7 @@ compatibility_date = "2024-11-01"
 # Table used by the PostgREST ping. It must exist and be exposed to the
 # `anon` role (explicit GRANT — new Supabase projects no longer expose
 # public tables to the Data API by default).
-KEEPALIVE_TABLE = "contacts"
+KEEPALIVE_TABLE = "contact_urls"
 
 # Ping every 6 hours (free tier supports cron triggers; 7-day pause window).
 [triggers]
