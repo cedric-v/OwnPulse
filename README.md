@@ -33,6 +33,8 @@
 - **Runway Analysis:** Know exactly how many months of operation you have left based on current cash flow.
 
 ## 🛠️ Tech Stack
+
+> 📋 **Sécurité & restes à faire** : voir [SECURITY.md](SECURITY.md) (état vérifié, rotation de clé, test multi-utilisateur, MFA…).
 - **Frontend/Backend:** [Next.js 16](https://nextjs.org/) (App Router, Turbopack)
 - **Database:** [Supabase](https://supabase.com/) (PostgreSQL, Real-time sync, Row-Level Security)
 - **Styling & Components:** [Tailwind CSS](https://tailwindcss.com/) + [Shadcn UI](https://ui.shadcn.com/)
