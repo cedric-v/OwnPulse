@@ -44,14 +44,17 @@
 
 ### 1. Database Setup (Supabase)
 1. Create a free project on [Supabase](https://supabase.com).
-2. Execute the SQL schema found in `/supabase/schema.sql` to initialize your `contacts`, `companies`, and `tasks` tables.
-3. Retrieve your `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
-4. *Existing users:* If you are upgrading from a version before Threads/Instagram support, run `migration_social_fields.sql`.
+2. Execute the SQL schema found in `/supabase/schema.sql` to initialize your `contacts`, `companies`, and `tasks` tables (already security-hardened: RLS owner-scoped, anonymous access limited to `contact_urls` view + `capture_contact` RPC).
+3. Run the incremental migrations in order: `fix_missing_tables.sql`, `migration_social_fields.sql`, `migration_marketing_cfo.sql`, `migration_acquisition_channels.sql`, `migration_offers_enhancement.sql`, `add_tax_social_settings.sql`, `add_vat_setting.sql` (and `supabase/seed_generic.sql` for neutral demo data).
+4. Retrieve your `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
+5. Disable public signup: **Authentication > Providers > Email > "Allow new users to sign up" = OFF**, and enable 2FA/MFA on your account.
+
+⚠️ **Never re-run `schema.sql` or the migrations on an existing project** — they are initialization scripts. Existing projects are updated with `hardening_security_rls.sql` and `hardening_multi_user_rls.sql` instead.
 
 Note: Supabase's Data API no longer exposes newly created `public` tables automatically by default on new projects starting May 30, 2026. Keep explicit `GRANT` statements alongside each `CREATE TABLE` migration.
 
-**Security hardening (required for GDPR/LPD):** run `hardening_security_rls.sql` once. It revokes anonymous read access to personal data and restricts all financial/config tables to `authenticated` only. Then, in the Supabase dashboard:
-- **Authentication > Providers > Email > "Allow new users to sign up" = OFF** (otherwise anyone can create an account and read all data — RLS grants `authenticated` full access).
+**Security hardening (required for GDPR/LPD):** new projects are already hardened by `schema.sql` (see above). *Existing* projects: run `hardening_security_rls.sql` then `hardening_multi_user_rls.sql` once. They revoke anonymous access to personal/financial data, add `user_id` ownership (multi-user), and expose only the minimal `contact_urls` view + `capture_contact` RPC for the extension. Then, in the Supabase dashboard:
+- **Authentication > Providers > Email > "Allow new users to sign up" = OFF** (otherwise anyone can create an account and read all data).
 - Enable **2FA/MFA** on your account.
 - Rotate the anon key if it was ever shared outside the extension.
 

@@ -28,13 +28,14 @@ Always run `npm run lint` and `npm run build` in `dashboard/` after meaningful a
 - The app uses Supabase Data API access through `supabase-js` and direct REST calls from the extension.
 - New tables created in `public` must include explicit `GRANT` statements. Do not rely on default Data API exposure.
 - Keep RLS and grants aligned with actual callers:
-  - dashboard uses `authenticated` and session-backed access
-  - extension currently uses `anon` access for `contacts` reads/inserts
+  - dashboard uses `authenticated` and session-backed access, scoped by `user_id` (multi-user ready)
+  - extension uses `anon` access limited to the `contact_urls` view (URL dedup) and the `capture_contact` RPC (whitelisted insert)
+- `schema.sql` is a **hardened bootstrap for new projects only** — never re-run it on an existing project (its older versions re-opened anonymous access). Existing projects use `hardening_security_rls.sql` + `hardening_multi_user_rls.sql`.
 - When changing schema or access patterns, update both SQL and documentation.
 
 ## Extension Rules
-- `extension/content.js` currently calls `/rest/v1/contacts` directly with the publishable key.
-- Do not tighten `contacts` access without checking extension behavior on a fresh Supabase project.
+- `extension/content.js` calls `/rest/v1/contact_urls` for dedup and `/rest/v1/rpc/capture_contact` for inserts, with the publishable key.
+- Anonymous access is intentionally locked down: no direct SELECT/INSERT on `contacts` with the anon key (personal data exposure risk). Keep this invariant — any future change must preserve the extension flow via `contact_urls` + `capture_contact`.
 - Prefer a server-mediated or authenticated extension flow for future hardening, but do not partially migrate it without updating the full path.
 
 ## Tooling Policy

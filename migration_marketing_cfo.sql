@@ -4,7 +4,7 @@ ALTER TABLE contacts ADD COLUMN IF NOT EXISTS first_contact_date TIMESTAMP WITH 
 ALTER TABLE contacts ADD COLUMN IF NOT EXISTS customer_conversion_date TIMESTAMP WITH TIME ZONE;
 ALTER TABLE contacts ADD COLUMN IF NOT EXISTS offers_purchased JSONB DEFAULT '[]'::JSONB;
 
--- Create sales table
+-- Create sales table (financial data — owner-scoped)
 CREATE TABLE IF NOT EXISTS sales (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     offer_name TEXT NOT NULL,
@@ -15,12 +15,13 @@ CREATE TABLE IF NOT EXISTS sales (
     payment_terms TEXT,
     payment_delay TEXT,
     contact_id UUID REFERENCES contacts(id),
+    user_id UUID REFERENCES auth.users(id) DEFAULT auth.uid(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.sales TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.sales TO authenticated, service_role;
 
--- Create expenses table
+-- Create expenses table (financial data — owner-scoped)
 CREATE TABLE IF NOT EXISTS expenses (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     description TEXT NOT NULL,
@@ -30,21 +31,34 @@ CREATE TABLE IF NOT EXISTS expenses (
     vat_rate NUMERIC NOT NULL DEFAULT 0,
     payment_frequency TEXT,
     date TIMESTAMP WITH TIME ZONE NOT NULL,
+    user_id UUID REFERENCES auth.users(id) DEFAULT auth.uid(),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON public.expenses TO anon, authenticated, service_role;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.expenses TO authenticated, service_role;
 
--- Add RLS policies (simple public/anon access for now as per project style)
+-- RLS
 ALTER TABLE sales ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Enable read access for all users" ON sales FOR SELECT USING (true);
-CREATE POLICY "Enable insert access for all users" ON sales FOR INSERT WITH CHECK (true);
-CREATE POLICY "Enable update access for all users" ON sales FOR UPDATE USING (true);
-CREATE POLICY "Enable delete access for all users" ON sales FOR DELETE USING (true);
+-- Owner-scoped policies (idempotent; drops legacy "for all users" policies)
+DROP POLICY IF EXISTS "Enable read access for all users" ON sales;
+DROP POLICY IF EXISTS "Enable insert access for all users" ON sales;
+DROP POLICY IF EXISTS "Enable update access for all users" ON sales;
+DROP POLICY IF EXISTS "Enable delete access for all users" ON sales;
+DROP POLICY IF EXISTS "Enable read access for all users" ON expenses;
+DROP POLICY IF EXISTS "Enable insert access for all users" ON expenses;
+DROP POLICY IF EXISTS "Enable update access for all users" ON expenses;
+DROP POLICY IF EXISTS "Enable delete access for all users" ON expenses;
 
-CREATE POLICY "Enable read access for all users" ON expenses FOR SELECT USING (true);
-CREATE POLICY "Enable insert access for all users" ON expenses FOR INSERT WITH CHECK (true);
-CREATE POLICY "Enable update access for all users" ON expenses FOR UPDATE USING (true);
-CREATE POLICY "Enable delete access for all users" ON expenses FOR DELETE USING (true);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'sales' AND policyname = 'owner_full_access') THEN
+        CREATE POLICY "owner_full_access" ON sales FOR ALL TO authenticated
+            USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE schemaname = 'public' AND tablename = 'expenses' AND policyname = 'owner_full_access') THEN
+        CREATE POLICY "owner_full_access" ON expenses FOR ALL TO authenticated
+            USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+    END IF;
+END $$;
