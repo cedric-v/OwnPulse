@@ -108,8 +108,20 @@ drop policy if exists "Enable update access for all users" on public.expenses;
 drop policy if exists "Enable delete access for all users" on public.expenses;
 
 -- ----------------------------------------------------------------------------
--- 5) user-scoped policies
+-- 5) user-scoped policies (drop first so the script is re-runnable)
 -- ----------------------------------------------------------------------------
+drop policy if exists "owner_or_unclaimed_select" on public.contacts;
+drop policy if exists "owner_or_unclaimed_insert" on public.contacts;
+drop policy if exists "owner_claim_update" on public.contacts;
+drop policy if exists "owner_or_unclaimed_delete" on public.contacts;
+drop policy if exists "owner_full_access" on public.companies;
+drop policy if exists "owner_full_access" on public.tasks;
+drop policy if exists "owner_full_access" on public.settings;
+drop policy if exists "owner_full_access" on public.offers;
+drop policy if exists "owner_full_access" on public.acquisition_channels;
+drop policy if exists "owner_full_access" on public.sales;
+drop policy if exists "owner_full_access" on public.expenses;
+
 create policy "owner_or_unclaimed_select" on public.contacts
   for select to authenticated using (user_id = auth.uid() or user_id is null);
 create policy "owner_or_unclaimed_insert" on public.contacts

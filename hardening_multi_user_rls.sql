@@ -30,6 +30,10 @@ drop policy if exists "authenticated_access" on public.contacts;
 drop policy if exists "authenticated_full_access" on public.contacts;
 drop policy if exists "anon_capture_read" on public.contacts;
 drop policy if exists "anon_capture_insert" on public.contacts;
+drop policy if exists "owner_or_unclaimed_select" on public.contacts;
+drop policy if exists "owner_or_unclaimed_insert" on public.contacts;
+drop policy if exists "owner_claim_update" on public.contacts;
+drop policy if exists "owner_or_unclaimed_delete" on public.contacts;
 
 create policy "owner_or_unclaimed_select" on public.contacts
   for select to authenticated using (user_id = auth.uid() or user_id is null);
@@ -94,6 +98,8 @@ drop policy if exists "authenticated_access" on public.companies;
 drop policy if exists "authenticated_access" on public.tasks;
 drop policy if exists "authenticated_full_access" on public.companies;
 drop policy if exists "authenticated_full_access" on public.tasks;
+drop policy if exists "owner_full_access" on public.companies;
+drop policy if exists "owner_full_access" on public.tasks;
 
 create policy "owner_full_access" on public.companies for all to authenticated
   using (user_id = auth.uid()) with check (user_id = auth.uid());
@@ -129,6 +135,11 @@ drop policy if exists "authenticated_full_access" on public.offers;
 drop policy if exists "authenticated_full_access" on public.acquisition_channels;
 drop policy if exists "authenticated_full_access" on public.sales;
 drop policy if exists "authenticated_full_access" on public.expenses;
+drop policy if exists "owner_full_access" on public.settings;
+drop policy if exists "owner_full_access" on public.offers;
+drop policy if exists "owner_full_access" on public.acquisition_channels;
+drop policy if exists "owner_full_access" on public.sales;
+drop policy if exists "owner_full_access" on public.expenses;
 
 create policy "owner_full_access" on public.settings
   for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
