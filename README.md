@@ -76,6 +76,11 @@ Note: Supabase's Data API no longer exposes newly created `public` tables automa
 - For this project, `npm run lint` must remain green before and after dependency upgrades; if `eslint` and `eslint-config-next` diverge, prefer keeping Next.js tooling compatibility first.
 - Revisit ESLint major upgrades as a dedicated maintenance task after Next.js and `eslint-config-next` have published compatible releases.
 
+**Dependency & security bots:**
+- **[Renovate](https://github.com/apps/renovate) is the only dependency bot** on this repo (`renovate.json` at the repo root). It handles both regular updates and security-related bumps (GitHub Security Advisories), as `config:recommended` keeps it active across all manifests.
+- **Dependabot is disabled**: no `.github/dependabot.yml` exists and GitHub's *Automated security fixes* setting is turned off, so Dependabot will not open PRs.
+- Security-sensitive dependency floors live in `dashboard/package.json` `overrides` (e.g. `next`, `postcss`, `hono`, `@hono/node-server`, `sharp`, `fast-uri`, `body-parser`). When a new advisory affects a transitive dependency, bump the matching override floor to the patched version and verify with `npm audit` (target: `found 0 vulnerabilities`) + `npm run lint` + `npm run build`.
+
 ### 5. Keep-Alive (Free Plan Anti-Pause)
 
 On the Supabase free plan, projects are **paused after 7 days of inactivity**. A zero-cost **Cloudflare Worker** (`keepalive-worker/`) keeps the project active every 6 hours via cron, fully independent of repo activity and GitHub.
