@@ -13,7 +13,9 @@
 -- ----------------------------------------------------------------------------
 -- 1) contacts — anonymous read/direct-write disabled, view only
 -- ----------------------------------------------------------------------------
-revoke select, insert, update, delete on public.contacts from anon;
+-- revoke ALL (not just DML) to also clear REFERENCES/TRIGGER/TRUNCATE
+-- left by Supabase default privileges
+revoke all on public.contacts from anon;
 revoke select, insert, update, delete on public.contacts from public;
 
 drop policy if exists "anon_capture_read" on public.contacts;
