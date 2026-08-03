@@ -253,17 +253,19 @@ async function saveToSupabase(data) {
         return;
     }
 
-    // Create new contact
-    const createUrl = `${SUPABASE_URL}/rest/v1/contacts`;
+    // Create new contact via the whitelisted capture RPC (RLS hardening):
+    // anonymous callers can no longer INSERT directly into `contacts`.
+    // The function only accepts whitelisted fields and returns the new id.
+    const createUrl = `${SUPABASE_URL}/rest/v1/rpc/capture_contact`;
     const res = await fetch(createUrl, {
         method: 'POST',
         headers: {
             'apikey': SUPABASE_KEY,
             'Authorization': `Bearer ${SUPABASE_KEY}`,
             'Content-Type': 'application/json',
-            'Prefer': 'return=minimal'
+            'Prefer': 'return=representation'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify({ p_payload: data })
     });
 
     if (!res.ok) {

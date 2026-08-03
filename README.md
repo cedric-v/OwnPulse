@@ -89,7 +89,8 @@ Note: Supabase's Data API no longer exposes newly created `public` tables automa
 ### 5. Security & Privacy (GDPR / LPD)
 
 OwnPulse stores personal data (contacts, notes, finances) and business secrets (offers, rates). Baseline practices:
-- **Data access**: the dashboard talks to Supabase only with the user session (`authenticated` role); RLS is the single enforcement point — keep policies aligned with `hardening_security_rls.sql`. The extension uses the publishable key and is restricted to INSERT + a minimal `contact_urls` view (no read of emails/phones/notes).
+- **Data access**: the dashboard talks to Supabase only with the user session (`authenticated` role); RLS is the single enforcement point — keep policies aligned with `hardening_security_rls.sql`. The extension uses the publishable key and is restricted to the `capture_contact` RPC (whitelisted INSERT) + a minimal `contact_urls` view (no read of emails/phones/notes).
+- **Multi-user**: if more than one account will ever use the app, run `hardening_multi_user_rls.sql` — every row gets a `user_id`, all tables are scoped to `auth.uid()`, and anonymous captures land as "unclaimed" contacts that the first editor claims. Current data is backfilled to the first created user.
 - **No secret keys in the repo**: only publishable keys appear in `extension/content.js`; the `service_role` key must never be committed, used in the browser, or put in the extension.
 - **Env vars**: copy `dashboard/.env.local.example` → `.env.local`; never commit `.env.local` (already gitignored).
 - **HTTP headers**: `dashboard/next.config.ts` sets CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and disables the `X-Powered-By` banner.
