@@ -25,11 +25,14 @@ cp .env.local.example .env.local
 # puis remplir avec les valeurs : Supabase > Project Settings > API
 ```
 
-### 2. Redéployer le worker keep-alive (ping → `contact_urls`)
-Le code poussé ping la vue `contact_urls` (grant anon), mais le worker **déployé** ping encore `contacts` → il reçoit 401 et survit grâce au fallback health. À redéployer pour un ping 200 propre :
+### 2. ~~Redéployer le worker keep-alive (ping → `contact_urls`)~~ ✅ FAIT (03/08/2026)
+Worker déployé : `https://ownpulse-supabase-keepalive.cedric-0bf.workers.dev` — `PostgREST ping` et `Health ping` vérifiés en **200** via logs. Au passage, le fallback health a été corrigé : Supabase exige le header `apikey` même sur `/auth/v1/health` (le « zero-key » documenté n'a jamais fonctionné).
+
+Rappel pour un futur redeploy :
 ```bash
 cd keepalive-worker
 npx wrangler login
+# secrets déjà en place (SUPABASE_URL, SUPABASE_ANON_KEY) — conservés au redeploy
 echo "https://qleflestlmwvgicyebey.supabase.co" | npx wrangler secret put SUPABASE_URL
 echo "TA_CLE_ANON" | npx wrangler secret put SUPABASE_ANON_KEY
 npx wrangler deploy

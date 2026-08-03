@@ -2,8 +2,8 @@
 #
 # Keeps the free-tier Supabase project from being paused (7-day inactivity
 # policy). Each cron run executes a real Postgres-backed query on the
-# `contacts` table (unambiguous activity) with the health endpoint as a
-# zero-key fallback — see src/index.js.
+# `contact_urls` view (unambiguous activity) with the health endpoint as a
+# second signal — see src/index.js.
 #
 # Deploy:
 #   cd keepalive-worker
@@ -19,9 +19,9 @@ main = "src/index.js"
 compatibility_date = "2024-11-01"
 
 [vars]
-# Table used by the PostgREST ping. It must exist and be exposed to the
+# View used by the PostgREST ping. It must exist and be exposed to the
 # `anon` role (explicit GRANT — new Supabase projects no longer expose
-# public tables to the Data API by default).
+# public objects to the Data API by default). See hardening_security_rls.sql.
 KEEPALIVE_TABLE = "contact_urls"
 
 # Ping every 6 hours (free tier supports cron triggers; 7-day pause window).

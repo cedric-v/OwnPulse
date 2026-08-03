@@ -11,8 +11,10 @@ the Cloudflare free plan (4 tiny requests/day).
    with the anon key. This is the conservative, unambiguous "activity" signal:
    it exercises both the REST API and the Postgres engine, which is the safest
    way to be counted as activity by the pause logic.
-2. **The health endpoint** — `GET /auth/v1/health` (no key), as a fallback so
-   the watcher stays green even if the table is renamed or its grants change.
+2. **The health endpoint** — `GET /auth/v1/health` with the publishable key
+   header (Supabase requires it, despite the endpoint being auth-less): a
+   second signal so the watcher stays green even if the table/view is renamed
+   or its grants change.
 
 ## Deploy
 

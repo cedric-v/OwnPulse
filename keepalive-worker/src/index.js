@@ -4,8 +4,9 @@
 // from being paused (7-day inactivity policy). Each run sends:
 //   1. A real Postgres-backed query via PostgREST — the conservative,
 //      unambiguous "activity" signal (API + database engine).
-//   2. The unauthenticated health endpoint — zero-key fallback so the
-//      watcher stays green even if the table is renamed or its grants change.
+//   2. The health endpoint — fallback signal (publishable key header required
+//      by Supabase), so the watcher stays green even if the table/view is
+//      renamed or its grants change.
 //
 // Secrets (set with `wrangler secret put`): SUPABASE_URL, SUPABASE_ANON_KEY
 // Manual verification: curl "https://<worker>.workers.dev/ping" → OK
@@ -69,9 +70,12 @@ async function runKeepAlive(env) {
     console.warn("SUPABASE_ANON_KEY not set — skipping the PostgREST ping, health endpoint only.");
   }
 
-  // 2) Health endpoint fallback (no key required).
+  // 2) Health endpoint fallback.
+  //    Supabase requires the publishable key even on /auth/v1/health (no key
+  //    → 401), so send it when available. Still a useful second signal.
   try {
-    const res = await fetch(`${SUPABASE_URL}${HEALTH_PATH}`);
+    const headers = SUPABASE_ANON_KEY ? { apikey: SUPABASE_ANON_KEY } : {};
+    const res = await fetch(`${SUPABASE_URL}${HEALTH_PATH}`, { headers });
     results.healthStatus = res.status;
     console.log(`Health ping → HTTP ${res.status}`);
     await res.text();

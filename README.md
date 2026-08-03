@@ -107,7 +107,7 @@ On the Supabase free plan, projects are **paused after 7 days of inactivity**. A
 
 Each run sends two pings (belt-and-suspenders):
 - **A real Postgres query** — `GET /rest/v1/contact_urls?select=id&limit=1` with the anon key: the unambiguous activity signal (REST API + Postgres engine), i.e. the most conservative guarantee against pausing.
-- **The health endpoint fallback** — `GET /auth/v1/health` (no key): keeps the watcher green even if the table is renamed or its grants change.
+- **The health endpoint fallback** — `GET /auth/v1/health` with the publishable key header (Supabase requires it): keeps the watcher green even if the table/view is renamed or its grants change.
 
 **Deploy (one time, ~3 min):** paste each line separately:
 1. `cd keepalive-worker`
