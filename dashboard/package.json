@@ -29,7 +29,7 @@
       "path-to-regexp": "^8.4.2"
     },
     "micromatch": {
-      "picomatch": "^2.3.2"
+      "picomatch": "^4.0.0"
     },
     "tinyglobby": {
       "picomatch": "^4.0.4"
