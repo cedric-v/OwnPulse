@@ -107,12 +107,14 @@ Each run sends two pings (belt-and-suspenders):
 - **A real Postgres query** — `GET /rest/v1/contact_urls?select=id&limit=1` with the anon key: the unambiguous activity signal (REST API + Postgres engine), i.e. the most conservative guarantee against pausing.
 - **The health endpoint fallback** — `GET /auth/v1/health` (no key): keeps the watcher green even if the table is renamed or its grants change.
 
-**Deploy (one time, ~3 min):**
+**Deploy (one time, ~3 min):** paste each line separately:
 1. `cd keepalive-worker`
-2. `npx wrangler@latest login` — authorize your Cloudflare account.
-3. `npx wrangler@latest secret put SUPABASE_URL` — enter `https://<project-ref>.supabase.co` (no trailing slash).
-4. `npx wrangler@latest secret put SUPABASE_ANON_KEY` — publishable anon key (Supabase dashboard > API).
-5. `npx wrangler@latest deploy` — deploys the worker and registers the cron trigger.
+2. `npx --yes wrangler@latest login` — authorize your Cloudflare account.
+3. `echo "https://<project-ref>.supabase.co" | npx --yes wrangler@latest secret put SUPABASE_URL` — replace the URL (no trailing slash).
+4. `echo "<publishable-anon-key>" | npx --yes wrangler@latest secret put SUPABASE_ANON_KEY` — anon key from Supabase dashboard > API.
+5. `npx --yes wrangler@latest deploy` — deploys the worker and registers the cron trigger.
+
+The `echo "..." |` form skips wrangler's interactive prompt, so the block is safe to copy-paste (inline `#` comments break interactive shells).
 
 **Verify:** `curl "https://ownpulse-supabase-keepalive.<your-subdomain>.workers.dev/ping"` → `OK`. Scheduled runs are visible under **Workers & Pages > ownpulse-supabase-keepalive > Logs**.
 

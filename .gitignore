@@ -36,3 +36,6 @@ extension/icons/ (if empty)
 
 # Local scripts
 scripts/
+
+# Cloudflare wrangler (local cache/account state)
+.wrangler/

@@ -31,6 +31,7 @@ Always run `npm run lint` and `npm run build` in `dashboard/` after meaningful a
   - dashboard uses `authenticated` and session-backed access, scoped by `user_id` (multi-user ready)
   - extension uses `anon` access limited to the `contact_urls` view (URL dedup) and the `capture_contact` RPC (whitelisted insert)
 - `schema.sql` is a **hardened bootstrap for new projects only** — never re-run it on an existing project (its older versions re-opened anonymous access). Existing projects use `hardening_security_rls.sql` + `hardening_multi_user_rls.sql`.
+- The anti-pause watchdog (`keepalive-worker/`, Cloudflare cron) pings `contact_urls` via the anon key. Keep an explicit `GRANT SELECT ON contact_urls TO anon` — if that grant is removed or the view is renamed, the keep-alive falls back to `/auth/v1/health` and logs the 404.
 - When changing schema or access patterns, update both SQL and documentation.
 
 ## Extension Rules

@@ -16,17 +16,25 @@ the Cloudflare free plan (4 tiny requests/day).
 
 ## Deploy
 
+Paste each line separately in your terminal (the `echo |` form avoids the
+interactive prompt — inline `#` comments are not treated as comments by
+interactive shells):
+
 ```bash
 cd keepalive-worker
-npx wrangler@latest login
-npx wrangler@latest secret put SUPABASE_URL        # https://<project-ref>.supabase.co (no trailing slash)
-npx wrangler@latest secret put SUPABASE_ANON_KEY   # publishable anon key (Supabase dashboard > API)
-npx wrangler@latest deploy
+npx --yes wrangler@latest login
+
+echo "https://<project-ref>.supabase.co" | npx --yes wrangler@latest secret put SUPABASE_URL
+
+echo "<publishable-anon-key>" | npx --yes wrangler@latest secret put SUPABASE_ANON_KEY
+
+npx --yes wrangler@latest deploy
 ```
 
 > Both values are stored as encrypted Cloudflare secrets, never in the repo.
 > The anon key is a publishable key (it already lives in the Chrome
-> extension), so this is not a security risk.
+> extension), so this is not a security risk. The `.wrangler/` local cache
+> created by wrangler is gitignored.
 
 ## Requirements & caveats
 
