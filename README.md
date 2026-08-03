@@ -76,6 +76,25 @@ Note: Supabase's Data API no longer exposes newly created `public` tables automa
 - For this project, `npm run lint` must remain green before and after dependency upgrades; if `eslint` and `eslint-config-next` diverge, prefer keeping Next.js tooling compatibility first.
 - Revisit ESLint major upgrades as a dedicated maintenance task after Next.js and `eslint-config-next` have published compatible releases.
 
+### 5. Keep-Alive (Free Plan Anti-Pause)
+
+On the Supabase free plan, projects are **paused after 7 days of inactivity**. A zero-cost **Cloudflare Worker** (`keepalive-worker/`) keeps the project active every 6 hours via cron, fully independent of repo activity and GitHub.
+
+Each run sends two pings (belt-and-suspenders):
+- **A real Postgres query** — `GET /rest/v1/contacts?select=id&limit=1` with the anon key: the unambiguous activity signal (REST API + Postgres engine), i.e. the most conservative guarantee against pausing.
+- **The health endpoint fallback** — `GET /auth/v1/health` (no key): keeps the watcher green even if the table is renamed or its grants change.
+
+**Deploy (one time, ~3 min):**
+1. `cd keepalive-worker`
+2. `npx wrangler@latest login` — authorize your Cloudflare account.
+3. `npx wrangler@latest secret put SUPABASE_URL` — enter `https://<project-ref>.supabase.co` (no trailing slash).
+4. `npx wrangler@latest secret put SUPABASE_ANON_KEY` — publishable anon key (Supabase dashboard > API).
+5. `npx wrangler@latest deploy` — deploys the worker and registers the cron trigger.
+
+**Verify:** `curl "https://ownpulse-supabase-keepalive.<your-subdomain>.workers.dev/ping"` → `OK`. Scheduled runs are visible under **Workers & Pages > ownpulse-supabase-keepalive > Logs**.
+
+**Caveat:** the ping table (default `contacts`) must be exposed to `anon` with an explicit `GRANT` — new Supabase projects no longer expose `public` tables to the Data API by default (see AGENTS.md). If you need a different frequency, edit `[triggers] crons` in `keepalive-worker/wrangler.toml` and redeploy.
+
 ---
 
 ## 📊 How it works

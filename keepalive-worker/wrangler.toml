@@ -1,0 +1,29 @@
+# Cloudflare Worker config — Supabase keep-alive.
+#
+# Keeps the free-tier Supabase project from being paused (7-day inactivity
+# policy). Each cron run executes a real Postgres-backed query on the
+# `contacts` table (unambiguous activity) with the health endpoint as a
+# zero-key fallback — see src/index.js.
+#
+# Deploy:
+#   cd keepalive-worker
+#   npx wrangler@latest login
+#   npx wrangler@latest secret put SUPABASE_URL        # https://<project-ref>.supabase.co (no trailing slash)
+#   npx wrangler@latest secret put SUPABASE_ANON_KEY   # publishable anon key (Supabase dashboard > API)
+#   npx wrangler@latest deploy
+#
+# Verify: curl "https://ownpulse-supabase-keepalive.<your-subdomain>.workers.dev/ping" → OK
+
+name = "ownpulse-supabase-keepalive"
+main = "src/index.js"
+compatibility_date = "2024-11-01"
+
+[vars]
+# Table used by the PostgREST ping. It must exist and be exposed to the
+# `anon` role (explicit GRANT — new Supabase projects no longer expose
+# public tables to the Data API by default).
+KEEPALIVE_TABLE = "contacts"
+
+# Ping every 6 hours (free tier supports cron triggers; 7-day pause window).
+[triggers]
+crons = ["0 */6 * * *"]
