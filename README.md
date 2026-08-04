@@ -47,7 +47,7 @@
 ### 1. Database Setup (Supabase)
 1. Create a free project on [Supabase](https://supabase.com).
 2. Execute the SQL schema found in `/supabase/schema.sql` to initialize your `contacts`, `companies`, and `tasks` tables (already security-hardened: RLS owner-scoped, anonymous access limited to `contact_urls` view + `capture_contact` RPC).
-3. Run the incremental migrations in order: `fix_missing_tables.sql`, `migration_social_fields.sql`, `migration_marketing_cfo.sql`, `migration_acquisition_channels.sql`, `migration_offers_enhancement.sql`, `add_tax_social_settings.sql`, `add_vat_setting.sql`, `migration_sales_company_link.sql` (and `supabase/seed_generic.sql` for neutral demo data).
+3. Run the incremental migrations in order: `fix_missing_tables.sql`, `migration_social_fields.sql`, `migration_marketing_cfo.sql`, `migration_acquisition_channels.sql`, `migration_offers_enhancement.sql`, `add_tax_social_settings.sql`, `add_vat_setting.sql`, `migration_sales_company_link.sql`, `migration_sales_quantity_decimal.sql` (and `supabase/seed_generic.sql` for neutral demo data).
 4. Retrieve your `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
 5. Disable public signup: **Authentication > Providers > Email > "Allow new users to sign up" = OFF**, and enable 2FA/MFA on your account.
 
