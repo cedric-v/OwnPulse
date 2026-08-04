@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { useLanguage } from "@/components/i18n/language-context"
-import { Sale, Expense } from "@/types"
+import { Sale, Expense, Offer } from "@/types"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { DollarSign, TrendingDown, Target, Wallet } from "lucide-react"
@@ -20,6 +20,7 @@ export default function CFODashboard() {
     const { t } = useLanguage()
     const [sales, setSales] = useState<Sale[]>([])
     const [expenses, setExpenses] = useState<Expense[]>([])
+    const [offers, setOffers] = useState<Offer[]>([])
     const [currency, setCurrency] = useState("CHF")
     const [period, setPeriod] = useState<Period>("12m")
     const [socialRate, setSocialRate] = useState(45)
@@ -31,9 +32,11 @@ export default function CFODashboard() {
     const fetchFinancials = useCallback(async () => {
         const salesRes = await supabase.from('sales').select('*, contacts(first_name, last_name), companies(name)').order('created_at', { ascending: false })
         const expensesRes = await supabase.from('expenses').select('*').order('created_at', { ascending: false })
+        const offersRes = await supabase.from('offers').select('*').order('name')
 
         if (salesRes.data) setSales(salesRes.data as Sale[])
         if (expensesRes.data) setExpenses(expensesRes.data as Expense[])
+        if (offersRes.data) setOffers(offersRes.data as Offer[])
 
         const { data: currencyData } = await supabase.from('settings').select('value').eq('key', 'currency').single()
         if (currencyData) setCurrency(currencyData.value)
@@ -112,6 +115,18 @@ export default function CFODashboard() {
 
     const filteredSales = sales.filter(s => isWithinPeriod(s.sale_date))
     const filteredExpenses = expenses.filter(e => isWithinPeriod(e.created_at))
+
+    // Revenue goal gauge (annual goal from offers' sales_goals, same logic as Offers dashboard)
+    const currentYear = new Date().getFullYear()
+    const revenueInPeriod = filteredSales.reduce((acc, sale) => acc + ((sale.price_ht || 0) * (sale.quantity || 1)), 0)
+    const revenueGoal = offers.reduce((sum, offer) => {
+        const goal = offer.sales_goals?.find(g => g.year === currentYear)
+        if (!goal) return sum
+        const totalQtyGoal = goal.monthly_counts.reduce((a, b) => a + b, 0)
+        return sum + (totalQtyGoal * offer.default_price)
+    }, 0)
+    const revenueProgress = revenueGoal > 0 ? (revenueInPeriod / revenueGoal) * 100 : 0
+    const gaugeArcLength = Math.PI * 80 // half-circle, radius 80
 
     const periodLabel = t(`periods.${period}`)
 
@@ -193,8 +208,49 @@ export default function CFODashboard() {
                             <CardHeader>
                                 <CardTitle>{t('cfo.revenueGoal')}</CardTitle>
                             </CardHeader>
-                            <CardContent className="pl-2">
-                                <div className="flex justify-center items-center h-[200px] text-muted-foreground">Gauge Chart Here</div>
+                            <CardContent className="pl-2 flex flex-col items-center gap-3">
+                                <svg viewBox="0 0 200 115" className="w-56 h-32">
+                                    <path
+                                        d="M 20 100 A 80 80 0 0 1 180 100"
+                                        fill="none"
+                                        strokeWidth="14"
+                                        strokeLinecap="round"
+                                        className="stroke-slate-200 dark:stroke-slate-800"
+                                    />
+                                    <path
+                                        d="M 20 100 A 80 80 0 0 1 180 100"
+                                        fill="none"
+                                        strokeWidth="14"
+                                        strokeLinecap="round"
+                                        className="stroke-indigo-500"
+                                        strokeDasharray={`${(Math.min(revenueProgress, 100) / 100) * gaugeArcLength} ${gaugeArcLength}`}
+                                    />
+                                    <text
+                                        x="100"
+                                        y="88"
+                                        textAnchor="middle"
+                                        className="fill-current text-3xl font-bold text-slate-900 dark:text-slate-100"
+                                    >
+                                        {Math.round(revenueProgress)}%
+                                    </text>
+                                </svg>
+                                <div className="flex items-center gap-8 text-sm">
+                                    <div className="text-center">
+                                        <div className="text-xs text-muted-foreground">{t('cfo.achievedRevenue')}</div>
+                                        <div className="font-semibold">
+                                            {revenueInPeriod.toLocaleString('fr-CH', { style: 'currency', currency: currency, maximumFractionDigits: 0 })}
+                                        </div>
+                                    </div>
+                                    <div className="text-center">
+                                        <div className="text-xs text-muted-foreground">{t('cfo.revenueGoal')}</div>
+                                        <div className="font-semibold">
+                                            {revenueGoal.toLocaleString('fr-CH', { style: 'currency', currency: currency, maximumFractionDigits: 0 })}
+                                        </div>
+                                    </div>
+                                </div>
+                                {revenueGoal === 0 && (
+                                    <p className="text-xs text-muted-foreground italic">{t('cfo.noRevenueGoal')}</p>
+                                )}
                             </CardContent>
                         </Card>
                         <Card className="col-span-3">
