@@ -226,6 +226,13 @@ export const translations = {
             addSale: "Ajouter une vente",
             noSales: "Aucune vente enregistrée pour ce contact.",
             totalSales: "Total des ventes",
+        },
+        companies: {
+            totalSales: "Total ventes",
+            sortBy: "Trier par",
+            sortName: "Nom",
+            sortValue: "Valeur potentielle",
+            sortLeads: "Nombre de leads",
         }
     },
     en: {
@@ -453,6 +460,13 @@ export const translations = {
             addSale: "Add Sale",
             noSales: "No sales recorded for this contact.",
             totalSales: "Total Sales",
+        },
+        companies: {
+            totalSales: "Total Sales",
+            sortBy: "Sort by",
+            sortName: "Name",
+            sortValue: "Potential Value",
+            sortLeads: "Number of leads",
         }
     }
 };

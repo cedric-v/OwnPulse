@@ -8,12 +8,14 @@ import { useLanguage } from "@/components/i18n/language-context"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Building, Search, ExternalLink, Users, Globe, MapPin } from "lucide-react"
+import { Building, Search, ExternalLink, Users, Globe, MapPin, ArrowUp, ArrowDown } from "lucide-react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { AddCompanyDialog } from "@/components/companies/add-company-dialog"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
-type CompanyWithContacts = Company & { contacts?: { id: string }[]; contactCount?: number }
+type CompanyWithContacts = Company & { contacts?: { id: string }[]; contactCount?: number; totalSales?: number }
+type CompanySortField = "name" | "totalSales" | "value" | "leads"
 
 const formatCurrency = (value: number, currency: string) => {
     return new Intl.NumberFormat('fr-CH', {
@@ -27,23 +29,31 @@ export default function CompaniesPage() {
     const [searchQuery, setSearchQuery] = useState("")
     const [loading, setLoading] = useState(true)
     const [currency, setCurrency] = useState("CHF")
+    const [sortBy, setSortBy] = useState<CompanySortField>("name")
+    const [sortDir, setSortDir] = useState<"asc" | "desc">("asc")
     const supabase = createClient()
     const { t } = useLanguage()
 
     useEffect(() => {
         async function fetchData() {
             setLoading(true)
-            // Fetch companies and join with contacts to get counts if possible, 
-            // or just fetch companies and then fetch counts.
-            const { data, error } = await supabase
-                .from('companies')
-                .select('*, contacts(id)')
-                .order('name')
+            const [companiesRes, salesRes] = await Promise.all([
+                supabase.from('companies').select('*, contacts(id)').order('name'),
+                supabase.from('sales').select('company_id, price_ht, quantity')
+            ])
 
-            if (!error && data) {
-                const formatted = (data as CompanyWithContacts[]).map((c) => ({
+            // Aggregate total sales (price_ht × quantity) per company
+            const salesByCompany: Record<string, number> = {}
+            ;(salesRes.data || []).forEach((s: { company_id: string | null; price_ht: number | null; quantity: number | null }) => {
+                if (!s.company_id) return
+                salesByCompany[s.company_id] = (salesByCompany[s.company_id] || 0) + ((s.price_ht || 0) * (s.quantity || 1))
+            })
+
+            if (!companiesRes.error && companiesRes.data) {
+                const formatted = (companiesRes.data as CompanyWithContacts[]).map((c) => ({
                     ...c,
-                    contactCount: c.contacts?.length || 0
+                    contactCount: c.contacts?.length || 0,
+                    totalSales: salesByCompany[c.id] || 0
                 }))
                 setCompanies(formatted)
             }
@@ -62,13 +72,48 @@ export default function CompaniesPage() {
         c.notes?.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
+    const handleSortChange = (value: string) => {
+        const field = value as CompanySortField
+        setSortBy(field)
+        // Default direction: ascending for name, descending for numeric fields
+        setSortDir(field === "name" ? "asc" : "desc")
+    }
+
+    const sortedCompanies = [...filteredCompanies].sort((a, b) => {
+        const dir = sortDir === "asc" ? 1 : -1
+        let cmp = 0
+        switch (sortBy) {
+            case "name": cmp = (a.name || "").localeCompare(b.name || "", undefined, { sensitivity: "base" }); break
+            case "totalSales": cmp = (a.totalSales || 0) - (b.totalSales || 0); break
+            case "value": cmp = (Number(a.value) || 0) - (Number(b.value) || 0); break
+            case "leads": cmp = (a.contactCount || 0) - (b.contactCount || 0); break
+        }
+        return cmp * dir
+    })
+
     return (
         <div className="container mx-auto space-y-6 p-4 sm:p-6">
             <div className="flex flex-col gap-4">
                 <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">{t("sidebar.companies")}</h1>
                 <div className="sticky top-16 z-20 -mx-4 border-y bg-slate-50/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-slate-50/80 sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:px-0 sm:py-0">
                     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                        <AddCompanyDialog />
+                        <div className="flex items-center gap-2">
+                            <AddCompanyDialog />
+                            <Select value={sortBy} onValueChange={handleSortChange}>
+                                <SelectTrigger className="w-auto gap-2">
+                                    <SelectValue placeholder={t("companies.sortBy")} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="name">{t("companies.sortName")}</SelectItem>
+                                    <SelectItem value="totalSales">{t("companies.totalSales")}</SelectItem>
+                                    <SelectItem value="value">{t("companies.sortValue")}</SelectItem>
+                                    <SelectItem value="leads">{t("companies.sortLeads")}</SelectItem>
+                                </SelectContent>
+                            </Select>
+                            <Button variant="outline" size="icon" onClick={() => setSortDir(d => d === "asc" ? "desc" : "asc")} aria-label="Toggle sort direction">
+                                {sortDir === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+                            </Button>
+                        </div>
                         <div className="relative w-full sm:w-auto">
                             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                             <Input
@@ -86,7 +131,7 @@ export default function CompaniesPage() {
                 <div className="flex justify-center p-12">Chargement des entreprises...</div>
             ) : (
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
-                    {filteredCompanies.map(company => (
+                    {sortedCompanies.map(company => (
                         <Card key={company.id} className="hover:shadow-md transition-shadow group">
                             <CardHeader className="pb-2">
                                 <div className="flex items-start justify-between gap-3">
@@ -123,6 +168,13 @@ export default function CompaniesPage() {
                                         <Badge variant="secondary" className="font-bold text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800/50">
                                             {formatCurrency(Number(company.value) || 0, currency)}
                                         </Badge>
+                                    </div>
+
+                                    <div className="flex justify-between items-center text-sm">
+                                        <span className="text-muted-foreground">{t("companies.totalSales")}</span>
+                                        <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                                            {formatCurrency(company.totalSales || 0, currency)}
+                                        </span>
                                     </div>
 
                                     <div className="flex flex-wrap gap-2">
