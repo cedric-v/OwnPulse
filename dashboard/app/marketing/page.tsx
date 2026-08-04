@@ -17,6 +17,7 @@ export default function MarketingPage() {
     const { t } = useLanguage()
     const [contacts, setContacts] = useState<Contact[]>([])
     const [sales, setSales] = useState<Sale[]>([])
+    const [currency, setCurrency] = useState("CHF")
     const [loading, setLoading] = useState(true)
     const [period, setPeriod] = useState<Period>("12m")
 
@@ -25,13 +26,15 @@ export default function MarketingPage() {
     useEffect(() => {
         async function fetchData() {
             setLoading(true)
-            const [contactsRes, salesRes] = await Promise.all([
+            const [contactsRes, salesRes, currencyRes] = await Promise.all([
                 supabase.from('contacts').select('*'),
-                supabase.from('sales').select('*')
+                supabase.from('sales').select('*'),
+                supabase.from('settings').select('value').eq('key', 'currency').single()
             ])
 
             if (contactsRes.data) setContacts(contactsRes.data as Contact[])
             if (salesRes.data) setSales(salesRes.data as Sale[])
+            if (currencyRes.data) setCurrency(currencyRes.data.value)
             setLoading(false)
         }
         fetchData()
@@ -149,16 +152,16 @@ export default function MarketingPage() {
     })
     const avgConversionTime = convertedCount > 0 ? Math.round(totalConversionDays / convertedCount) : 0
 
-    // 3. Top Selling Offers (Aggregated from Sales table & Period)
-    const offerCounts: Record<string, number> = {}
+    // 3. Top 5 Offers by Revenue (price_ht × quantity over the period)
+    const offerRevenue: Record<string, number> = {}
     filteredSales.forEach(s => {
         const name = s.offer_name || 'Unknown Offer'
-        const count = s.quantity || 1
-        offerCounts[name] = (offerCounts[name] || 0) + count
+        const revenue = (s.price_ht || 0) * (s.quantity || 1)
+        offerRevenue[name] = (offerRevenue[name] || 0) + revenue
     })
-    const offersData = Object.entries(offerCounts)
-        .map(([name, count]) => ({ name, count }))
-        .sort((a, b) => b.count - a.count)
+    const offersData = Object.entries(offerRevenue)
+        .map(([name, revenue]) => ({ name, revenue: Math.round(revenue) }))
+        .sort((a, b) => b.revenue - a.revenue)
         .slice(0, 5)
 
     // 4. Retention Rate (Based on real sales data)
@@ -286,12 +289,15 @@ export default function MarketingPage() {
                                 <BarChart data={offersData}>
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="name" />
-                                    <YAxis />
-                                    <RechartsTooltip cursor={{ fill: 'transparent' }} />
+                                    <YAxis tickFormatter={(v) => v.toLocaleString('fr-CH')} />
+                                    <RechartsTooltip
+                                        cursor={{ fill: 'transparent' }}
+                                        formatter={(value) => Number(value).toLocaleString('fr-CH', { style: 'currency', currency: currency, maximumFractionDigits: 0 })}
+                                    />
                                     <Bar
-                                        dataKey="count"
+                                        dataKey="revenue"
                                         fill="#82ca9d"
-                                        name="Sales Count"
+                                        name="Revenue"
                                         className="cursor-pointer"
                                         onClick={(data) => {
                                             if (data && data.name) {
