@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 function HomeContent() {
   const router = useRouter()
-  type ContactWithSales = Contact & { sales?: { price_ht: number | null, offer_name: string | null }[] }
+  type ContactWithSales = Contact & { sales?: { price_ht: number | null, quantity: number | null, offer_name: string | null }[] }
 
   const { t } = useLanguage()
   const [data, setData] = useState<Contact[]>([])
@@ -35,7 +35,7 @@ function HomeContent() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     const [contactsRes, offersRes] = await Promise.all([
-      supabase.from('contacts').select('*, sales(price_ht, offer_name)').order('created_at', { ascending: false }),
+      supabase.from('contacts').select('*, sales(price_ht, quantity, offer_name)').order('created_at', { ascending: false }),
       supabase.from('offers').select('name').order('name')
     ])
 
@@ -45,7 +45,7 @@ function HomeContent() {
     } else {
       const enrichedContacts = ((contactsRes.data || []) as ContactWithSales[]).map((c) => ({
         ...c,
-        total_sales: (c.sales || []).reduce((acc, s) => acc + (s.price_ht || 0), 0)
+        total_sales: (c.sales || []).reduce((acc, s) => acc + ((s.price_ht || 0) * (s.quantity || 1)), 0)
       }))
       setData(enrichedContacts)
     }

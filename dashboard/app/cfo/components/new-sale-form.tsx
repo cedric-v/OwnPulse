@@ -103,7 +103,7 @@ export function NewSaleForm({ onSuccess, defaultContactId, defaultCompanyId, ini
             sale_date: date,
             price_ht: parseFloat(price),
             vat_rate: parseFloat(vat),
-            quantity: parseInt(quantity),
+            quantity: parseFloat(quantity) || 1,
             payment_terms: paymentTerms === "staggered"
                 ? `${staggeredValue}% commande / solde fin`
                 : paymentTerms === "installments"
@@ -207,7 +207,7 @@ export function NewSaleForm({ onSuccess, defaultContactId, defaultCompanyId, ini
                 </div>
                 <div className="space-y-2">
                     <Label>{t('cfo.quantity')}</Label>
-                    <Input type="number" value={quantity} onChange={e => setQuantity(e.target.value)} />
+                    <Input type="number" step="0.01" min="0" value={quantity} onChange={e => setQuantity(e.target.value)} />
                 </div>
             </div>
 

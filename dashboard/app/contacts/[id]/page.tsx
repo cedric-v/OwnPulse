@@ -632,7 +632,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                                     </div>
                                                 </div>
                                                 <div className="flex flex-col items-end">
-                                                    <span className="font-bold">{sale.price_ht.toLocaleString('fr-CH', { style: 'currency', currency: currency })}</span>
+                                                    <span className="font-bold">{((sale.price_ht || 0) * (sale.quantity || 1)).toLocaleString('fr-CH', { style: 'currency', currency: currency })}</span>
                                                     <span className="text-[10px] text-muted-foreground">Qty: {sale.quantity}</span>
                                                 </div>
                                             </div>

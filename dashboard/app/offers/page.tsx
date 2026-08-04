@@ -100,7 +100,7 @@ export default function OffersPage() {
     // --- KPIs Calculations ---
 
     // 1. Revenue
-    const totalRevenue = filteredSales.reduce((sum, sale) => sum + (sale.price_ht || 0), 0)
+    const totalRevenue = filteredSales.reduce((sum, sale) => sum + ((sale.price_ht || 0) * (sale.quantity || 1)), 0)
 
     // 2. Goal (Sum of goals for the current year, proportionate? No, usually absolute goal for the year)
     // The screenshot shows "objectif de 4 500 €". This seems to be the SUM of all offer goals.

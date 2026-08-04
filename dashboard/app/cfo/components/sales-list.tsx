@@ -52,7 +52,7 @@ export function SalesList({ sales, currency }: SalesListProps) {
                                 </TableCell>
                                 <TableCell>{sale.quantity}</TableCell>
                                 <TableCell className="text-right">
-                                    {sale.price_ht.toLocaleString('fr-CH', { style: 'currency', currency: currency })}
+                                    {((sale.price_ht || 0) * (sale.quantity || 1)).toLocaleString('fr-CH', { style: 'currency', currency: currency })}
                                 </TableCell>
                             </TableRow>
                         ))

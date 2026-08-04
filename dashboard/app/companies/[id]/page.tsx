@@ -294,7 +294,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                                     </div>
                                     <div className="text-right shrink-0">
                                         <Badge variant="secondary" className="text-[10px] h-5">
-                                            {formatCurrency(Number(sale.price_ht) || 0, currency)}
+                                            {formatCurrency((Number(sale.price_ht) || 0) * (sale.quantity || 1), currency)}
                                         </Badge>
                                     </div>
                                 </div>
@@ -321,7 +321,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                             <div className="flex justify-between items-center text-sm font-medium">
                                 <span>Recorded Revenue</span>
                                 <span className="text-emerald-600 dark:text-emerald-400">
-                                    {formatCurrency(sales.reduce((sum, s) => sum + (Number(s.price_ht) || 0), 0), currency)}
+                                    {formatCurrency(sales.reduce((sum, s) => sum + ((Number(s.price_ht) || 0) * (s.quantity || 1)), 0), currency)}
                                 </span>
                             </div>
                         </CardContent>
