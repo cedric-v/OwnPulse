@@ -1,7 +1,8 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { createClient } from "@/lib/supabase/client"
+import { useSearchParams } from "next/navigation"
 import { useLanguage } from "@/components/i18n/language-context"
 import { Language } from "@/lib/i18n/translations"
 import { Offer, AcquisitionChannel } from "@/types"
@@ -17,11 +18,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { OfferForm } from "./components/offer-form"
 
-export default function SettingsPage() {
+function SettingsContent() {
     const { toast } = useToast()
     const { t, language: currentLanguage, setLanguage } = useLanguage()
+    const searchParams = useSearchParams()
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
+    const [activeTab, setActiveTab] = useState("general")
     const [currency, setCurrency] = useState("CHF")
     const [vatRate, setVatRate] = useState("8.1")
     const [socialRate, setSocialRate] = useState("45")
@@ -64,6 +67,27 @@ export default function SettingsPage() {
         }
         loadSettings()
     }, [supabase])
+
+    // Land on the tab requested via ?tab= (e.g. "Nouvelle offre" from /offers)
+    useEffect(() => {
+        const tab = searchParams.get("tab")
+        if (tab && ["general", "finance", "offers", "channels"].includes(tab)) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setActiveTab(tab)
+        }
+    }, [searchParams])
+
+    // Open the offer edit dialog when arriving via ?edit=<offerId>
+    useEffect(() => {
+        const editId = searchParams.get("edit")
+        if (!editId || loading) return
+        const offer = offers.find(o => o.id === editId)
+        if (offer) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setEditingOffer(offer)
+            setIsOfferDialogOpen(true)
+        }
+    }, [searchParams, offers, loading])
 
     const saveSettings = async () => {
         setSaving(true)
@@ -203,7 +227,7 @@ export default function SettingsPage() {
         <div className="container mx-auto p-6 space-y-6">
             <h1 className="text-3xl font-bold tracking-tight">{t('settings.title')}</h1>
 
-            <Tabs defaultValue="general" className="w-full">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList>
                     <TabsTrigger value="general">{t('common.general')}</TabsTrigger>
                     <TabsTrigger value="finance">{t('settings.finance')}</TabsTrigger>
@@ -469,5 +493,13 @@ export default function SettingsPage() {
                 </TabsContent>
             </Tabs>
         </div>
+    )
+}
+
+export default function SettingsPage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center p-12"><Loader2 className="animate-spin h-8 w-8" /></div>}>
+            <SettingsContent />
+        </Suspense>
     )
 }
