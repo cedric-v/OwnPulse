@@ -44,7 +44,11 @@ export function SalesList({ sales, currency }: SalesListProps) {
                                 <TableCell>{new Date(sale.sale_date).toLocaleDateString()}</TableCell>
                                 <TableCell className="font-medium">{sale.offer_name}</TableCell>
                                 <TableCell>
-                                    {sale.contacts ? `${sale.contacts.first_name || ""} ${sale.contacts.last_name || ""}` : "-"}
+                                    {sale.companies?.name
+                                        ? <span>{sale.companies.name}{sale.contacts ? ` · ${sale.contacts.first_name || ""} ${sale.contacts.last_name || ""}` : ""}</span>
+                                        : sale.contacts
+                                            ? `${sale.contacts.first_name || ""} ${sale.contacts.last_name || ""}`
+                                            : "-"}
                                 </TableCell>
                                 <TableCell>{sale.quantity}</TableCell>
                                 <TableCell className="text-right">

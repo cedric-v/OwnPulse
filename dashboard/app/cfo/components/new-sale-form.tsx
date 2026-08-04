@@ -13,15 +13,17 @@ import { Offer, Sale } from "@/types"
 interface NewSaleFormProps {
     onSuccess: () => void
     defaultContactId?: string
+    defaultCompanyId?: string
     initialData?: Sale | null
 }
 
 import { useLanguage } from "@/components/i18n/language-context"
 
-export function NewSaleForm({ onSuccess, defaultContactId, initialData }: NewSaleFormProps) {
+export function NewSaleForm({ onSuccess, defaultContactId, defaultCompanyId, initialData }: NewSaleFormProps) {
     const { t } = useLanguage()
     const [loading, setLoading] = useState(false)
-    const [contacts, setContacts] = useState<{ id: string, first_name: string | null, last_name: string | null }[]>([])
+    const [contacts, setContacts] = useState<{ id: string, first_name: string | null, last_name: string | null, company_id: string | null }[]>([])
+    const [companies, setCompanies] = useState<{ id: string, name: string }[]>([])
     const [offers, setOffers] = useState<Offer[]>([])
     const [currency, setCurrency] = useState("CHF")
     const { toast } = useToast()
@@ -43,6 +45,7 @@ export function NewSaleForm({ onSuccess, defaultContactId, initialData }: NewSal
     )
     const [paymentDelay, setPaymentDelay] = useState(initialData?.payment_delay || "immediat")
     const [contactId, setContactId] = useState(initialData?.contact_id || defaultContactId || "")
+    const [companyId, setCompanyId] = useState(initialData?.company_id || defaultCompanyId || "")
     const [staggeredValue, setStaggeredValue] = useState(
         initialTerms.includes("% commande / solde fin") ? initialTerms.split("%")[0] : "50"
     )
@@ -54,13 +57,15 @@ export function NewSaleForm({ onSuccess, defaultContactId, initialData }: NewSal
 
     useEffect(() => {
         async function fetchData() {
-            const [contactsRes, offersRes, currencyRes, vatRes] = await Promise.all([
-                supabase.from('contacts').select('id, first_name, last_name').order('last_name'),
+            const [contactsRes, companiesRes, offersRes, currencyRes, vatRes] = await Promise.all([
+                supabase.from('contacts').select('id, first_name, last_name, company_id').order('last_name'),
+                supabase.from('companies').select('id, name').order('name'),
                 supabase.from('offers').select('*').order('name'),
                 supabase.from('settings').select('value').eq('key', 'currency').single(),
                 supabase.from('settings').select('value').eq('key', 'vat_rate').single()
             ])
-            if (contactsRes.data) setContacts(contactsRes.data as { id: string, first_name: string | null, last_name: string | null }[])
+            if (contactsRes.data) setContacts(contactsRes.data as { id: string, first_name: string | null, last_name: string | null, company_id: string | null }[])
+            if (companiesRes.data) setCompanies(companiesRes.data as { id: string, name: string }[])
             if (offersRes.data) setOffers(offersRes.data as Offer[])
             if (currencyRes.data) setCurrency(currencyRes.data.value)
 
@@ -75,6 +80,17 @@ export function NewSaleForm({ onSuccess, defaultContactId, initialData }: NewSal
         const selectedOffer = offers.find(o => o.name === name)
         if (selectedOffer) {
             setPrice(selectedOffer.default_price.toString())
+        }
+    }
+
+    const handleCompanyChange = (value: string) => {
+        setCompanyId(value)
+        // Reset the contact if it does not belong to the newly selected company
+        if (value && value !== "none") {
+            const selectedContact = contacts.find(c => c.id === contactId)
+            if (selectedContact && selectedContact.company_id !== value) {
+                setContactId("")
+            }
         }
     }
 
@@ -94,7 +110,8 @@ export function NewSaleForm({ onSuccess, defaultContactId, initialData }: NewSal
                     ? `Échelonné ${installmentsValue} mois`
                     : paymentTerms,
             payment_delay: paymentDelay,
-            contact_id: contactId === "none" ? null : (contactId || null)
+            contact_id: contactId === "none" ? null : (contactId || null),
+            company_id: companyId === "none" ? null : (companyId || null)
         }
 
         const query = initialData
@@ -150,16 +167,31 @@ export function NewSaleForm({ onSuccess, defaultContactId, initialData }: NewSal
             </div>
 
             <div className="space-y-2">
+                <Label>{t('cfo.company')}</Label>
+                <Select onValueChange={handleCompanyChange} value={companyId}>
+                    <SelectTrigger><SelectValue placeholder={t('cfo.associateCompany')} /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="none">{t('common.all')}</SelectItem>
+                        {companies.map(c => (
+                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <div className="space-y-2">
                 <Label>{t('cfo.client')}</Label>
                 <Select onValueChange={setContactId} value={contactId}>
                     <SelectTrigger><SelectValue placeholder={t('cfo.associateContact')} /></SelectTrigger>
                     <SelectContent>
                         <SelectItem value="none">{t('common.all')}</SelectItem>
-                        {contacts.map(c => (
-                            <SelectItem key={c.id} value={c.id}>
-                                {c.first_name} {c.last_name}
-                            </SelectItem>
-                        ))}
+                        {contacts
+                            .filter(c => !companyId || companyId === "none" || c.company_id === companyId)
+                            .map(c => (
+                                <SelectItem key={c.id} value={c.id}>
+                                    {c.first_name} {c.last_name}
+                                </SelectItem>
+                            ))}
                     </SelectContent>
                 </Select>
             </div>

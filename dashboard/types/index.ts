@@ -48,8 +48,10 @@ export type Sale = {
     payment_terms: string | null
     payment_delay: string | null
     contact_id: string | null
+    company_id: string | null
     created_at: string
     contacts?: { first_name: string | null, last_name: string | null } | null
+    companies?: { name: string | null } | null
 }
 
 export type Expense = {

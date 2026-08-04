@@ -29,7 +29,7 @@ export default function CFODashboard() {
     const supabase = createClient()
 
     const fetchFinancials = useCallback(async () => {
-        const salesRes = await supabase.from('sales').select('*, contacts(first_name, last_name)').order('created_at', { ascending: false })
+        const salesRes = await supabase.from('sales').select('*, contacts(first_name, last_name), companies(name)').order('created_at', { ascending: false })
         const expensesRes = await supabase.from('expenses').select('*').order('created_at', { ascending: false })
 
         if (salesRes.data) setSales(salesRes.data as Sale[])

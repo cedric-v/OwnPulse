@@ -11,9 +11,12 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Loader2, Globe, MapPin, ExternalLink, Users, Check, Trash2 } from "lucide-react"
+import { ArrowLeft, Loader2, Globe, MapPin, ExternalLink, Users, Check, Trash2, Plus, DollarSign } from "lucide-react"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { NewSaleForm } from "@/app/cfo/components/new-sale-form"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Sale } from "@/types"
 
 const formatCurrency = (value: number, currency: string) => {
     return new Intl.NumberFormat('fr-CH', {
@@ -29,16 +32,19 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
 
     const [company, setCompany] = useState<Company | null>(null)
     const [leads, setLeads] = useState<Contact[]>([])
+    const [sales, setSales] = useState<Sale[]>([])
     const [loading, setLoading] = useState(true)
     const [currency, setCurrency] = useState("CHF")
     const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle")
+    const [saleDialogOpen, setSaleDialogOpen] = useState(false)
 
     useEffect(() => {
         async function fetchData() {
             setLoading(true)
-            const [companyRes, leadsRes, settingsRes] = await Promise.all([
+            const [companyRes, leadsRes, salesRes, settingsRes] = await Promise.all([
                 supabase.from('companies').select('*').eq('id', id).single(),
                 supabase.from('contacts').select('*').eq('company_id', id),
+                supabase.from('sales').select('*').eq('company_id', id).order('sale_date', { ascending: false }),
                 supabase.from('settings').select('value').eq('key', 'currency').single()
             ])
 
@@ -48,11 +54,19 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
             if (!leadsRes.error) {
                 setLeads(leadsRes.data || [])
             }
+            if (!salesRes.error) {
+                setSales(salesRes.data || [])
+            }
             if (settingsRes.data) setCurrency(settingsRes.data.value)
             setLoading(false)
         }
         fetchData()
     }, [id, supabase])
+
+    const refreshSales = async () => {
+        const { data } = await supabase.from('sales').select('*').eq('company_id', id).order('sale_date', { ascending: false })
+        if (data) setSales(data)
+    }
 
     // Debounced Auto-Save
     useEffect(() => {
@@ -255,6 +269,45 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                     </Card>
 
                     <Card>
+                        <CardHeader className="flex flex-row items-center justify-between pb-2">
+                            <CardTitle className="text-lg flex items-center gap-2">
+                                <DollarSign className="h-5 w-5 text-muted-foreground" />
+                                Sales
+                            </CardTitle>
+                            <div className="flex items-center gap-2">
+                                <Badge variant="outline">{sales.length}</Badge>
+                                <Button size="sm" variant="outline" className="gap-1" onClick={() => setSaleDialogOpen(true)}>
+                                    <Plus className="h-4 w-4" />
+                                    New Sale
+                                </Button>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {sales.map(sale => (
+                                <div key={sale.id} className="flex items-center justify-between p-2 rounded-lg border hover:bg-muted/50 transition-colors">
+                                    <div className="overflow-hidden">
+                                        <p className="text-sm font-medium truncate">{sale.offer_name}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {new Date(sale.sale_date).toLocaleDateString()}
+                                            {sale.contacts ? ` · ${sale.contacts.first_name || ""} ${sale.contacts.last_name || ""}` : ""}
+                                        </p>
+                                    </div>
+                                    <div className="text-right shrink-0">
+                                        <Badge variant="secondary" className="text-[10px] h-5">
+                                            {formatCurrency(Number(sale.price_ht) || 0, currency)}
+                                        </Badge>
+                                    </div>
+                                </div>
+                            ))}
+                            {sales.length === 0 && (
+                                <div className="text-center py-6 text-sm text-muted-foreground italic">
+                                    No sales recorded for this company yet.
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
+                    <Card>
                         <CardHeader>
                             <CardTitle className="text-sm text-muted-foreground">Quick Stats</CardTitle>
                         </CardHeader>
@@ -265,10 +318,31 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                                     {formatCurrency(leads.reduce((sum, l) => sum + (Number(l.value) || 0), 0), currency)}
                                 </span>
                             </div>
+                            <div className="flex justify-between items-center text-sm font-medium">
+                                <span>Recorded Revenue</span>
+                                <span className="text-emerald-600 dark:text-emerald-400">
+                                    {formatCurrency(sales.reduce((sum, s) => sum + (Number(s.price_ht) || 0), 0), currency)}
+                                </span>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>
             </div>
+
+            <Dialog open={saleDialogOpen} onOpenChange={setSaleDialogOpen}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>New Sale — {company.name}</DialogTitle>
+                    </DialogHeader>
+                    <NewSaleForm
+                        defaultCompanyId={id}
+                        onSuccess={() => {
+                            setSaleDialogOpen(false)
+                            refreshSales()
+                        }}
+                    />
+                </DialogContent>
+            </Dialog>
         </div>
     )
 }
