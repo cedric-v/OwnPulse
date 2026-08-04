@@ -12,6 +12,30 @@ import { Contact, Sale } from "@/types"
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d']
 
+function OffersTooltip({
+    active,
+    payload,
+    currency,
+    t,
+}: {
+    active?: boolean
+    payload?: Array<{ payload: { name: string; revenue: number; count: number } }>
+    currency: string
+    t: (path: string, variables?: Record<string, string | number>) => string
+}) {
+    if (!active || !payload || payload.length === 0) return null
+    const data = payload[0].payload
+    return (
+        <div className="rounded-md border bg-background px-3 py-2 text-sm shadow-md">
+            <div className="font-medium">{data.name}</div>
+            <div>{data.revenue.toLocaleString('fr-CH', { style: 'currency', currency: currency, maximumFractionDigits: 0 })}</div>
+            <div className="text-xs text-muted-foreground">
+                {data.count} {data.count > 1 ? t('marketing.salesPlural') : t('marketing.salesSingular')}
+            </div>
+        </div>
+    )
+}
+
 export default function MarketingPage() {
     const router = useRouter()
     const { t } = useLanguage()
@@ -153,14 +177,17 @@ export default function MarketingPage() {
     const avgConversionTime = convertedCount > 0 ? Math.round(totalConversionDays / convertedCount) : 0
 
     // 3. Top 5 Offers by Revenue (price_ht × quantity over the period)
-    const offerRevenue: Record<string, number> = {}
+    const offerRevenue: Record<string, { revenue: number; count: number }> = {}
     filteredSales.forEach(s => {
         const name = s.offer_name || 'Unknown Offer'
         const revenue = (s.price_ht || 0) * (s.quantity || 1)
-        offerRevenue[name] = (offerRevenue[name] || 0) + revenue
+        const count = s.quantity || 1
+        if (!offerRevenue[name]) offerRevenue[name] = { revenue: 0, count: 0 }
+        offerRevenue[name].revenue += revenue
+        offerRevenue[name].count += count
     })
     const offersData = Object.entries(offerRevenue)
-        .map(([name, revenue]) => ({ name, revenue: Math.round(revenue) }))
+        .map(([name, v]) => ({ name, revenue: Math.round(v.revenue), count: v.count }))
         .sort((a, b) => b.revenue - a.revenue)
         .slice(0, 5)
 
@@ -292,7 +319,7 @@ export default function MarketingPage() {
                                     <YAxis tickFormatter={(v) => v.toLocaleString('fr-CH')} />
                                     <RechartsTooltip
                                         cursor={{ fill: 'transparent' }}
-                                        formatter={(value) => Number(value).toLocaleString('fr-CH', { style: 'currency', currency: currency, maximumFractionDigits: 0 })}
+                                        content={<OffersTooltip currency={currency} t={t} />}
                                     />
                                     <Bar
                                         dataKey="revenue"
