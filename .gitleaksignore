@@ -1,0 +1,12 @@
+# gitleaks ignore file.
+#
+# One finding fingerprint per line: <file>:<rule-id>:<line>
+# (e.g. `dashboard/src/utils.ts:aws-access-token:42`).
+# A commit hash prefix (`<commit>:<file>:<rule-id>:<line>`) is required to
+# ignore findings in past commits / full-history scans.
+#
+# Prefer the inline `# gitleaks:allow` comment or an entry in .gitleaks.toml
+# when the finding is a stable, repo-wide false positive; this file is for
+# one-off or historical findings.
+#
+# Generate/refresh with: gitleaks baseline --source .

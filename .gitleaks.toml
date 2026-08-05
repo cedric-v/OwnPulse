@@ -1,0 +1,48 @@
+# Project-specific gitleaks configuration for OwnPulse.
+#
+# This config extends the full default rule set (235 rules) — see
+# https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml —
+# and layers project-specific allowlists on top.
+#
+# gitleaks auto-discovers this file at the repository root ({source}/.gitleaks.toml),
+# so it is picked up by the pre-commit hook, `gitleaks detect`, and CI alike —
+# no --config flag needed.
+
+title = "OwnPulse gitleaks config"
+minVersion = "v8.25.0"
+
+[extend]
+useDefault = true
+
+# Supabase publishable keys (sb_publishable_*) are public by design:
+# - embedded in the Chrome extension (extension/content.js) shipped to users
+# - used by keepalive-worker and the extension anon flow
+# Security relies on RLS + the whitelisted capture_contact RPC (see AGENTS.md),
+# NOT on hiding this key. Flagging it would block every legit extension commit.
+[[allowlists]]
+description = "Supabase publishable keys (public by design)"
+regexTarget = "secret"
+regexes = [
+    '''sb_publishable_[a-zA-Z0-9_]+''',
+]
+
+# Project-level allowlist: patterns or paths that are intentionally safe.
+# Keep this minimal — the goal is to document legitimate false positives,
+# never to silence real secrets.
+#
+# When to add an entry here instead of .gitleaksignore:
+#   * the pattern is safe repo-wide (e.g. a test fixture value, a generated
+#     file that legitimately contains key-shaped data)
+#   * you can express it as a path or a regex
+# Otherwise, ignore a one-off finding in .gitleaksignore, or annotate the
+# line with an inline `# gitleaks:allow` comment.
+# Add entries here when the first real false positive appears, e.g.:
+#
+#   [[allowlists]]
+#   description = "OwnPulse project allowlist"
+#   paths = [
+#       '''(?:^|/)testdata/''',
+#   ]
+#   regexes = [
+#       '''AKIALALEMEL33243OLIA''',  # gitleaks test fixture value
+#   ]
