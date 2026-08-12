@@ -42,8 +42,8 @@ Always run `npm run lint` and `npm run build` in `dashboard/` after meaningful a
 ## Tooling Policy
 - Keep `eslint` compatible with `eslint-config-next`. Do not force the newest ESLint major unless Next.js tooling supports it cleanly.
 - Current intentional state:
-  - `next`: `^16.2.6`
-  - `eslint-config-next`: `^16.2.6`
+  - `next`: `^16.3.0`
+  - `eslint-config-next`: `^16.3.0`
   - `eslint`: `^9.39.4`
 - If testing a new ESLint major, verify `npm run lint` before keeping the upgrade.
 - Dependency freshness matters, but build and lint stability take priority over chasing every new major immediately.
