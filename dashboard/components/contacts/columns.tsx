@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ColumnDef } from "@tanstack/react-table"
+import { LegacyColumnDef } from "@tanstack/react-table/legacy"
 import { Contact } from "@/types"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { MoreHorizontal, Globe, ExternalLink } from "lucide-react"
@@ -121,7 +121,7 @@ const TotalSalesHeader = () => {
     )
 }
 
-export const columns: ColumnDef<Contact>[] = [
+export const columns: LegacyColumnDef<Contact>[] = [
     {
         accessorKey: "avatar_url",
         header: "",

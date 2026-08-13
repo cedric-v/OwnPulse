@@ -3,17 +3,21 @@
 
 import * as React from "react"
 import {
-    ColumnDef,
-    Row,
-    TableMeta,
     flexRender,
+    RowData,
+    SortingState,
+    TableMeta,
+} from "@tanstack/react-table"
+import {
     getCoreRowModel,
     getFilteredRowModel,
     getPaginationRowModel,
     getSortedRowModel,
-    SortingState,
-    useReactTable,
-} from "@tanstack/react-table"
+    LegacyColumnDef,
+    LegacyFeatures,
+    LegacyRow,
+    useLegacyTable,
+} from "@tanstack/react-table/legacy"
 
 import { ArrowUpDown } from "lucide-react"
 import {
@@ -28,26 +32,25 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
-interface DataTableProps<TData, TValue> {
-    columns: ColumnDef<TData, TValue>[]
+interface DataTableProps<TData extends RowData> {
+    columns: LegacyColumnDef<TData, unknown>[]
     data: TData[]
-    meta?: TableMeta<TData>
-    mobileRowRenderer?: (row: Row<TData>) => React.ReactNode
+    meta?: TableMeta<LegacyFeatures, TData>
+    mobileRowRenderer?: (row: LegacyRow<TData>) => React.ReactNode
     showGlobalFilter?: boolean
 }
 
-export function DataTable<TData, TValue>({
+export function DataTable<TData extends RowData>({
     columns,
     data,
     meta,
     mobileRowRenderer,
     showGlobalFilter = true,
-}: DataTableProps<TData, TValue>) {
+}: DataTableProps<TData>) {
     const [globalFilter, setGlobalFilter] = React.useState("")
     const [sorting, setSorting] = React.useState<SortingState>([])
 
-    // eslint-disable-next-line react-hooks/incompatible-library
-    const table = useReactTable({
+    const table = useLegacyTable({
         data,
         columns,
         getCoreRowModel: getCoreRowModel(),
