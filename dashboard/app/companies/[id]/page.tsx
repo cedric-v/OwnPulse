@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Loader2, Globe, MapPin, ExternalLink, Users, Check, Trash2, Plus, DollarSign } from "lucide-react"
+import { ArrowLeft, Loader2, Globe, MapPin, ExternalLink, Users, Check, Trash2, Plus, DollarSign, Pencil } from "lucide-react"
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { NewSaleForm } from "@/app/cfo/components/new-sale-form"
@@ -37,6 +37,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
     const [currency, setCurrency] = useState("CHF")
     const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle")
     const [saleDialogOpen, setSaleDialogOpen] = useState(false)
+    const [editingSale, setEditingSale] = useState<Sale | null>(null)
 
     useEffect(() => {
         async function fetchData() {
@@ -284,13 +285,24 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {sales.map(sale => (
-                                <div key={sale.id} className="flex items-center justify-between p-2 rounded-lg border hover:bg-muted/50 transition-colors">
-                                    <div className="overflow-hidden">
-                                        <p className="text-sm font-medium truncate">{sale.offer_name}</p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {new Date(sale.sale_date).toLocaleDateString()}
-                                            {sale.contacts ? ` · ${sale.contacts.first_name || ""} ${sale.contacts.last_name || ""}` : ""}
-                                        </p>
+                                <div key={sale.id} className="group flex items-center justify-between p-2 rounded-lg border hover:bg-muted/50 transition-colors">
+                                    <div className="flex items-center gap-2 overflow-hidden">
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            onClick={() => setEditingSale(sale)}
+                                            title="Edit sale"
+                                        >
+                                            <Pencil className="h-3 w-3 text-muted-foreground" />
+                                        </Button>
+                                        <div className="overflow-hidden">
+                                            <p className="text-sm font-medium truncate">{sale.offer_name}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {new Date(sale.sale_date).toLocaleDateString()}
+                                                {sale.contacts ? ` · ${sale.contacts.first_name || ""} ${sale.contacts.last_name || ""}` : ""}
+                                            </p>
+                                        </div>
                                     </div>
                                     <div className="text-right shrink-0">
                                         <Badge variant="secondary" className="text-[10px] h-5">
@@ -341,6 +353,23 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                             refreshSales()
                         }}
                     />
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={!!editingSale} onOpenChange={(open) => !open && setEditingSale(null)}>
+                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Edit Sale — {company.name}</DialogTitle>
+                    </DialogHeader>
+                    {editingSale && (
+                        <NewSaleForm
+                            initialData={editingSale}
+                            onSuccess={() => {
+                                setEditingSale(null)
+                                refreshSales()
+                            }}
+                        />
+                    )}
                 </DialogContent>
             </Dialog>
         </div>
