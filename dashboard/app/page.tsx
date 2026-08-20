@@ -93,7 +93,10 @@ function HomeContent() {
         (contact.last_name || "").toLowerCase().includes(query) ||
         (contact.company || "").toLowerCase().includes(query) ||
         (contact.notes || "").toLowerCase().includes(query) ||
-        (contact.status || "").toLowerCase().includes(query)
+        (contact.status || "").toLowerCase().includes(query) ||
+        (contact.linkedin_url || "").toLowerCase().includes(query) ||
+        (contact.threads_url || "").toLowerCase().includes(query) ||
+        (contact.instagram_url || "").toLowerCase().includes(query)
       )
     }
 

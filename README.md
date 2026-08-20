@@ -78,7 +78,10 @@ Note: Supabase's Data API no longer exposes newly created `public` tables automa
 1. Go to `chrome://extensions/`.
 2. Enable **Developer Mode**.
 3. Click **Load unpacked** and select the `/extension` folder from this repository.
-4. Update the extension's configuration (in `popup.js` or `content.js`) with your Supabase endpoint.
+4. After updating the extension, click **Reload** on the OwnPulse extension and refresh the social profile tab so the new content script is loaded.
+5. Update the extension's configuration (in `popup.js` or `content.js`) with your Supabase endpoint.
+
+The extension reports **Already in CRM** when the profile URL is already captured. On the dashboard, search by the profile URL or username: the All Leads search includes LinkedIn, Threads, and Instagram URLs. If a profile is already present but not visible on the current page, it may be on another paginated results page.
 
 ### 4. Tooling Maintenance
 - Keep `eslint` aligned with `eslint-config-next` compatibility, not simply with the latest ESLint major.

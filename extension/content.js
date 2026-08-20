@@ -43,9 +43,14 @@ function createFloatingButton() {
             }
 
             btn.innerText = 'Saving...';
-            await saveToSupabase(profileData);
-            btn.innerText = '✔ Saved to CRM';
-            btn.style.backgroundColor = '#059669'; // Emerald 600
+            const saveResult = await saveToSupabase(profileData);
+            if (saveResult.status === 'existing') {
+                btn.innerText = 'Already in CRM';
+                btn.style.backgroundColor = '#d97706'; // Amber 600
+            } else {
+                btn.innerText = '✔ Saved to CRM';
+                btn.style.backgroundColor = '#059669'; // Emerald 600
+            }
             btn.style.transform = 'scale(1.05)';
             btn.style.opacity = '1';
         } catch (error) {
@@ -228,29 +233,65 @@ function scrapeProfile() {
     }
 }
 
+function normalizeSocialUrl(value) {
+    if (!value) return null;
+    try {
+        const parsed = new URL(value);
+        parsed.search = '';
+        parsed.hash = '';
+        parsed.pathname = parsed.pathname.replace(/\/+$/, '') + '/';
+        return parsed.toString();
+    } catch {
+        return value;
+    }
+}
+
 async function saveToSupabase(data) {
     if (SUPABASE_URL === 'YOUR_SUPABASE_URL') {
         alert('Please configure Supabase URL and Key in content.js');
         throw new Error('Missing Config');
     }
 
-    // Check if contact exists by any social URL.
+    const normalizedData = {
+        ...data,
+        linkedin_url: normalizeSocialUrl(data.linkedin_url),
+        threads_url: normalizeSocialUrl(data.threads_url),
+        instagram_url: normalizeSocialUrl(data.instagram_url)
+    };
+
+    // Check if contact exists by any supplied social URL.
+    // Do not include empty URLs in the OR filter: `eq.null` would match many
+    // unrelated contacts and falsely report every new profile as a duplicate.
     // Queries the minimal `contact_urls` view (RLS hardening): the anonymous
     // key no longer has read access to the full `contacts` table.
-    const searchUrl = `${SUPABASE_URL}/rest/v1/contact_urls?or=(linkedin_url.eq.${encodeURIComponent(data.linkedin_url || 'null')},threads_url.eq.${encodeURIComponent(data.threads_url || 'null')},instagram_url.eq.${encodeURIComponent(data.instagram_url || 'null')})`;
-    const searchRes = await fetch(searchUrl, {
-        method: 'GET',
-        headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json'
-        }
-    });
+    const urlFilters = [
+        ['linkedin_url', normalizedData.linkedin_url],
+        ['threads_url', normalizedData.threads_url],
+        ['instagram_url', normalizedData.instagram_url]
+    ]
+        .filter(([, value]) => value)
+        .map(([column, value]) => `${column}.eq.${encodeURIComponent(value)}`);
 
-    const existing = await searchRes.json();
+    let existing = [];
+    if (urlFilters.length > 0) {
+        const searchUrl = `${SUPABASE_URL}/rest/v1/contact_urls?or=(${urlFilters.join(',')})`;
+        const searchRes = await fetch(searchUrl, {
+            method: 'GET',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (!searchRes.ok) {
+            throw new Error(`Deduplication request failed (${searchRes.status}): ${await searchRes.text()}`);
+        }
+        existing = await searchRes.json();
+    }
+
     if (existing && existing.length > 0) {
-        // Optional: Update logic here
-        return;
+        return { status: 'existing', id: existing[0].id };
     }
 
     // Create new contact via the whitelisted capture RPC (RLS hardening):
@@ -265,13 +306,15 @@ async function saveToSupabase(data) {
             'Content-Type': 'application/json',
             'Prefer': 'return=representation'
         },
-        body: JSON.stringify({ p_payload: data })
+        body: JSON.stringify({ p_payload: normalizedData })
     });
 
     if (!res.ok) {
         const err = await res.text();
         throw new Error(err);
     }
+
+    return { status: 'created' };
 }
 
 // Run loop to check for page changes (SPA navigation)
