@@ -371,14 +371,22 @@ export default function ProspectingPage() {
                                             <p className="mt-2 text-xs text-muted-foreground">{lastActivity ? `Dernière action : ${formatActivityDate(lastActivity.created_at)}` : "Jamais contacté dans l’historique"}</p>
                                         </div>
                                     </div>
-                                    <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                                        {contact.linkedin_url && <Button variant="outline" size="sm" asChild><a href={contact.linkedin_url.startsWith("http") ? contact.linkedin_url : `https://www.linkedin.com/in/${contact.linkedin_url}`} target="_blank" rel="noreferrer"><Globe className="h-3.5 w-3.5" /> Ouvrir LinkedIn</a></Button>}
-                                        {contact.email && <Button variant="outline" size="sm" asChild><a href={`mailto:${contact.email}`}><Mail className="h-3.5 w-3.5" /> Écrire un e-mail</a></Button>}
-                                        {contact.phone && <Button variant="outline" size="sm" asChild><a href={`tel:${contact.phone}`}><Phone className="h-3.5 w-3.5" /> Appeler</a></Button>}
-                                        {contact.phone && <Button variant="outline" size="sm" asChild><a href={`https://wa.me/${contact.phone.replace(/[^\d+]/g, "").replace(/^\+/, "")}`} target="_blank" rel="noreferrer"><MessageCircle className="h-3.5 w-3.5" /> WhatsApp</a></Button>}
-                                        {contact.phone && <Button variant="outline" size="sm" asChild><a href={`sms:${contact.phone}`}><Smartphone className="h-3.5 w-3.5" /> SMS</a></Button>}
-                                        <div className="basis-full text-xs text-muted-foreground lg:basis-auto">1. Ouvre un canal, contacte la personne, puis :</div>
-                                        <Button size="sm" onClick={() => openLogSheet(contact)}><Check className="h-3.5 w-3.5" /> 2. J’ai contacté cette personne</Button>
+                                    <div className="flex flex-col gap-3 lg:min-w-[360px] lg:items-end">
+                                        <div className="w-full space-y-1.5">
+                                            <p className="text-sm font-medium">Étape 1 — Contacter la personne</p>
+                                            <p className="text-xs text-muted-foreground">Ouvre le canal de ton choix et contacte cette personne.</p>
+                                            <div className="flex flex-wrap gap-2 pt-1">
+                                                {contact.linkedin_url && <Button variant="outline" size="sm" asChild><a href={contact.linkedin_url.startsWith("http") ? contact.linkedin_url : `https://www.linkedin.com/in/${contact.linkedin_url}`} target="_blank" rel="noreferrer"><Globe className="h-3.5 w-3.5" /> Ouvrir LinkedIn</a></Button>}
+                                                {contact.email && <Button variant="outline" size="sm" asChild><a href={`mailto:${contact.email}`}><Mail className="h-3.5 w-3.5" /> Écrire un e-mail</a></Button>}
+                                                {contact.phone && <Button variant="outline" size="sm" asChild><a href={`tel:${contact.phone}`}><Phone className="h-3.5 w-3.5" /> Appeler</a></Button>}
+                                                {contact.phone && <Button variant="outline" size="sm" asChild><a href={`https://wa.me/${contact.phone.replace(/[^\d+]/g, "").replace(/^\+/, "")}`} target="_blank" rel="noreferrer"><MessageCircle className="h-3.5 w-3.5" /> WhatsApp</a></Button>}
+                                                {contact.phone && <Button variant="outline" size="sm" asChild><a href={`sms:${contact.phone}`}><Smartphone className="h-3.5 w-3.5" /> SMS</a></Button>}
+                                            </div>
+                                        </div>
+                                        <div className="w-full border-t pt-3">
+                                            <p className="mb-2 text-xs text-muted-foreground">Étape 2 — Après le contact, enregistre ton action.</p>
+                                            <Button className="w-full sm:w-auto" size="sm" onClick={() => openLogSheet(contact)}><Check className="h-3.5 w-3.5" /> J’ai contacté cette personne</Button>
+                                        </div>
                                     </div>
                                 </div>
                             </CardContent>
