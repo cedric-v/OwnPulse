@@ -79,7 +79,9 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
             if (contactRes.error) {
                 setError(contactRes.error.message)
             } else {
-                setContact(contactRes.data)
+                // Normalize legacy rich-text notes once, so the editor works on plain text.
+                // This also means the debounced auto-save persists clean plain text.
+                setContact({ ...contactRes.data, notes: htmlToText(contactRes.data.notes) })
 
                 // Client side sort for multi-level logic
                 const sorted = (tasksRes.data || []).sort((a, b) => {
@@ -513,7 +515,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                     <Textarea
                                         id="notes"
                                         rows={6}
-                                        value={htmlToText(contact.notes)}
+                                        value={contact.notes || ""}
                                         onChange={e => setContact({ ...contact, notes: e.target.value })}
                                     />
                                 </div>
