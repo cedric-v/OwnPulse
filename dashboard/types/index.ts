@@ -11,6 +11,16 @@ export type Company = {
     updated_at: string
 }
 
+export type ContactActivity = {
+    id: string
+    contact_id: string
+    user_id: string
+    channel: 'LinkedIn' | 'Email' | 'Phone' | 'WhatsApp' | 'Instagram' | 'Threads' | 'Other'
+    outcome: 'Message sent' | 'Conversation started' | 'No response' | 'Follow-up needed' | 'Meeting booked' | 'Not interested' | 'Wrong contact' | 'Other'
+    note: string | null
+    created_at: string
+}
+
 export type Contact = {
     id: string
     first_name: string | null

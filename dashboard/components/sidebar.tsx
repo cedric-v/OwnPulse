@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/sheet"
 import {
     Users,
+    Target,
     Kanban,
     CheckSquare,
     Briefcase,
@@ -70,6 +71,12 @@ function SidebarContent({ className, onNavigate }: SidebarContentProps) {
                             <Link href="/" onClick={onNavigate}>
                                 <Users className="mr-2 h-4 w-4" />
                                 {t('sidebar.allLeads')}
+                            </Link>
+                        </Button>
+                        <Button variant={pathname === "/prospecting" ? "secondary" : "ghost"} className="w-full justify-start" asChild>
+                            <Link href="/prospecting" onClick={onNavigate}>
+                                <Target className="mr-2 h-4 w-4" />
+                                {t('sidebar.prospecting')}
                             </Link>
                         </Button>
                         <Button variant={pathname === "/tasks" ? "secondary" : "ghost"} className="w-full justify-start" asChild>

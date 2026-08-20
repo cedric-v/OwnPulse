@@ -110,25 +110,28 @@ create index if not exists idx_companies_user_id on public.companies(user_id);
 create index if not exists idx_tasks_user_id on public.tasks(user_id);
 
 -- ----------------------------------------------------------------------------
--- 3) settings, offers, acquisition_channels, sales, expenses — strictly private
+-- 3) settings, offers, acquisition_channels, sales, expenses, contact_activities — strictly private
 -- ----------------------------------------------------------------------------
 alter table public.settings             add column if not exists user_id uuid references auth.users(id) default auth.uid();
 alter table public.offers               add column if not exists user_id uuid references auth.users(id) default auth.uid();
 alter table public.acquisition_channels add column if not exists user_id uuid references auth.users(id) default auth.uid();
 alter table public.sales                add column if not exists user_id uuid references auth.users(id) default auth.uid();
 alter table public.expenses             add column if not exists user_id uuid references auth.users(id) default auth.uid();
+alter table public.contact_activities add column if not exists user_id uuid references auth.users(id) default auth.uid();
 
 update public.settings             set user_id = (select id from auth.users order by created_at limit 1) where user_id is null;
 update public.offers               set user_id = (select id from auth.users order by created_at limit 1) where user_id is null;
 update public.acquisition_channels set user_id = (select id from auth.users order by created_at limit 1) where user_id is null;
 update public.sales                set user_id = (select id from auth.users order by created_at limit 1) where user_id is null;
 update public.expenses             set user_id = (select id from auth.users order by created_at limit 1) where user_id is null;
+update public.contact_activities set user_id = (select id from auth.users order by created_at limit 1) where user_id is null;
 
 alter table public.settings             alter column user_id set not null;
 alter table public.offers               alter column user_id set not null;
 alter table public.acquisition_channels alter column user_id set not null;
 alter table public.sales                alter column user_id set not null;
 alter table public.expenses             alter column user_id set not null;
+alter table public.contact_activities alter column user_id set not null;
 
 drop policy if exists "authenticated_full_access" on public.settings;
 drop policy if exists "authenticated_full_access" on public.offers;
@@ -140,6 +143,7 @@ drop policy if exists "owner_full_access" on public.offers;
 drop policy if exists "owner_full_access" on public.acquisition_channels;
 drop policy if exists "owner_full_access" on public.sales;
 drop policy if exists "owner_full_access" on public.expenses;
+drop policy if exists "owner_full_access" on public.contact_activities;
 
 create policy "owner_full_access" on public.settings
   for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
@@ -151,9 +155,13 @@ create policy "owner_full_access" on public.sales
   for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 create policy "owner_full_access" on public.expenses
   for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy "owner_full_access" on public.contact_activities
+  for all to authenticated using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 create index if not exists idx_settings_user_id             on public.settings(user_id);
 create index if not exists idx_offers_user_id               on public.offers(user_id);
 create index if not exists idx_acquisition_channels_user_id on public.acquisition_channels(user_id);
 create index if not exists idx_sales_user_id                on public.sales(user_id);
 create index if not exists idx_expenses_user_id             on public.expenses(user_id);
+create index if not exists idx_contact_activities_contact_id on public.contact_activities(contact_id);
+create index if not exists idx_contact_activities_user_created_at on public.contact_activities(user_id, created_at desc);

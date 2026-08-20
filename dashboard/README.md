@@ -26,6 +26,8 @@ The core management interface for OwnPulse. Built with Next.js 16 for speed, sec
    npm run dev
    ```
 
+   On an existing Supabase project, also apply `../migration_contact_activities.sql` before opening `/prospecting`.
+
 5. **Validate Changes**:
    ```bash
    npm run lint
@@ -38,6 +40,7 @@ The core management interface for OwnPulse. Built with Next.js 16 for speed, sec
 - **Multi-List Support**: Assign leads to multiple categories simultaneously (Customers, Prospects, etc.).
 - **Direct Lead Entry**: Add leads manually from the dashboard without needing the extension.
 - **CSV Export**: One-click export of your filtered/search results.
+- **Prospecting workspace**: Daily 10-lead outreach goal, prioritizing existing `Warm`, `Interested`, and `Engaged` statuses without duplicating the contact temperature field. Outreach actions are stored in `contact_activities`; follow-ups use the existing `tasks` table.
 - **SSR Optimized**: Built with Next.js App Router for maximum performance and SEO.
 
 ## 🛡 Security

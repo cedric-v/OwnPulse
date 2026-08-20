@@ -47,7 +47,7 @@
 ### 1. Database Setup (Supabase)
 1. Create a free project on [Supabase](https://supabase.com).
 2. Execute the SQL schema found in `/supabase/schema.sql` to initialize your `contacts`, `companies`, and `tasks` tables (already security-hardened: RLS owner-scoped, anonymous access limited to `contact_urls` view + `capture_contact` RPC).
-3. Run the incremental migrations in order: `fix_missing_tables.sql`, `migration_social_fields.sql`, `migration_marketing_cfo.sql`, `migration_acquisition_channels.sql`, `migration_offers_enhancement.sql`, `add_tax_social_settings.sql`, `add_vat_setting.sql`, `migration_sales_company_link.sql`, `migration_sales_quantity_decimal.sql` (and `supabase/seed_generic.sql` for neutral demo data).
+3. Run the incremental migrations in order: `fix_missing_tables.sql`, `migration_social_fields.sql`, `migration_marketing_cfo.sql`, `migration_acquisition_channels.sql`, `migration_offers_enhancement.sql`, `add_tax_social_settings.sql`, `add_vat_setting.sql`, `migration_sales_company_link.sql`, `migration_sales_quantity_decimal.sql`, `migration_contact_activities.sql` (and `supabase/seed_generic.sql` for neutral demo data).
 4. Retrieve your `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
 5. Disable public signup: **Authentication > Providers > Email > "Allow new users to sign up" = OFF**, and enable 2FA/MFA on your account.
 
@@ -101,7 +101,13 @@ OwnPulse stores personal data (contacts, notes, finances) and business secrets (
 - **HTTP headers**: `dashboard/next.config.ts` sets CSP, HSTS, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and disables the `X-Powered-By` banner.
 - **Git hygiene**: gitleaks pre-commit hook (`.pre-commit-config.yaml`) blocks secret commits.
 
-### 6. Keep-Alive (Free Plan Anti-Pause)
+### 6. Prospecting workspace
+
+The `/prospecting` workspace is designed for a daily outreach goal of 10 distinct leads. It prioritizes the existing contact statuses `Warm`, `Interested`, and `Engaged` as the warm-to-hot queue; it does not introduce a duplicate temperature field. `contacts.notes`, `first_contact_date`, `acquisition_channel`, and the existing `tasks` table keep their original meanings.
+
+Run `migration_contact_activities.sql` once on an existing project. It adds the owner-scoped `contact_activities` history for the outreach channel, outcome, and short note. A follow-up entered from the workspace creates an existing-style task. Multiple activities for the same lead on one day count as one distinct person toward the daily goal.
+
+### 7. Keep-Alive (Free Plan Anti-Pause)
 
 On the Supabase free plan, projects are **paused after 7 days of inactivity**. A zero-cost **Cloudflare Worker** (`keepalive-worker/`) keeps the project active every 6 hours via cron, fully independent of repo activity and GitHub.
 

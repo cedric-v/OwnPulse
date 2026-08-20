@@ -37,6 +37,7 @@ grant select on public.contact_urls to anon;
 -- 2) all other tables — anonymous access disabled
 -- ----------------------------------------------------------------------------
 revoke all on public.companies from anon;
+revoke all on public.contact_activities from anon;
 revoke all on public.tasks from anon;
 revoke all on public.settings from anon;
 revoke all on public.offers from anon;
@@ -63,6 +64,7 @@ alter table public.offers add column if not exists user_id uuid references auth.
 alter table public.acquisition_channels add column if not exists user_id uuid references auth.users(id) default auth.uid();
 alter table public.sales add column if not exists user_id uuid references auth.users(id) default auth.uid();
 alter table public.expenses add column if not exists user_id uuid references auth.users(id) default auth.uid();
+alter table public.contact_activities add column if not exists user_id uuid references auth.users(id) default auth.uid();
 
 -- Backfill: assign current rows to the first created user (the owner).
 update public.contacts set user_id = (select id from auth.users order by created_at limit 1) where user_id is null;
@@ -73,6 +75,7 @@ update public.offers set user_id = (select id from auth.users order by created_a
 update public.acquisition_channels set user_id = (select id from auth.users order by created_at limit 1) where user_id is null;
 update public.sales set user_id = (select id from auth.users order by created_at limit 1) where user_id is null;
 update public.expenses set user_id = (select id from auth.users order by created_at limit 1) where user_id is null;
+update public.contact_activities set user_id = (select id from auth.users order by created_at limit 1) where user_id is null;
 
 -- contacts stays nullable (unclaimed capture rows); the rest must be owned.
 alter table public.companies alter column user_id set not null;
@@ -82,6 +85,7 @@ alter table public.offers alter column user_id set not null;
 alter table public.acquisition_channels alter column user_id set not null;
 alter table public.sales alter column user_id set not null;
 alter table public.expenses alter column user_id set not null;
+alter table public.contact_activities alter column user_id set not null;
 
 -- ----------------------------------------------------------------------------
 -- 4) drop legacy/leaky policies everywhere
@@ -123,6 +127,7 @@ drop policy if exists "owner_full_access" on public.offers;
 drop policy if exists "owner_full_access" on public.acquisition_channels;
 drop policy if exists "owner_full_access" on public.sales;
 drop policy if exists "owner_full_access" on public.expenses;
+drop policy if exists "owner_full_access" on public.contact_activities;
 
 create policy "owner_or_unclaimed_select" on public.contacts
   for select to authenticated using (user_id = auth.uid() or user_id is null);
@@ -147,6 +152,8 @@ create policy "owner_full_access" on public.acquisition_channels for all to auth
 create policy "owner_full_access" on public.sales for all to authenticated
   using (user_id = auth.uid()) with check (user_id = auth.uid());
 create policy "owner_full_access" on public.expenses for all to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
+create policy "owner_full_access" on public.contact_activities for all to authenticated
   using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 -- ----------------------------------------------------------------------------
@@ -192,6 +199,8 @@ create index if not exists idx_offers_user_id on public.offers(user_id);
 create index if not exists idx_acquisition_channels_user_id on public.acquisition_channels(user_id);
 create index if not exists idx_sales_user_id on public.sales(user_id);
 create index if not exists idx_expenses_user_id on public.expenses(user_id);
+create index if not exists idx_contact_activities_contact_id on public.contact_activities(contact_id);
+create index if not exists idx_contact_activities_user_created_at on public.contact_activities(user_id, created_at desc);
 
 -- ----------------------------------------------------------------------------
 -- 8) DIAGNOSTIC — paste the output here for verification

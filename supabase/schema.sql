@@ -84,11 +84,32 @@ create table tasks (
 grant select, insert, update, delete on public.tasks to authenticated, service_role;
 
 -- ---------------------------------------------------------------------------
+-- Prospecting activity history
+--   One row per outreach action. This is deliberately separate from the
+--   contact's permanent notes and from tasks (future follow-ups).
+-- ---------------------------------------------------------------------------
+create table contact_activities (
+  id uuid primary key default uuid_generate_v4(),
+  contact_id uuid not null references contacts(id) on delete cascade,
+  user_id uuid not null references auth.users(id) default auth.uid(),
+  channel text not null check (channel in ('LinkedIn', 'Email', 'Phone', 'WhatsApp', 'Instagram', 'Threads', 'Other')),
+  outcome text not null check (outcome in ('Message sent', 'Conversation started', 'No response', 'Follow-up needed', 'Meeting booked', 'Not interested', 'Wrong contact', 'Other')),
+  note text,
+  created_at timestamptz not null default now()
+);
+
+grant select, insert, update, delete on public.contact_activities to authenticated, service_role;
+
+-- ---------------------------------------------------------------------------
 -- Row Level Security — owner-scoped
 -- ---------------------------------------------------------------------------
 alter table companies enable row level security;
 alter table contacts enable row level security;
 alter table tasks enable row level security;
+alter table contact_activities enable row level security;
+
+create policy "owner_full_access" on contact_activities for all to authenticated
+  using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 create policy "owner_full_access" on companies for all to authenticated
   using (user_id = auth.uid()) with check (user_id = auth.uid());
@@ -156,6 +177,8 @@ grant execute on function capture_contact(jsonb) to anon, authenticated;
 create index if not exists idx_companies_user_id on companies(user_id);
 create index if not exists idx_contacts_user_id on contacts(user_id);
 create index if not exists idx_tasks_user_id on tasks(user_id);
+create index if not exists idx_contact_activities_contact_id on contact_activities(contact_id);
+create index if not exists idx_contact_activities_user_created_at on contact_activities(user_id, created_at desc);
 
 -- ---------------------------------------------------------------------------
 -- One-time data migration: create companies from existing contacts
