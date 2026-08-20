@@ -15,7 +15,7 @@ export type ContactActivity = {
     id: string
     contact_id: string
     user_id: string
-    channel: 'LinkedIn' | 'Email' | 'Phone' | 'WhatsApp' | 'Instagram' | 'Threads' | 'Other'
+    channel: 'LinkedIn' | 'Email' | 'Phone' | 'WhatsApp' | 'SMS' | 'Instagram' | 'Threads' | 'Other'
     outcome: 'Message sent' | 'Conversation started' | 'No response' | 'Follow-up needed' | 'Meeting booked' | 'Not interested' | 'Wrong contact' | 'Other'
     note: string | null
     created_at: string

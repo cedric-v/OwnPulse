@@ -24,6 +24,11 @@ CREATE POLICY "owner_full_access" ON public.contact_activities
     USING (user_id = auth.uid())
     WITH CHECK (user_id = auth.uid());
 
+-- Keep the channel vocabulary aligned with the prospecting UI on existing projects.
+ALTER TABLE public.contact_activities DROP CONSTRAINT IF EXISTS contact_activities_channel_check;
+ALTER TABLE public.contact_activities ADD CONSTRAINT contact_activities_channel_check
+    CHECK (channel IN ('LinkedIn', 'Email', 'Phone', 'WhatsApp', 'SMS', 'Instagram', 'Threads', 'Other'));
+
 CREATE INDEX IF NOT EXISTS idx_contact_activities_contact_id
     ON public.contact_activities(contact_id);
 CREATE INDEX IF NOT EXISTS idx_contact_activities_user_created_at

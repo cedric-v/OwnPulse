@@ -40,6 +40,7 @@ import {
     MessageCircle,
     Phone,
     Search,
+    Smartphone,
     Target,
     UserRound,
 } from "lucide-react"
@@ -58,11 +59,12 @@ type FollowUp = {
 const PRIORITY_STATUSES = ["Warm", "Interested", "Engaged"]
 const CLOSED_STATUSES = ["Client", "Customer", "Deal Won", "Closed", "Lost"]
 const CHANNELS: { value: Channel; label: string }[] = [
-    { value: "LinkedIn", label: "LinkedIn" },
+    { value: "LinkedIn", label: "MP LinkedIn" },
     { value: "Email", label: "E-mail" },
-    { value: "Phone", label: "Téléphone" },
+    { value: "Phone", label: "Appel" },
     { value: "WhatsApp", label: "WhatsApp" },
-    { value: "Instagram", label: "Instagram" },
+    { value: "SMS", label: "SMS" },
+    { value: "Instagram", label: "MP Instagram" },
     { value: "Threads", label: "Threads" },
     { value: "Other", label: "Autre" },
 ]
@@ -123,6 +125,7 @@ function channelIcon(channel: Channel) {
     if (channel === "Email") return <Mail className="h-3.5 w-3.5" />
     if (channel === "Phone") return <Phone className="h-3.5 w-3.5" />
     if (channel === "WhatsApp") return <MessageCircle className="h-3.5 w-3.5" />
+    if (channel === "SMS") return <Smartphone className="h-3.5 w-3.5" />
     return <ExternalLink className="h-3.5 w-3.5" />
 }
 
@@ -364,10 +367,13 @@ export default function ProspectingPage() {
                                         </div>
                                     </div>
                                     <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                                        {contact.linkedin_url && <Button variant="outline" size="sm" asChild><a href={contact.linkedin_url.startsWith("http") ? contact.linkedin_url : `https://www.linkedin.com/in/${contact.linkedin_url}`} target="_blank" rel="noreferrer"><Globe className="h-3.5 w-3.5" /> LinkedIn</a></Button>}
-                                        {contact.email && <Button variant="outline" size="sm" asChild><a href={`mailto:${contact.email}`}><Mail className="h-3.5 w-3.5" /> E-mail</a></Button>}
+                                        {contact.linkedin_url && <Button variant="outline" size="sm" asChild><a href={contact.linkedin_url.startsWith("http") ? contact.linkedin_url : `https://www.linkedin.com/in/${contact.linkedin_url}`} target="_blank" rel="noreferrer"><Globe className="h-3.5 w-3.5" /> Ouvrir LinkedIn</a></Button>}
+                                        {contact.email && <Button variant="outline" size="sm" asChild><a href={`mailto:${contact.email}`}><Mail className="h-3.5 w-3.5" /> Écrire un e-mail</a></Button>}
                                         {contact.phone && <Button variant="outline" size="sm" asChild><a href={`tel:${contact.phone}`}><Phone className="h-3.5 w-3.5" /> Appeler</a></Button>}
-                                        <Button size="sm" onClick={() => openLogSheet(contact)}><Check className="h-3.5 w-3.5" /> Enregistrer le contact</Button>
+                                        {contact.phone && <Button variant="outline" size="sm" asChild><a href={`https://wa.me/${contact.phone.replace(/[^\d+]/g, "").replace(/^\+/, "")}`} target="_blank" rel="noreferrer"><MessageCircle className="h-3.5 w-3.5" /> WhatsApp</a></Button>}
+                                        {contact.phone && <Button variant="outline" size="sm" asChild><a href={`sms:${contact.phone}`}><Smartphone className="h-3.5 w-3.5" /> SMS</a></Button>}
+                                        <div className="basis-full text-xs text-muted-foreground lg:basis-auto">1. Ouvre un canal, contacte la personne, puis :</div>
+                                        <Button size="sm" onClick={() => openLogSheet(contact)}><Check className="h-3.5 w-3.5" /> 2. J’ai contacté cette personne</Button>
                                     </div>
                                 </div>
                             </CardContent>
@@ -389,17 +395,17 @@ export default function ProspectingPage() {
             <Sheet open={!!selectedContact} onOpenChange={(open) => !open && setSelectedContact(null)}>
                 <SheetContent className="w-full overflow-y-auto sm:max-w-lg">
                     <SheetHeader>
-                        <SheetTitle>Enregistrer un contact</SheetTitle>
+                        <SheetTitle>J’ai contacté cette personne</SheetTitle>
                         <SheetDescription>{selectedContact && `${displayName(selectedContact)}${selectedContact.company ? ` · ${selectedContact.company}` : ""}`}</SheetDescription>
                     </SheetHeader>
                     <div className="space-y-5 px-4">
-                        <div className="rounded-lg bg-muted/50 p-3 text-sm"><div className="flex items-center gap-2 font-medium"><UserRound className="h-4 w-4" /> Cette action comptera comme une personne contactée</div><p className="mt-1 text-xs text-muted-foreground">Plusieurs actions sur la même personne le même jour ne comptent qu’une seule fois dans l’objectif.</p></div>
-                        <div className="space-y-2"><Label>Moyen utilisé</Label><Select value={channel} onValueChange={(value) => setChannel(value as Channel)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{CHANNELS.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent></Select></div>
+                        <div className="rounded-lg bg-muted/50 p-3 text-sm"><div className="flex items-center gap-2 font-medium"><UserRound className="h-4 w-4" /> Étape 2 — confirmer le contact</div><p className="mt-1 text-xs text-muted-foreground">Choisis le moyen réellement utilisé. Cette personne sera comptée dans ton objectif du jour.</p></div>
+                        <div className="space-y-2"><Label>Moyen réellement utilisé</Label><Select value={channel} onValueChange={(value) => setChannel(value as Channel)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{CHANNELS.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent></Select></div>
                         <div className="space-y-2"><Label>Résultat</Label><Select value={outcome} onValueChange={(value) => setOutcome(value as Outcome)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{OUTCOMES.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent></Select></div>
                         <div className="space-y-2"><Label htmlFor="activity-note">Petite note <span className="font-normal text-muted-foreground">(optionnelle)</span></Label><Textarea id="activity-note" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Ex. Message envoyé avec deux exemples de missions..." className="min-h-28" /></div>
                         <div className="space-y-2"><Label htmlFor="follow-up-date">Prochaine relance <span className="font-normal text-muted-foreground">(optionnelle)</span></Label><Input id="follow-up-date" type="date" min={today} value={followUpDate} onChange={(event) => setFollowUpDate(event.target.value)} /><p className="text-xs text-muted-foreground">Une tâche de relance sera créée automatiquement.</p></div>
                     </div>
-                    <SheetFooter><Button variant="outline" onClick={() => setSelectedContact(null)}>Annuler</Button><Button onClick={() => void saveActivity()} disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />} Enregistrer</Button></SheetFooter>
+                    <SheetFooter><Button variant="outline" onClick={() => setSelectedContact(null)}>Annuler</Button><Button onClick={() => void saveActivity()} disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />} Confirmer et compter</Button></SheetFooter>
                 </SheetContent>
             </Sheet>
         </div>

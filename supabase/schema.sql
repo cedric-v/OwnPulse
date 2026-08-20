@@ -92,7 +92,7 @@ create table contact_activities (
   id uuid primary key default uuid_generate_v4(),
   contact_id uuid not null references contacts(id) on delete cascade,
   user_id uuid not null references auth.users(id) default auth.uid(),
-  channel text not null check (channel in ('LinkedIn', 'Email', 'Phone', 'WhatsApp', 'Instagram', 'Threads', 'Other')),
+  channel text not null check (channel in ('LinkedIn', 'Email', 'Phone', 'WhatsApp', 'SMS', 'Instagram', 'Threads', 'Other')),
   outcome text not null check (outcome in ('Message sent', 'Conversation started', 'No response', 'Follow-up needed', 'Meeting booked', 'Not interested', 'Wrong contact', 'Other')),
   note text,
   created_at timestamptz not null default now()
