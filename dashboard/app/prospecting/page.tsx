@@ -156,15 +156,17 @@ export default function ProspectingPage() {
     const [outcome, setOutcome] = useState<Outcome>("Message sent")
     const [note, setNote] = useState("")
     const [followUpDate, setFollowUpDate] = useState("")
+    const [goal, setGoal] = useState(10)
 
     const fetchData = useCallback(async () => {
         setLoading(true)
         setError(null)
         const range = dateRange(selectedDate)
-        const [contactsRes, activitiesRes, tasksRes] = await Promise.all([
+        const [contactsRes, activitiesRes, tasksRes, goalRes] = await Promise.all([
             supabase.from("contacts").select("*").order("created_at", { ascending: false }),
             supabase.from("contact_activities").select("*").order("created_at", { ascending: false }),
             supabase.from("tasks").select("contact_id, due_date").eq("completed", false).not("due_date", "is", null).lte("due_date", range.end),
+            supabase.from("settings").select("value").eq("key", "prospecting_daily_goal").maybeSingle(),
         ])
 
         if (contactsRes.error) setError(contactsRes.error.message)
@@ -172,6 +174,10 @@ export default function ProspectingPage() {
         if (activitiesRes.error) setError(activitiesRes.error.message)
         else setActivities((activitiesRes.data || []) as ContactActivity[])
         if (!tasksRes.error) setFollowUps((tasksRes.data || []) as FollowUp[])
+        if (!goalRes.error && goalRes.data) {
+            const configuredGoal = Number.parseInt(goalRes.data.value, 10)
+            if (Number.isInteger(configuredGoal) && configuredGoal > 0) setGoal(configuredGoal)
+        }
         setLoading(false)
     }, [selectedDate, supabase])
 
@@ -270,7 +276,6 @@ export default function ProspectingPage() {
         setSaving(false)
     }
 
-    const goal = 10
     const contactedCount = contactedIds.size
     const progress = Math.min(100, Math.round((contactedCount / goal) * 100))
     const isToday = selectedDate === today

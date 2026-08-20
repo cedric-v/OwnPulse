@@ -103,7 +103,7 @@ OwnPulse stores personal data (contacts, notes, finances) and business secrets (
 
 ### 6. Prospecting workspace
 
-The `/prospecting` workspace is designed for a daily outreach goal of 10 distinct leads. It prioritizes the existing contact statuses `Warm`, `Interested`, and `Engaged` as the warm-to-hot queue; it does not introduce a duplicate temperature field. `contacts.notes`, `first_contact_date`, `acquisition_channel`, and the existing `tasks` table keep their original meanings.
+The `/prospecting` workspace is designed for a configurable daily outreach goal (10 distinct leads by default). The goal can be changed under **Settings → General → Objectif quotidien de prospection**. It prioritizes the existing contact statuses `Warm`, `Interested`, and `Engaged` as the warm-to-hot queue; it does not introduce a duplicate temperature field. `contacts.notes`, `first_contact_date`, `acquisition_channel`, and the existing `tasks` table keep their original meanings.
 
 The workflow is explicit: open the available channel, contact the person, then click **J’ai contacté cette personne** and confirm the channel actually used. Available outreach channels are MP LinkedIn, e-mail, WhatsApp, SMS, appel, MP Instagram, Threads, and autre. The quick actions open LinkedIn, e-mail, phone, WhatsApp, or SMS when the corresponding contact data is available.
 

@@ -26,8 +26,10 @@ CREATE TABLE IF NOT EXISTS offers (
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.offers TO authenticated, service_role;
 
--- Insert default currency if not exists
-INSERT INTO settings (key, value) VALUES ('currency', 'CHF')
+-- Insert default settings if they do not exist
+INSERT INTO settings (key, value) VALUES
+('currency', 'CHF'),
+('prospecting_daily_goal', '10')
 ON CONFLICT (key) DO NOTHING;
 
 -- Initial offers migration (Generic for Git)

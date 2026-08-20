@@ -30,6 +30,7 @@ function SettingsContent() {
     const [socialRate, setSocialRate] = useState("45")
     const [taxRate, setTaxRate] = useState("5")
     const [targetNetSalary, setTargetNetSalary] = useState("4000")
+    const [prospectingGoal, setProspectingGoal] = useState("10")
     const [offers, setOffers] = useState<Offer[]>([])
     const [acquisitionChannels, setAcquisitionChannels] = useState<AcquisitionChannel[]>([])
     const supabase = createClient()
@@ -46,12 +47,13 @@ function SettingsContent() {
     useEffect(() => {
         async function loadSettings() {
             setLoading(true)
-            const [currencyRes, vatRes, socialRes, taxRes, salaryRes, offersRes, channelsRes] = await Promise.all([
+            const [currencyRes, vatRes, socialRes, taxRes, salaryRes, prospectingGoalRes, offersRes, channelsRes] = await Promise.all([
                 supabase.from('settings').select('*').eq('key', 'currency').single(),
                 supabase.from('settings').select('*').eq('key', 'vat_rate').single(),
                 supabase.from('settings').select('*').eq('key', 'social_rate').single(),
                 supabase.from('settings').select('*').eq('key', 'tax_rate').single(),
                 supabase.from('settings').select('*').eq('key', 'target_net_salary').single(),
+                supabase.from('settings').select('*').eq('key', 'prospecting_daily_goal').maybeSingle(),
                 supabase.from('offers').select('*').order('name'),
                 supabase.from('acquisition_channels').select('*').order('name')
             ])
@@ -61,6 +63,7 @@ function SettingsContent() {
             if (socialRes.data) setSocialRate(socialRes.data.value)
             if (taxRes.data) setTaxRate(taxRes.data.value)
             if (salaryRes.data) setTargetNetSalary(salaryRes.data.value)
+            if (prospectingGoalRes.data) setProspectingGoal(prospectingGoalRes.data.value)
             if (offersRes.data) setOffers(offersRes.data)
             if (channelsRes.data) setAcquisitionChannels(channelsRes.data)
             setLoading(false)
@@ -111,8 +114,19 @@ function SettingsContent() {
             .from('settings')
             .upsert({ key: 'target_net_salary', value: targetNetSalary }, { onConflict: 'key' })
 
-        if (currencyError || vatError || socialError || taxError || salaryError) {
-            toast({ title: t('common.error'), description: (currencyError || vatError || socialError || taxError || salaryError)?.message, variant: "destructive" })
+        const goal = Number.parseInt(prospectingGoal, 10)
+        if (!Number.isInteger(goal) || goal < 1) {
+            toast({ title: t('common.error'), description: t('settings.prospectingGoalInvalid'), variant: "destructive" })
+            setSaving(false)
+            return
+        }
+
+        const { error: prospectingGoalError } = await supabase
+            .from('settings')
+            .upsert({ key: 'prospecting_daily_goal', value: String(goal) }, { onConflict: 'key' })
+
+        if (currencyError || vatError || socialError || taxError || salaryError || prospectingGoalError) {
+            toast({ title: t('common.error'), description: (currencyError || vatError || socialError || taxError || salaryError || prospectingGoalError)?.message, variant: "destructive" })
         } else {
             toast({ title: t('common.success'), description: t('common.success') })
         }
@@ -254,6 +268,17 @@ function SettingsContent() {
                                         <SelectItem value="USD">$ (Dollar US)</SelectItem>
                                     </SelectContent>
                                 </Select>
+                            </div>
+                            <div className="space-y-2 max-w-sm">
+                                <Label>{t('settings.prospectingGoal')}</Label>
+                                <Input
+                                    type="number"
+                                    min="1"
+                                    step="1"
+                                    value={prospectingGoal}
+                                    onChange={e => setProspectingGoal(e.target.value)}
+                                />
+                                <p className="text-xs text-muted-foreground italic">{t('settings.prospectingGoalNote')}</p>
                             </div>
                             <div className="space-y-2 max-w-sm">
                                 <Label>{t('settings.interfaceLanguage')}</Label>
