@@ -19,6 +19,7 @@
 - **Smart Capture:** Instantly save leads from **LinkedIn, Threads, and Instagram** via the dedicated Chrome Extension.
 - **Pipeline Management:** Move leads through custom stages with a high-velocity, debounced interface.
 - **Bi-directional Linking:** Connect sales directly to contacts for a 360° view of customer history.
+- **Duplicate Merge:** Merge accidentally duplicated leads from the contact page or by multi-selecting rows in the leads table — fields, lists, notes, tasks, sales, and activities are consolidated and duplicates removed.
 
 ### 2. 📊 Marketing & Offer Intelligence
 - **Acquisition Analysis:** Track exactly which social channels are driving your customers.
