@@ -32,12 +32,18 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 
+export type MobileRowSelection = {
+    selected: boolean
+    setSelected: (checked: boolean) => void
+}
+
 interface DataTableProps<TData extends RowData> {
     columns: LegacyColumnDef<TData, unknown>[]
     data: TData[]
     meta?: TableMeta<LegacyFeatures, TData>
-    mobileRowRenderer?: (row: LegacyRow<TData>) => React.ReactNode
+    mobileRowRenderer?: (row: LegacyRow<TData>, selection?: MobileRowSelection) => React.ReactNode
     showGlobalFilter?: boolean
+    selectionToolbar?: (selectedRows: LegacyRow<TData>[], clearSelection: () => void) => React.ReactNode
 }
 
 export function DataTable<TData extends RowData>({
@@ -46,9 +52,11 @@ export function DataTable<TData extends RowData>({
     meta,
     mobileRowRenderer,
     showGlobalFilter = true,
+    selectionToolbar,
 }: DataTableProps<TData>) {
     const [globalFilter, setGlobalFilter] = React.useState("")
     const [sorting, setSorting] = React.useState<SortingState>([])
+    const [rowSelection, setRowSelection] = React.useState({})
 
     const table = useLegacyTable({
         data,
@@ -61,8 +69,15 @@ export function DataTable<TData extends RowData>({
         state: {
             globalFilter,
             sorting,
+            rowSelection,
         },
         onGlobalFilterChange: setGlobalFilter,
+        onRowSelectionChange: setRowSelection,
+        enableRowSelection: !!selectionToolbar,
+        getRowId: (row) => {
+            const id = (row as Record<string, unknown>).id
+            return typeof id === "string" ? id : String(row)
+        },
         meta,
     })
 
@@ -78,12 +93,28 @@ export function DataTable<TData extends RowData>({
                     />
                 </div>
             ) : null}
+            {selectionToolbar && table.getSelectedRowModel().rows.length > 0 ? (
+                <div className="mb-3">
+                    {selectionToolbar(
+                        table.getSelectedRowModel().rows,
+                        () => table.resetRowSelection()
+                    )}
+                </div>
+            ) : null}
             {mobileRowRenderer ? (
                 <div className="space-y-3 md:hidden">
                     {table.getRowModel().rows?.length ? (
                         table.getRowModel().rows.map((row) => (
                             <React.Fragment key={row.id}>
-                                {mobileRowRenderer(row)}
+                                {mobileRowRenderer(
+                                    row,
+                                    selectionToolbar
+                                        ? {
+                                            selected: row.getIsSelected(),
+                                            setSelected: (checked) => row.toggleSelected(checked),
+                                        }
+                                        : undefined
+                                )}
                             </React.Fragment>
                         ))
                     ) : (

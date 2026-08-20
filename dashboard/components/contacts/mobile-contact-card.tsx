@@ -4,6 +4,7 @@ import Link from "next/link"
 import { Contact } from "@/types"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { StatusCell } from "./status-cell"
 import { NotesSheet } from "./notes-sheet"
 import { ActionsCell } from "./columns"
@@ -11,9 +12,13 @@ import { ActionsCell } from "./columns"
 export function MobileContactCard({
     contact,
     onRefresh,
+    selected,
+    onSelectChange,
 }: {
     contact: Contact
     onRefresh?: () => void
+    selected?: boolean
+    onSelectChange?: (checked: boolean) => void
 }) {
     const initials = `${contact.first_name?.[0] || "?"}${contact.last_name?.[0] || "?"}`
     const totalSales = contact.total_sales || 0
@@ -26,6 +31,14 @@ export function MobileContactCard({
         <article className="rounded-xl border bg-background p-4 shadow-xs">
             <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 items-start gap-3">
+                    {onSelectChange && (
+                        <Checkbox
+                            checked={!!selected}
+                            onCheckedChange={(value) => onSelectChange(value === true)}
+                            className="mt-1"
+                            aria-label="Sélectionner"
+                        />
+                    )}
                     <Avatar className="h-10 w-10">
                         <AvatarImage src={contact.avatar_url || undefined} />
                         <AvatarFallback>{initials}</AvatarFallback>

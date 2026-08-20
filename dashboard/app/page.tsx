@@ -5,14 +5,15 @@ import { useEffect, useState, useCallback, Suspense } from "react"
 import Link from "next/link"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Contact } from "@/types"
-import { columns } from "@/components/contacts/columns"
+import { selectableColumns } from "@/components/contacts/columns"
 import { DataTable } from "@/components/contacts/data-table"
 import { MobileContactCard } from "@/components/contacts/mobile-contact-card"
+import { MergeSelectedDialog } from "@/components/contacts/merge-selected-dialog"
 import { createClient } from "@/lib/supabase/client"
 import { useLanguage } from "@/components/i18n/language-context"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Download } from "lucide-react"
+import { Download, GitMerge, X } from "lucide-react"
 import { AddLeadDialog } from "@/components/contacts/add-lead-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
@@ -26,6 +27,9 @@ function HomeContent() {
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [offers, setOffers] = useState<{ name: string }[]>([])
+  const [showMergeDialog, setShowMergeDialog] = useState(false)
+  const [mergeContacts, setMergeContacts] = useState<Contact[]>([])
+  const [tableEpoch, setTableEpoch] = useState(0)
 
   const searchParams = useSearchParams()
   const listFilter = searchParams.get('list')
@@ -200,20 +204,60 @@ function HomeContent() {
       ) : error ? (
         <div className="text-red-500">Error: {error}</div>
       ) : (
+        <>
         <DataTable
-          columns={columns}
+          key={tableEpoch}
+          columns={selectableColumns}
           data={filteredData}
           showGlobalFilter={false}
           meta={{
             refreshData: fetchData
           }}
-          mobileRowRenderer={(row) => (
+          selectionToolbar={(rows, clearSelection) => (
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-blue-200 bg-blue-50 px-4 py-2.5 dark:border-blue-800 dark:bg-blue-950/30">
+              <span className="text-sm font-medium">
+                {t('contacts.merge.selectedCount', { count: rows.length })}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  disabled={rows.length < 2}
+                  onClick={() => {
+                    setMergeContacts(rows.map(r => r.original))
+                    setShowMergeDialog(true)
+                  }}
+                >
+                  <GitMerge className="mr-2 h-4 w-4" />
+                  {t('contacts.merge.confirm')}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={clearSelection}>
+                  <X className="mr-1 h-4 w-4" />
+                  {t('contacts.merge.clearSelection')}
+                </Button>
+              </div>
+            </div>
+          )}
+          mobileRowRenderer={(row, selection) => (
             <MobileContactCard
               contact={row.original}
               onRefresh={fetchData}
+              selected={selection?.selected}
+              onSelectChange={selection?.setSelected}
             />
           )}
         />
+        <MergeSelectedDialog
+          contacts={mergeContacts}
+          open={showMergeDialog}
+          onOpenChange={setShowMergeDialog}
+          onSuccess={async () => {
+            setShowMergeDialog(false)
+            setMergeContacts([])
+            setTableEpoch(e => e + 1)
+            await fetchData()
+          }}
+        />
+        </>
       )}
     </div>
   )

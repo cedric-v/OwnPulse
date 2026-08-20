@@ -47,7 +47,7 @@
 ### 1. Database Setup (Supabase)
 1. Create a free project on [Supabase](https://supabase.com).
 2. Execute the SQL schema found in `/supabase/schema.sql` to initialize your `contacts`, `companies`, and `tasks` tables (already security-hardened: RLS owner-scoped, anonymous access limited to `contact_urls` view + `capture_contact` RPC).
-3. Run the incremental migrations in order: `fix_missing_tables.sql`, `migration_social_fields.sql`, `migration_marketing_cfo.sql`, `migration_acquisition_channels.sql`, `migration_offers_enhancement.sql`, `add_tax_social_settings.sql`, `add_vat_setting.sql`, `migration_sales_company_link.sql`, `migration_sales_quantity_decimal.sql`, `migration_contact_activities.sql` (and `supabase/seed_generic.sql` for neutral demo data).
+3. Run the incremental migrations in order: `fix_missing_tables.sql`, `migration_social_fields.sql`, `migration_marketing_cfo.sql`, `migration_acquisition_channels.sql`, `migration_offers_enhancement.sql`, `add_tax_social_settings.sql`, `add_vat_setting.sql`, `migration_sales_company_link.sql`, `migration_sales_quantity_decimal.sql`, `migration_contact_activities.sql`, `migration_merge_contacts.sql` (and `supabase/seed_generic.sql` for neutral demo data).
 4. Retrieve your `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
 5. Disable public signup: **Authentication > Providers > Email > "Allow new users to sign up" = OFF**, and enable 2FA/MFA on your account.
 
@@ -132,6 +132,20 @@ The `echo "..." |` form skips wrangler's interactive prompt, so the block is saf
 **Verify:** `curl "https://ownpulse-supabase-keepalive.<your-subdomain>.workers.dev/ping"` → `OK`. Scheduled runs are visible under **Workers & Pages > ownpulse-supabase-keepalive > Logs**.
 
 **Caveat:** the ping view (default `contact_urls`, from `hardening_security_rls.sql`) must be exposed to `anon` with an explicit `GRANT` — new Supabase projects no longer expose `public` objects to the Data API by default (see AGENTS.md). If you need a different frequency, edit `[triggers] crons` in `keepalive-worker/wrangler.toml` and redeploy.
+
+### 8. Merge duplicate leads
+
+When the same person is captured twice (e.g. once via Instagram, once via LinkedIn), merge the duplicates from either place:
+- **Contact page:** from the contact's detail page → **Quick Actions → Fusionner des contacts** (search the duplicate, then choose which record to keep).
+- **Leads table:** on the home page, tick the checkboxes of the duplicate rows (2+), then **Fusionner** in the selection bar and choose the record to keep.
+
+Run `migration_merge_contacts.sql` once on an existing project. It adds the `merge_contacts(p_primary_id, p_duplicate_ids)` RPC (SECURITY DEFINER, `authenticated` only):
+- **Field policy:** the kept (primary) contact's non-empty values win; its empty fields are filled from the duplicate(s). Lists are unioned (case-insensitive dedup) and notes are appended with a `--- Fusionné depuis ... ---` trace marker.
+- **Related records:** tasks, sales, and prospecting activities are re-attached to the kept contact; the duplicate row is deleted.
+- **Ownership:** only contacts owned by the caller, or unclaimed rows (`user_id` NULL, anonymous extension captures), can be merged. The kept contact becomes claimed (`user_id = auth.uid()`).
+- The merge runs in a single transaction: any validation error rolls everything back.
+
+The dedup `contact_urls` view automatically stops listing the deleted duplicate's profile URLs, and the kept contact retains both profile URLs (LinkedIn + Instagram) so the extension will report **Already in CRM** for both.
 
 ---
 

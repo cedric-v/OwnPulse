@@ -18,6 +18,7 @@ import {
 import { StatusCell } from "./status-cell"
 import { NotesSheet } from "./notes-sheet"
 import { DeleteLeadAlert } from "./delete-lead-alert"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useLanguage } from "@/components/i18n/language-context"
 
 type ContactsTableMeta = {
@@ -200,4 +201,37 @@ export const columns: LegacyColumnDef<Contact>[] = [
             )
         },
     },
+]
+
+// Row-selection column prepended to the base columns when the leads table is
+// used with multi-select (merge duplicates flow).
+const SelectColumn: LegacyColumnDef<Contact> = {
+    id: "select",
+    header: ({ table }) => (
+        <Checkbox
+            checked={
+                table.getIsAllPageRowsSelected()
+                    ? true
+                    : table.getIsSomePageRowsSelected()
+                        ? "indeterminate"
+                        : false
+            }
+            onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+            aria-label="Sélectionner tout"
+        />
+    ),
+    cell: ({ row }) => (
+        <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label="Sélectionner la ligne"
+        />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+}
+
+export const selectableColumns: LegacyColumnDef<Contact>[] = [
+    SelectColumn,
+    ...columns,
 ]

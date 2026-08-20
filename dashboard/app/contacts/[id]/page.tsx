@@ -12,9 +12,10 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Loader2, Phone, Mail, MapPin, Globe, ExternalLink, Check, Building, Pencil } from "lucide-react"
+import { ArrowLeft, Loader2, Phone, Mail, MapPin, Globe, ExternalLink, Check, Building, Pencil, GitMerge } from "lucide-react"
 import Link from "next/link"
 import { StatusCell } from "@/components/contacts/status-cell"
+import { MergeContactDialog } from "@/components/contacts/merge-contact-dialog"
 import {
     Dialog,
     DialogContent,
@@ -64,6 +65,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
     const [editForm, setEditForm] = useState({ description: "", priority: "", category: "", due_date: "" })
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
     const [isDeleting, setIsDeleting] = useState(false)
+    const [showMergeDialog, setShowMergeDialog] = useState(false)
 
     useEffect(() => {
         async function fetchData() {
@@ -741,6 +743,13 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                 </Button>
                             )}
                             <Button
+                                variant="outline"
+                                className="justify-start"
+                                onClick={() => setShowMergeDialog(true)}
+                            >
+                                <GitMerge className="mr-2 h-4 w-4" /> {t('contacts.merge.title')}
+                            </Button>
+                            <Button
                                 variant="destructive"
                                 className="justify-start mt-4"
                                 onClick={() => setShowDeleteDialog(true)}
@@ -847,6 +856,14 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Merge Duplicates Dialog */}
+            <MergeContactDialog
+                contact={contact}
+                currency={currency}
+                open={showMergeDialog}
+                onOpenChange={setShowMergeDialog}
+            />
 
             {/* Delete Confirmation Dialog */}
             <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
