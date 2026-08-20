@@ -18,13 +18,14 @@ import {
 import { createClient } from "@/lib/supabase/client"
 import { Contact } from "@/types"
 import { StickyNote } from "lucide-react"
+import { htmlToText } from "@/lib/html-to-text"
 
 interface NotesSheetProps {
     contact: Contact
 }
 
 export function NotesSheet({ contact }: NotesSheetProps) {
-    const [notes, setNotes] = useState(contact.notes || "")
+    const [notes, setNotes] = useState(htmlToText(contact.notes))
     const [loading, setLoading] = useState(false)
     const supabase = createClient()
     const [open, setOpen] = useState(false)

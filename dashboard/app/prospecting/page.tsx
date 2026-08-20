@@ -44,6 +44,7 @@ import {
     UserRound,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { htmlToText } from "@/lib/html-to-text"
 
 type Filter = "all" | "priority" | "follow-up" | "never"
 type Channel = ContactActivity["channel"]
@@ -358,7 +359,7 @@ export default function ProspectingPage() {
                                         <div className="min-w-0 flex-1">
                                             <div className="flex flex-wrap items-center gap-2"><Link href={`/contacts/${contact.id}`} className="font-semibold hover:underline">{displayName(contact)}</Link><Badge variant="outline" className={statusClass(contact.status)}>{contact.status || "N/A"}</Badge>{isFollowUp && <Badge variant="outline" className="gap-1 border-red-200 bg-red-50 text-red-700"><Clock3 className="h-3 w-3" /> Relance due</Badge>}</div>
                                             <p className="mt-0.5 truncate text-sm text-muted-foreground">{contact.company || "Entreprise inconnue"}{contact.company_role ? ` · ${contact.company_role}` : ""}</p>
-                                            <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{lastActivity?.note || contact.notes || "Aucune note disponible pour ce lead."}</p>
+                                            <p className="mt-2 line-clamp-2 whitespace-pre-line text-sm text-muted-foreground">{htmlToText(lastActivity?.note || contact.notes) || "Aucune note disponible pour ce lead."}</p>
                                             <p className="mt-2 text-xs text-muted-foreground">{lastActivity ? `Dernière action : ${formatActivityDate(lastActivity.created_at)}` : "Jamais contacté dans l’historique"}</p>
                                         </div>
                                     </div>

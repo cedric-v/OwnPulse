@@ -33,6 +33,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { Calendar as CalendarIcon, Plus, AlertCircle } from "lucide-react"
 import { NewSaleForm } from "@/app/cfo/components/new-sale-form"
+import { htmlToText } from "@/lib/html-to-text"
 
 export default function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params)
@@ -512,7 +513,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                     <Textarea
                                         id="notes"
                                         rows={6}
-                                        value={contact.notes || ""}
+                                        value={htmlToText(contact.notes)}
                                         onChange={e => setContact({ ...contact, notes: e.target.value })}
                                     />
                                 </div>
