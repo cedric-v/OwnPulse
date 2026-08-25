@@ -601,7 +601,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label>Date de premier contact <span className="font-normal text-muted-foreground">(optionnelle)</span></Label>
+                                        <Label>Date de premier contact <span className="font-normal text-muted-foreground">({t('contacts.detail.optional')})</span></Label>
                                         <div className="flex gap-2">
                                             <DateInput
                                                 value={contact.first_contact_date?.slice(0, 10) || ""}

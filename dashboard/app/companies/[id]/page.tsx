@@ -17,6 +17,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { NewSaleForm } from "@/app/cfo/components/new-sale-form"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Sale } from "@/types"
+import { useLanguage } from "@/components/i18n/language-context"
 
 const formatCurrency = (value: number, currency: string) => {
     return new Intl.NumberFormat('fr-CH', {
@@ -28,6 +29,7 @@ const formatCurrency = (value: number, currency: string) => {
 export default function CompanyDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params)
     const router = useRouter()
+    const { t } = useLanguage()
     const supabase = createClient()
 
     const [company, setCompany] = useState<Company | null>(null)
@@ -100,7 +102,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
     }, [company, id, supabase, loading])
 
     const handleDelete = async () => {
-        if (!confirm("Are you sure you want to delete this company? Related leads will be unlinked.")) return
+        if (!confirm(t('companyDetail.deleteConfirm'))) return
 
         const { error } = await supabase
             .from('companies')
@@ -108,14 +110,14 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
             .eq('id', id)
 
         if (error) {
-            alert("Error deleting company: " + error.message)
+            alert(`${t('companyDetail.deleteError')}: ${error.message}`)
         } else {
             router.push('/companies')
         }
     }
 
     if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin h-8 w-8" /></div>
-    if (!company) return <div className="p-12 text-center">Company not found.</div>
+    if (!company) return <div className="p-12 text-center">{t('companyDetail.notFound')}</div>
 
     return (
         <div className="container mx-auto p-6 space-y-6">
@@ -131,15 +133,15 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                             {company.name}
                         </h1>
                         <div className="text-[10px] font-medium text-muted-foreground h-4">
-                            {saveStatus === "saving" && <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Saving...</span>}
-                            {saveStatus === "saved" && <span className="flex items-center gap-1 text-emerald-600"><Check className="h-3 w-3" /> Saved</span>}
+                            {saveStatus === "saving" && <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> {t('companyDetail.saving')}</span>}
+                            {saveStatus === "saved" && <span className="flex items-center gap-1 text-emerald-600"><Check className="h-3 w-3" /> {t('companyDetail.saved')}</span>}
                         </div>
                     </div>
                 </div>
                 <div className="ml-auto">
                     <Button variant="destructive" size="sm" onClick={handleDelete} className="gap-2">
                         <Trash2 className="h-4 w-4" />
-                        Delete Company
+                        {t('companyDetail.deleteCompany')}
                     </Button>
                 </div>
             </div>
@@ -148,12 +150,12 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                 {/* Left: Info */}
                 <Card className="md:col-span-2">
                     <CardHeader>
-                        <CardTitle>Company Profile</CardTitle>
+                        <CardTitle>{t('companyDetail.profile')}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="name">Company Name</Label>
+                                <Label htmlFor="name">{t('companyDetail.name')}</Label>
                                 <Input
                                     id="name"
                                     value={company.name || ""}
@@ -161,7 +163,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="value">Total Potential Value ({currency})</Label>
+                                <Label htmlFor="value">{t('companyDetail.totalPotentialValue')} ({currency})</Label>
                                 <Input
                                     id="value"
                                     type="number"
@@ -175,7 +177,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
 
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="website" className="flex items-center gap-2"><Globe className="h-3 w-3" /> Website</Label>
+                                <Label htmlFor="website" className="flex items-center gap-2"><Globe className="h-3 w-3" /> {t('companyDetail.website')}</Label>
                                 <div className="flex gap-2">
                                     <Input
                                         id="website"
@@ -191,7 +193,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="linkedin" className="flex items-center gap-2"><ExternalLink className="h-3 w-3" /> LinkedIn Page</Label>
+                                <Label htmlFor="linkedin" className="flex items-center gap-2"><ExternalLink className="h-3 w-3" /> {t('companyDetail.linkedinPage')}</Label>
                                 <div className="flex gap-2">
                                     <Input
                                         id="linkedin"
@@ -209,7 +211,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="city" className="flex items-center gap-2"><MapPin className="h-3 w-3" /> Headquarters City</Label>
+                            <Label htmlFor="city" className="flex items-center gap-2"><MapPin className="h-3 w-3" /> {t('companyDetail.headquartersCity')}</Label>
                             <Input
                                 id="city"
                                 value={company.city || ""}
@@ -219,7 +221,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="notes">Company-wide Notes</Label>
+                            <Label htmlFor="notes">{t('companyDetail.notes')}</Label>
                             <Textarea
                                 id="notes"
                                 rows={8}
@@ -237,7 +239,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-lg flex items-center gap-2">
                                 <Users className="h-5 w-5 text-muted-foreground" />
-                                Linked Leads
+                                {t('companyDetail.linkedLeads')}
                             </CardTitle>
                             <Badge variant="outline">{leads.length}</Badge>
                         </CardHeader>
@@ -254,7 +256,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                                                 <Link href={`/contacts/${lead.id}`} className="text-sm font-medium hover:underline block truncate">
                                                     {lead.first_name} {lead.last_name}
                                                 </Link>
-                                                <p className="text-xs text-muted-foreground truncate">{lead.company_role || "No role specified"}</p>
+                                                <p className="text-xs text-muted-foreground truncate">{lead.company_role || t('companyDetail.noRole')}</p>
                                             </div>
                                         </div>
                                         <Badge variant="secondary" className="text-[10px] h-5">{formatCurrency(Number(lead.value) || 0, currency)}</Badge>
@@ -262,7 +264,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                                 ))}
                                 {leads.length === 0 && (
                                     <div className="text-center py-6 text-sm text-muted-foreground italic">
-                                        No leads linked to this company.
+                                        {t('companyDetail.noLeads')}
                                     </div>
                                 )}
                             </div>
@@ -273,13 +275,13 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                         <CardHeader className="flex flex-row items-center justify-between pb-2">
                             <CardTitle className="text-lg flex items-center gap-2">
                                 <DollarSign className="h-5 w-5 text-muted-foreground" />
-                                Sales
+                                {t('companyDetail.sales')}
                             </CardTitle>
                             <div className="flex items-center gap-2">
                                 <Badge variant="outline">{sales.length}</Badge>
                                 <Button size="sm" variant="outline" className="gap-1" onClick={() => setSaleDialogOpen(true)}>
                                     <Plus className="h-4 w-4" />
-                                    New Sale
+                                    {t('companyDetail.newSale')}
                                 </Button>
                             </div>
                         </CardHeader>
@@ -292,7 +294,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                                             size="icon"
                                             className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
                                             onClick={() => setEditingSale(sale)}
-                                            title="Edit sale"
+                                            title={t('companyDetail.editSale')}
                                         >
                                             <Pencil className="h-3 w-3 text-muted-foreground" />
                                         </Button>
@@ -313,7 +315,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                             ))}
                             {sales.length === 0 && (
                                 <div className="text-center py-6 text-sm text-muted-foreground italic">
-                                    No sales recorded for this company yet.
+                                    {t('companyDetail.noSales')}
                                 </div>
                             )}
                         </CardContent>
@@ -321,17 +323,17 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
 
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-sm text-muted-foreground">Quick Stats</CardTitle>
+                            <CardTitle className="text-sm text-muted-foreground">{t('companyDetail.quickStats')}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="flex justify-between items-center text-sm font-medium">
-                                <span>Total Deals Value</span>
+                                <span>{t('companyDetail.totalDealsValue')}</span>
                                 <span className="text-emerald-600 dark:text-emerald-400">
                                     {formatCurrency(leads.reduce((sum, l) => sum + (Number(l.value) || 0), 0), currency)}
                                 </span>
                             </div>
                             <div className="flex justify-between items-center text-sm font-medium">
-                                <span>Recorded Revenue</span>
+                                <span>{t('companyDetail.recordedRevenue')}</span>
                                 <span className="text-emerald-600 dark:text-emerald-400">
                                     {formatCurrency(sales.reduce((sum, s) => sum + ((Number(s.price_ht) || 0) * (s.quantity || 1)), 0), currency)}
                                 </span>
@@ -344,7 +346,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
             <Dialog open={saleDialogOpen} onOpenChange={setSaleDialogOpen}>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>New Sale — {company.name}</DialogTitle>
+                        <DialogTitle>{t('companyDetail.newSaleTitle', { company: company.name })}</DialogTitle>
                     </DialogHeader>
                     <NewSaleForm
                         defaultCompanyId={id}
@@ -359,7 +361,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
             <Dialog open={!!editingSale} onOpenChange={(open) => !open && setEditingSale(null)}>
                 <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Edit Sale — {company.name}</DialogTitle>
+                        <DialogTitle>{t('companyDetail.editSale')} — {company.name}</DialogTitle>
                     </DialogHeader>
                     {editingSale && (
                         <NewSaleForm

@@ -257,7 +257,7 @@ export function AddLeadDialog() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>{t('contacts.leadForm.firstContactDate')} <span className="font-normal text-muted-foreground">({t('common.optional')})</span></Label>
+                                <Label>{t('contacts.leadForm.firstContactDate')} <span className="font-normal text-muted-foreground">({t('contacts.detail.optional')})</span></Label>
                                 <DateInput
                                     value={formData.first_contact_date}
                                     onChange={e => setFormData({ ...formData, first_contact_date: e.target.value })}

@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react"
 import { Contact } from "@/types"
 import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent } from "@/components/ui/card"
+import { useLanguage } from "@/components/i18n/language-context"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { StatusCell } from "@/components/contacts/status-cell"
 import Link from "next/link"
@@ -39,6 +40,7 @@ const groupContacts = (contacts: Contact[]) => {
 
 
 export default function PipelinePage() {
+    const { t } = useLanguage()
     const [data, setData] = useState<Contact[]>([])
     const [loading, setLoading] = useState(true)
     const [currency, setCurrency] = useState("CHF")
@@ -66,11 +68,20 @@ export default function PipelinePage() {
     }, [fetchData])
 
     const grouped = groupContacts(data)
+    const stageLabels: Record<string, string> = {
+        "N/A": t('contacts.statuses.notAvailable'),
+        Cold: t('contacts.statuses.cold'),
+        Engaged: t('contacts.statuses.engaged'),
+        Interested: t('contacts.statuses.interested'),
+        Warm: t('contacts.statuses.warm'),
+        Ghosted: t('contacts.statuses.ghosted'),
+        Closed: t('contacts.statuses.closed'),
+    }
 
     return (
         <div className="h-full flex flex-col">
-            <h1 className="text-3xl font-bold tracking-tight mb-6">Pipeline</h1>
-            {loading ? <div>Loading...</div> : (
+            <h1 className="text-3xl font-bold tracking-tight mb-6">{t('pipeline.title')}</h1>
+            {loading ? <div>{t('pipeline.loading')}</div> : (
                 <div className="flex-1 overflow-x-auto">
                     <div className="flex gap-4 min-w-[1200px] pb-4">
                         {STAGES.map(stage => {
@@ -81,7 +92,7 @@ export default function PipelinePage() {
                                 <div key={stage} className="w-[300px] flex-shrink-0 flex flex-col">
                                     <div className="flex items-center justify-between mb-3 px-1">
                                         <div className="flex items-center gap-2">
-                                            <h3 className="font-semibold text-sm uppercase text-gray-500">{stage}</h3>
+                                            <h3 className="font-semibold text-sm uppercase text-gray-500">{stageLabels[stage] || stage}</h3>
                                             <span className="bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-full text-xs font-medium text-gray-400">
                                                 {total}
                                             </span>
@@ -107,7 +118,7 @@ export default function PipelinePage() {
                                                                 </p>
                                                             </Link>
                                                             <p className="text-xs text-gray-500 truncate">
-                                                                {contact.company || "No Company"}
+                                                                {contact.company || t('pipeline.noCompany')}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -123,7 +134,7 @@ export default function PipelinePage() {
                                         ))}
                                         {items.length === 0 && (
                                             <div className="text-center py-10 text-gray-400 text-xs italic">
-                                                No leads
+                                                {t('pipeline.noLeads')}
                                             </div>
                                         )}
                                     </div>
