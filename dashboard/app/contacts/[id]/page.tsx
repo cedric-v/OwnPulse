@@ -105,6 +105,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
     useEffect(() => {
         async function fetchData() {
             setLoading(true)
+            setActivityError(null)
             const [contactRes, tasksRes, activitiesRes, salesRes, settingsRes, channelsRes] = await Promise.all([
                 supabase.from('contacts').select('*').eq('id', id).single(),
                 supabase.from('tasks').select('*').eq('contact_id', id),
