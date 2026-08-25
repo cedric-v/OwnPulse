@@ -34,7 +34,9 @@ export function AddLeadDialog() {
         list: "Prospects",
         value: 0,
         acquisition_channel: "",
-        first_contact_date: new Date().toISOString().split('T')[0]
+        // A lead can be created before any contact has taken place. Keep this
+        // empty rather than presenting the creation date as a first contact.
+        first_contact_date: ""
     })
     const [channels, setChannels] = useState<{ id: string, name: string }[]>([])
     const router = useRouter()
@@ -82,7 +84,7 @@ export function AddLeadDialog() {
                 first_name: "", last_name: "", company: "", email: "",
                 linkedin_url: "", threads_url: "", instagram_url: "",
                 list: "Prospects", value: 0, acquisition_channel: "",
-                first_contact_date: new Date().toISOString().split('T')[0]
+                first_contact_date: ""
             })
             router.refresh()
             if (data && data[0]) {
@@ -248,12 +250,19 @@ export function AddLeadDialog() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Date of First Contact</Label>
+                                <Label>Date of First Contact <span className="font-normal text-muted-foreground">(optional)</span></Label>
                                 <Input
                                     type="date"
                                     value={formData.first_contact_date}
                                     onChange={e => setFormData({ ...formData, first_contact_date: e.target.value })}
+                                    className={!formData.first_contact_date ? "text-muted-foreground" : ""}
+                                    aria-describedby="first-contact-date-help"
                                 />
+                                <p id="first-contact-date-help" className="text-xs text-muted-foreground">
+                                    {formData.first_contact_date
+                                        ? "Date enregistrée comme premier contact."
+                                        : "Date inconnue — elle ne sera pas remplacée par la date d’aujourd’hui."}
+                                </p>
                             </div>
                         </TabsContent>
                     </Tabs>

@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Loader2, Phone, Mail, MapPin, Globe, ExternalLink, Check, Building, Pencil, GitMerge } from "lucide-react"
+import { ArrowLeft, Loader2, Phone, Mail, MapPin, Globe, ExternalLink, Check, Building, Pencil, GitMerge, X } from "lucide-react"
 import Link from "next/link"
 import { StatusCell } from "@/components/contacts/status-cell"
 import { MergeContactDialog } from "@/components/contacts/merge-contact-dialog"
@@ -35,6 +35,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Calendar as CalendarIcon, Plus, AlertCircle } from "lucide-react"
 import { NewSaleForm } from "@/app/cfo/components/new-sale-form"
 import { htmlToText } from "@/lib/html-to-text"
+import { cn } from "@/lib/utils"
 
 export default function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params)
@@ -550,12 +551,34 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label>Date de premier contact</Label>
-                                        <Input
-                                            type="date"
-                                            value={contact.first_contact_date?.slice(0, 10) || ""}
-                                            onChange={e => setContact({ ...contact, first_contact_date: e.target.value })}
-                                        />
+                                        <Label>Date de premier contact <span className="font-normal text-muted-foreground">(optionnelle)</span></Label>
+                                        <div className="flex gap-2">
+                                            <Input
+                                                type="date"
+                                                value={contact.first_contact_date?.slice(0, 10) || ""}
+                                                onChange={e => setContact({ ...contact, first_contact_date: e.target.value || null })}
+                                                className={cn("min-w-0", !contact.first_contact_date && "text-muted-foreground")}
+                                                aria-describedby="first-contact-date-help"
+                                            />
+                                            {contact.first_contact_date && (
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="shrink-0 text-muted-foreground hover:text-destructive"
+                                                    onClick={() => setContact({ ...contact, first_contact_date: null })}
+                                                    aria-label="Effacer la date de premier contact"
+                                                    title="Effacer la date"
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                        <p id="first-contact-date-help" className="text-xs text-muted-foreground">
+                                            {contact.first_contact_date
+                                                ? "Date renseignée manuellement."
+                                                : "Date inconnue — le champ vide ne signifie pas aujourd’hui."}
+                                        </p>
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Date devenu client</Label>

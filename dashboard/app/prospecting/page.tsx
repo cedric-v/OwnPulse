@@ -43,6 +43,7 @@ import {
     Smartphone,
     Target,
     UserRound,
+    X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { htmlToText } from "@/lib/html-to-text"
@@ -260,6 +261,26 @@ export default function ProspectingPage() {
             return
         }
 
+        // The first contact date is only set when an outreach is actually
+        // logged. A newly imported/created lead must not inherit today's date.
+        if (!selectedContact.first_contact_date) {
+            const firstContactDate = localDateKey(new Date())
+            const { error: firstContactDateError } = await supabase
+                .from("contacts")
+                .update({ first_contact_date: firstContactDate })
+                .eq("id", selectedContact.id)
+
+            if (!firstContactDateError) {
+                setContacts((current) => current.map((contact) => (
+                    contact.id === selectedContact.id
+                        ? { ...contact, first_contact_date: firstContactDate }
+                        : contact
+                )))
+            } else {
+                setError(firstContactDateError.message)
+            }
+        }
+
         if (followUpDate) {
             await supabase.from("tasks").insert({
                 contact_id: selectedContact.id,
@@ -416,7 +437,38 @@ export default function ProspectingPage() {
                         <div className="space-y-2"><Label>Moyen réellement utilisé</Label><Select value={channel} onValueChange={(value) => setChannel(value as Channel)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{CHANNELS.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent></Select></div>
                         <div className="space-y-2"><Label>Résultat</Label><Select value={outcome} onValueChange={(value) => setOutcome(value as Outcome)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{OUTCOMES.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent></Select></div>
                         <div className="space-y-2"><Label htmlFor="activity-note">Petite note <span className="font-normal text-muted-foreground">(optionnelle)</span></Label><Textarea id="activity-note" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Ex. Message envoyé avec deux exemples de missions..." className="min-h-28" /></div>
-                        <div className="space-y-2"><Label htmlFor="follow-up-date">Prochaine relance <span className="font-normal text-muted-foreground">(optionnelle)</span></Label><Input id="follow-up-date" type="date" min={today} value={followUpDate} onChange={(event) => setFollowUpDate(event.target.value)} /><p className="text-xs text-muted-foreground">Une tâche de relance sera créée automatiquement.</p></div>
+                        <div className="space-y-2">
+                            <Label htmlFor="follow-up-date">Prochaine relance <span className="font-normal text-muted-foreground">(optionnelle)</span></Label>
+                            <div className="flex gap-2">
+                                <Input
+                                    id="follow-up-date"
+                                    type="date"
+                                    min={today}
+                                    value={followUpDate}
+                                    onChange={(event) => setFollowUpDate(event.target.value)}
+                                    className={cn("min-w-0", !followUpDate && "text-muted-foreground")}
+                                    aria-describedby="follow-up-date-help"
+                                />
+                                {followUpDate && (
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="shrink-0 text-muted-foreground hover:text-destructive"
+                                        onClick={() => setFollowUpDate("")}
+                                        aria-label="Effacer la date de prochaine relance"
+                                        title="Effacer la date"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </Button>
+                                )}
+                            </div>
+                            <p id="follow-up-date-help" className="text-xs text-muted-foreground">
+                                {followUpDate
+                                    ? "Une tâche de relance sera créée automatiquement."
+                                    : "Aucune date sélectionnée — aucune tâche ne sera créée."}
+                            </p>
+                        </div>
                     </div>
                     <SheetFooter><Button variant="outline" onClick={() => setSelectedContact(null)}>Annuler</Button><Button onClick={() => void saveActivity()} disabled={saving}>{saving && <Loader2 className="h-4 w-4 animate-spin" />} Confirmer et compter</Button></SheetFooter>
                 </SheetContent>
