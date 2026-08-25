@@ -35,7 +35,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Calendar as CalendarIcon, Plus, AlertCircle } from "lucide-react"
 import { NewSaleForm } from "@/app/cfo/components/new-sale-form"
 import { htmlToText } from "@/lib/html-to-text"
-import { cn } from "@/lib/utils"
+import { DateInput } from "@/components/ui/date-input"
 
 const ACTIVITY_CHANNEL_LABELS: Record<ContactActivity["channel"], string> = {
     LinkedIn: "MP LinkedIn",
@@ -591,11 +591,11 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                     <div className="space-y-2">
                                         <Label>Date de premier contact <span className="font-normal text-muted-foreground">(optionnelle)</span></Label>
                                         <div className="flex gap-2">
-                                            <Input
-                                                type="date"
+                                            <DateInput
                                                 value={contact.first_contact_date?.slice(0, 10) || ""}
                                                 onChange={e => setContact({ ...contact, first_contact_date: e.target.value || null })}
-                                                className={cn("min-w-0", !contact.first_contact_date && "text-muted-foreground")}
+                                                containerClassName="min-w-0 flex-1"
+                                                emptyLabel="Date inconnue"
                                                 aria-describedby="first-contact-date-help"
                                             />
                                             {contact.first_contact_date && (

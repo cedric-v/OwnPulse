@@ -18,6 +18,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { UserPlus, Loader2 } from "lucide-react"
+import { DateInput } from "@/components/ui/date-input"
 import { useRouter } from "next/navigation"
 
 export function AddLeadDialog() {
@@ -251,11 +252,10 @@ export function AddLeadDialog() {
                             </div>
                             <div className="space-y-2">
                                 <Label>Date of First Contact <span className="font-normal text-muted-foreground">(optional)</span></Label>
-                                <Input
-                                    type="date"
+                                <DateInput
                                     value={formData.first_contact_date}
                                     onChange={e => setFormData({ ...formData, first_contact_date: e.target.value })}
-                                    className={!formData.first_contact_date ? "text-muted-foreground" : ""}
+                                    emptyLabel="Date inconnue"
                                     aria-describedby="first-contact-date-help"
                                 />
                                 <p id="first-contact-date-help" className="text-xs text-muted-foreground">

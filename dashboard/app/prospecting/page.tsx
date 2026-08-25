@@ -46,6 +46,7 @@ import {
     X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { DateInput } from "@/components/ui/date-input"
 import { htmlToText } from "@/lib/html-to-text"
 
 type Filter = "all" | "priority" | "follow-up" | "never"
@@ -440,13 +441,13 @@ export default function ProspectingPage() {
                         <div className="space-y-2">
                             <Label htmlFor="follow-up-date">Prochaine relance <span className="font-normal text-muted-foreground">(optionnelle)</span></Label>
                             <div className="flex gap-2">
-                                <Input
+                                <DateInput
                                     id="follow-up-date"
-                                    type="date"
                                     min={today}
                                     value={followUpDate}
                                     onChange={(event) => setFollowUpDate(event.target.value)}
-                                    className={cn("min-w-0", !followUpDate && "text-muted-foreground")}
+                                    containerClassName="min-w-0 flex-1"
+                                    emptyLabel="Aucune date"
                                     aria-describedby="follow-up-date-help"
                                 />
                                 {followUpDate && (
