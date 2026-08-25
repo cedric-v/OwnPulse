@@ -1,7 +1,8 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { Contact, ContactActivity } from "@/types"
 import { useLanguage } from "@/components/i18n/language-context"
@@ -140,8 +141,12 @@ function formatActivityDate(value: string) {
     }).format(new Date(value))
 }
 
-export default function ProspectingPage() {
+function ProspectingPage() {
     const { t } = useLanguage()
+    const router = useRouter()
+    const searchParams = useSearchParams()
+    const requestedContactId = searchParams.get("contact")
+    const requestedAction = searchParams.get("action")
     const supabase = useMemo(() => createClient(), [])
     const today = localDateKey(new Date())
     const [selectedDate, setSelectedDate] = useState(today)
@@ -235,13 +240,27 @@ export default function ProspectingPage() {
             })
     }, [contacts, contactedIds, filter, followUpIds, lastActivityByContact, search])
 
-    const openLogSheet = (contact: Contact) => {
+    const openLogSheet = useCallback((contact: Contact) => {
         setSelectedContact(contact)
         setChannel(contact.linkedin_url ? "LinkedIn" : contact.email ? "Email" : contact.phone ? "Phone" : "Other")
         setOutcome("Message sent")
         setNote("")
         setFollowUpDate("")
-    }
+    }, [])
+
+    useEffect(() => {
+        if (loading || requestedAction !== "log" || !requestedContactId || selectedContact) return
+        const requestedContact = contacts.find((contact) => contact.id === requestedContactId)
+        if (!requestedContact) return
+
+        // This effect translates a one-time URL command into the visible log
+        // sheet, so the synchronous state update is intentional here.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        openLogSheet(requestedContact)
+        // Keep the sheet open while removing the command from the URL so a
+        // refresh does not unexpectedly open it again.
+        router.replace("/prospecting", { scroll: false })
+    }, [contacts, loading, openLogSheet, requestedAction, requestedContactId, router, selectedContact])
 
     const saveActivity = async () => {
         if (!selectedContact || !note.trim() && !channel) return
@@ -476,5 +495,13 @@ export default function ProspectingPage() {
                 </SheetContent>
             </Sheet>
         </div>
+    )
+}
+
+export default function ProspectingPageRoute() {
+    return (
+        <Suspense fallback={<div className="flex justify-center p-12"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
+            <ProspectingPage />
+        </Suspense>
     )
 }

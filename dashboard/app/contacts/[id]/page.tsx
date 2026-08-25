@@ -681,7 +681,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
 
                     {/* Prospecting History Card */}
                     <Card>
-                        <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                        <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-2 space-y-0">
                             <div>
                                 <CardTitle className="flex items-center gap-2 text-lg">
                                     <Activity className="h-4 w-4 text-muted-foreground" />
@@ -691,9 +691,17 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                     Chaque ligne correspond à une action enregistrée.
                                 </p>
                             </div>
-                            <Badge variant="secondary">
-                                {activities.length} {activities.length === 1 ? "action" : "actions"}
-                            </Badge>
+                            <div className="flex items-center gap-2">
+                                <Badge variant="secondary">
+                                    {activities.length} {activities.length === 1 ? "action" : "actions"}
+                                </Badge>
+                                <Button variant="outline" size="sm" asChild>
+                                    <Link href={`/prospecting?contact=${encodeURIComponent(id)}&action=log`}>
+                                        <Plus className="mr-1 h-3.5 w-3.5" />
+                                        {t('contacts.detail.logProspectingAction')}
+                                    </Link>
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             {activityError ? (
