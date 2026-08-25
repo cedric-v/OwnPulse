@@ -31,6 +31,7 @@ import {
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { normalizeSearchText } from "@/lib/utils"
 
 export type MobileRowSelection = {
     selected: boolean
@@ -63,6 +64,13 @@ export function DataTable<TData extends RowData>({
         columns,
         getCoreRowModel: getCoreRowModel(),
         getFilteredRowModel: getFilteredRowModel(),
+        globalFilterFn: (row, _columnId, filterValue) => {
+            const query = normalizeSearchText(String(filterValue ?? ""))
+            const searchableText = Object.values(row.original as Record<string, unknown>)
+                .filter((value): value is string => typeof value === "string")
+                .join(" ")
+            return normalizeSearchText(searchableText).includes(query)
+        },
         getPaginationRowModel: getPaginationRowModel(),
         getSortedRowModel: getSortedRowModel(),
         onSortingChange: setSorting,

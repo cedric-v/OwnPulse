@@ -13,6 +13,7 @@ import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
 import { AddCompanyDialog } from "@/components/companies/add-company-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { normalizeSearchText } from "@/lib/utils"
 
 type CompanyWithContacts = Company & { contacts?: { id: string }[]; contactCount?: number; totalSales?: number }
 type CompanySortField = "name" | "totalSales" | "value" | "leads"
@@ -66,10 +67,11 @@ export default function CompaniesPage() {
         fetchData()
     }, [supabase])
 
+    const normalizedQuery = normalizeSearchText(searchQuery)
     const filteredCompanies = companies.filter(c =>
-        c.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.city?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        c.notes?.toLowerCase().includes(searchQuery.toLowerCase())
+        normalizeSearchText(c.name).includes(normalizedQuery) ||
+        normalizeSearchText(c.city).includes(normalizedQuery) ||
+        normalizeSearchText(c.notes).includes(normalizedQuery)
     )
 
     const handleSortChange = (value: string) => {

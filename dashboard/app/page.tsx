@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button"
 import { Download, GitMerge, X } from "lucide-react"
 import { AddLeadDialog } from "@/components/contacts/add-lead-dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { normalizeSearchText } from "@/lib/utils"
 
 function HomeContent() {
   const router = useRouter()
@@ -91,17 +92,17 @@ function HomeContent() {
 
     // 3. Search Query
     if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      return (
-        (contact.first_name || "").toLowerCase().includes(query) ||
-        (contact.last_name || "").toLowerCase().includes(query) ||
-        (contact.company || "").toLowerCase().includes(query) ||
-        (contact.notes || "").toLowerCase().includes(query) ||
-        (contact.status || "").toLowerCase().includes(query) ||
-        (contact.linkedin_url || "").toLowerCase().includes(query) ||
-        (contact.threads_url || "").toLowerCase().includes(query) ||
-        (contact.instagram_url || "").toLowerCase().includes(query)
-      )
+      const query = normalizeSearchText(searchQuery)
+      return [
+        contact.first_name,
+        contact.last_name,
+        contact.company,
+        contact.notes,
+        contact.status,
+        contact.linkedin_url,
+        contact.threads_url,
+        contact.instagram_url,
+      ].some((value) => normalizeSearchText(value).includes(query))
     }
 
     return true

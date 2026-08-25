@@ -45,7 +45,7 @@ import {
     UserRound,
     X,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, normalizeSearchText } from "@/lib/utils"
 import { DateInput } from "@/components/ui/date-input"
 import { htmlToText } from "@/lib/html-to-text"
 
@@ -209,7 +209,7 @@ export default function ProspectingPage() {
     const followUpIds = useMemo(() => new Set(followUps.map((task) => task.contact_id)), [followUps])
 
     const queue = useMemo(() => {
-        const query = search.trim().toLowerCase()
+        const query = normalizeSearchText(search)
         return contacts
             .filter((contact) => {
                 const status = contact.status || ""
@@ -219,8 +219,9 @@ export default function ProspectingPage() {
                 if (filter === "follow-up" && !followUpIds.has(contact.id)) return false
                 if (filter === "never" && lastActivityByContact.has(contact.id)) return false
                 if (!query) return true
-                return [displayName(contact), contact.company || "", contact.company_role || "", contact.notes || "", status]
-                    .join(" ").toLowerCase().includes(query)
+                return normalizeSearchText(
+                    [displayName(contact), contact.company || "", contact.company_role || "", contact.notes || "", status].join(" ")
+                ).includes(query)
             })
             .sort((a, b) => {
                 const priority = statusRank(b.status) - statusRank(a.status)

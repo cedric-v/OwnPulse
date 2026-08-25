@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { GitMerge, Loader2, Search, Check, AlertCircle, UserPlus } from "lucide-react"
+import { normalizeSearchText } from "@/lib/utils"
 
 type MergeCandidate = Pick<
     Contact,
@@ -99,17 +100,19 @@ export function MergeContactDialog({ contact, currency, open, onOpenChange }: Me
     }, [open, contact.id, supabase])
 
     const filtered = useMemo(() => {
-        const q = search.trim().toLowerCase()
+        const q = normalizeSearchText(search)
         if (!q) return candidates
         return candidates.filter(c =>
-            (c.first_name || "").toLowerCase().includes(q) ||
-            (c.last_name || "").toLowerCase().includes(q) ||
-            `${c.first_name || ""} ${c.last_name || ""}`.toLowerCase().includes(q) ||
-            (c.email || "").toLowerCase().includes(q) ||
-            (c.company || "").toLowerCase().includes(q) ||
-            (c.linkedin_url || "").toLowerCase().includes(q) ||
-            (c.threads_url || "").toLowerCase().includes(q) ||
-            (c.instagram_url || "").toLowerCase().includes(q)
+            [
+                c.first_name,
+                c.last_name,
+                `${c.first_name || ""} ${c.last_name || ""}`,
+                c.email,
+                c.company,
+                c.linkedin_url,
+                c.threads_url,
+                c.instagram_url,
+            ].some((value) => normalizeSearchText(value).includes(q))
         )
     }, [candidates, search])
 

@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/select"
 import { Loader2, Calendar, User, AlertCircle, Pencil } from "lucide-react"
 import Link from "next/link"
-import { cn } from "@/lib/utils"
+import { cn, normalizeSearchText } from "@/lib/utils"
 
 const PRIORITY_COLORS = {
     High: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200",
@@ -212,10 +212,10 @@ export default function TasksPage() {
     if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin h-8 w-8" /></div>
 
     const filteredTasks = tasks.filter(task => {
-        const query = searchQuery.toLowerCase()
-        const descriptionMatch = task.description.toLowerCase().includes(query)
-        const firstNameMatch = task.contact?.first_name?.toLowerCase().includes(query) || false
-        const lastNameMatch = task.contact?.last_name?.toLowerCase().includes(query) || false
+        const query = normalizeSearchText(searchQuery)
+        const descriptionMatch = normalizeSearchText(task.description).includes(query)
+        const firstNameMatch = normalizeSearchText(task.contact?.first_name).includes(query)
+        const lastNameMatch = normalizeSearchText(task.contact?.last_name).includes(query)
         return descriptionMatch || firstNameMatch || lastNameMatch
     })
 
