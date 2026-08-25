@@ -20,6 +20,7 @@
 - **Pipeline Management:** Move leads through custom stages with a high-velocity, debounced interface.
 - **Bi-directional Linking:** Connect sales directly to contacts for a 360° view of customer history.
 - **Duplicate Merge:** Merge accidentally duplicated leads from the contact page or by multi-selecting rows in the leads table — fields, lists, notes, tasks, sales, and activities are consolidated and duplicates removed.
+- **Accent-insensitive search:** Search fields ignore accents and letter case, so searching `ecole` finds the value `école`.
 
 ### 2. 📊 Marketing & Offer Intelligence
 - **Acquisition Analysis:** Track exactly which social channels are driving your customers.
@@ -112,6 +113,8 @@ The `/prospecting` workspace is designed for a configurable daily outreach goal 
 The workflow is explicit: open the available channel, contact the person, then click **J’ai contacté cette personne** and confirm the channel actually used. Available outreach channels are MP LinkedIn, e-mail, WhatsApp, SMS, appel, MP Instagram, Threads, and autre. The quick actions open LinkedIn, e-mail, phone, WhatsApp, or SMS when the corresponding contact data is available.
 
 Run `migration_contact_activities.sql` once on an existing project. It adds the owner-scoped `contact_activities` history for the outreach channel, outcome, and short note, including the `SMS` channel constraint. A follow-up entered from the workspace creates an existing-style task. Multiple activities for the same lead on one day count as one distinct person toward the daily goal.
+
+Each contact detail page (`/contacts/<id>`) displays the complete **Prospecting History**: total recorded actions, timestamp, channel, outcome, and note. A newly created or imported lead keeps `first_contact_date` empty until a date is explicitly supplied or the first outreach is logged; the interface displays an explicit unknown-date state rather than implying that today is the contact date. Optional follow-up dates likewise remain empty until selected. Search inputs throughout contacts, prospecting, companies, tasks, and duplicate merging are accent- and case-insensitive.
 
 ### 7. Keep-Alive (Free Plan Anti-Pause)
 

@@ -40,7 +40,8 @@ The core management interface for OwnPulse. Built with Next.js 16 for speed, sec
 - **Multi-List Support**: Assign leads to multiple categories simultaneously (Customers, Prospects, etc.).
 - **Direct Lead Entry**: Add leads manually from the dashboard without needing the extension.
 - **CSV Export**: One-click export of your filtered/search results.
-- **Prospecting workspace**: Configurable daily outreach goal (10 by default), prioritizing existing `Warm`, `Interested`, and `Engaged` statuses without duplicating the contact temperature field. The workflow is: open a channel, contact the person, then confirm with **J’ai contacté cette personne**. Supported channels are MP LinkedIn, e-mail, WhatsApp, SMS, appel, MP Instagram, Threads, and autre. Outreach actions are stored in `contact_activities`; follow-ups use the existing `tasks` table.
+- **Accent-insensitive search**: Contact, prospecting, company, task, and duplicate-merge searches ignore accents and case (`ecole` finds `école`).
+- **Prospecting workspace**: Configurable daily outreach goal (10 by default), prioritizing existing `Warm`, `Interested`, and `Engaged` statuses without duplicating the contact temperature field. The workflow is: open a channel, contact the person, then confirm with **J’ai contacté cette personne**. Supported channels are MP LinkedIn, e-mail, WhatsApp, SMS, appel, MP Instagram, Threads, and autre. Outreach actions are stored in `contact_activities`; follow-ups use the existing `tasks` table. The contact detail page shows the complete prospecting history, and unknown first-contact/follow-up dates are displayed explicitly instead of appearing as today.
 - **SSR Optimized**: Built with Next.js App Router for maximum performance and SEO.
 
 ## 🛡 Security
