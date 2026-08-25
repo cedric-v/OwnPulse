@@ -218,15 +218,20 @@ function ProspectingPage() {
         return contacts
             .filter((contact) => {
                 const status = contact.status || ""
+                // Une recherche par nom doit toujours trouver le lead, même s'il
+                // est déjà contacté aujourd'hui ou dans un statut fermé : elle
+                // passe donc devant les exclusions de la file de prospection.
+                if (query) {
+                    return normalizeSearchText(
+                        [displayName(contact), contact.company || "", contact.company_role || "", contact.notes || "", status].join(" ")
+                    ).includes(query)
+                }
                 if (CLOSED_STATUSES.some((closed) => closed.toLowerCase() === status.toLowerCase())) return false
                 if (contactedIds.has(contact.id)) return false
                 if (filter === "priority" && !PRIORITY_STATUSES.some((item) => item.toLowerCase() === status.toLowerCase())) return false
                 if (filter === "follow-up" && !followUpIds.has(contact.id)) return false
                 if (filter === "never" && lastActivityByContact.has(contact.id)) return false
-                if (!query) return true
-                return normalizeSearchText(
-                    [displayName(contact), contact.company || "", contact.company_role || "", contact.notes || "", status].join(" ")
-                ).includes(query)
+                return true
             })
             .sort((a, b) => {
                 const priority = statusRank(b.status) - statusRank(a.status)
@@ -395,7 +400,7 @@ function ProspectingPage() {
 
             {error && <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">Impossible de charger la prospection : {error}. Vérifie que la migration des activités a été exécutée.</div>}
             {loading ? <div className="flex justify-center p-12"><Loader2 className="h-8 w-8 animate-spin" /></div> : queue.length === 0 ? (
-                <Card><CardContent className="flex flex-col items-center gap-2 p-12 text-center"><Check className="h-10 w-10 rounded-full bg-emerald-100 p-2 text-emerald-700" /><p className="font-medium">Aucun lead dans cette file</p><p className="text-sm text-muted-foreground">Tous les leads pertinents ont peut-être déjà été contactés pour cette journée.</p></CardContent></Card>
+                <Card><CardContent className="flex flex-col items-center gap-2 p-12 text-center"><Search className="h-10 w-10 rounded-full bg-muted p-2 text-muted-foreground" /><p className="font-medium">{search.trim() ? "Aucun lead ne correspond à ta recherche" : "Aucun lead dans cette file"}</p><p className="text-sm text-muted-foreground">{search.trim() ? `Essaie avec un autre nom, une entreprise ou un statut.` : "Tous les leads pertinents ont peut-être déjà été contactés pour cette journée."}</p></CardContent></Card>
             ) : (
                 <div className="space-y-3">
                     {queue.map((contact) => {
