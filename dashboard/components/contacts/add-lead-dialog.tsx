@@ -19,9 +19,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { UserPlus, Loader2 } from "lucide-react"
 import { DateInput } from "@/components/ui/date-input"
+import { useLanguage } from "@/components/i18n/language-context"
 import { useRouter } from "next/navigation"
 
 export function AddLeadDialog() {
+    const { t } = useLanguage()
     const [open, setOpen] = useState(false)
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
@@ -77,7 +79,7 @@ export function AddLeadDialog() {
 
         setLoading(false)
         if (error) {
-            alert("Error adding lead: " + error.message)
+            alert(`${t('contacts.leadForm.addError')}: ${error.message}`)
         } else {
             setOpen(false)
             setOpen(false)
@@ -101,24 +103,24 @@ export function AddLeadDialog() {
             <DialogTrigger asChild>
                 <Button className="gap-2">
                     <UserPlus className="h-4 w-4" />
-                    Add a Lead
+                    {t('contacts.leadForm.addTitle')}
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Add a New Lead</DialogTitle>
+                    <DialogTitle>{t('contacts.leadForm.addTitle')}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit}>
                     <Tabs defaultValue="basic" className="w-full pt-4">
                         <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                            <TabsTrigger value="marketing">Marketing Info</TabsTrigger>
+                            <TabsTrigger value="basic">{t('contacts.leadForm.basicInfo')}</TabsTrigger>
+                            <TabsTrigger value="marketing">{t('contacts.leadForm.marketingInfo')}</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="basic" className="space-y-4 pt-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="first_name">First Name</Label>
+                                    <Label htmlFor="first_name">{t('contacts.detail.firstName')}</Label>
                                     <Input
                                         id="first_name"
                                         value={formData.first_name}
@@ -128,7 +130,7 @@ export function AddLeadDialog() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="last_name">Last Name</Label>
+                                    <Label htmlFor="last_name">{t('contacts.detail.lastName')}</Label>
                                     <Input
                                         id="last_name"
                                         value={formData.last_name}
@@ -139,7 +141,7 @@ export function AddLeadDialog() {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="company">Company</Label>
+                                <Label htmlFor="company">{t('contacts.detail.company')}</Label>
                                 <Input
                                     id="company"
                                     value={formData.company}
@@ -149,7 +151,7 @@ export function AddLeadDialog() {
                             </div>
                             <div className="grid grid-cols-1 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="linkedin_url">LinkedIn URL</Label>
+                                    <Label htmlFor="linkedin_url">{t('contacts.leadForm.linkedinUrl')}</Label>
                                     <Input
                                         id="linkedin_url"
                                         value={formData.linkedin_url}
@@ -158,7 +160,7 @@ export function AddLeadDialog() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="threads_url">Threads URL</Label>
+                                    <Label htmlFor="threads_url">{t('contacts.leadForm.threadsUrl')}</Label>
                                     <Input
                                         id="threads_url"
                                         value={formData.threads_url}
@@ -167,7 +169,7 @@ export function AddLeadDialog() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="instagram_url">Instagram URL</Label>
+                                    <Label htmlFor="instagram_url">{t('contacts.leadForm.instagramUrl')}</Label>
                                     <Input
                                         id="instagram_url"
                                         value={formData.instagram_url}
@@ -177,7 +179,7 @@ export function AddLeadDialog() {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
+                                <Label htmlFor="email">{t('contacts.detail.email')}</Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -187,7 +189,7 @@ export function AddLeadDialog() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Lists</Label>
+                                <Label>{t('contacts.detail.lists')}</Label>
                                 <div className="flex flex-wrap gap-x-4 gap-y-2 pt-2">
                                     {LIST_OPTIONS.map(option => {
                                         const currentLists = formData.list.split(',').map(l => l.trim().toLowerCase())
@@ -214,7 +216,11 @@ export function AddLeadDialog() {
                                                     htmlFor={`new-list-${option}`}
                                                     className="text-xs font-medium leading-none cursor-pointer"
                                                 >
-                                                    {option}
+                                                    {option === "Prospects" ? t('sidebar.prospects')
+                                                        : option === "Customers" ? t('sidebar.customers')
+                                                            : option === "Partnerships" ? t('sidebar.partnerships')
+                                                                : option === "Network/Peers" ? t('sidebar.network')
+                                                                    : t('sidebar.podcast')}
                                                 </label>
                                             </div>
                                         )
@@ -222,7 +228,7 @@ export function AddLeadDialog() {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="value">Value (CHF)</Label>
+                                <Label htmlFor="value">{t('contacts.leadForm.value')} (CHF)</Label>
                                 <Input
                                     id="value"
                                     type="number"
@@ -237,12 +243,12 @@ export function AddLeadDialog() {
 
                         <TabsContent value="marketing" className="space-y-4 pt-4">
                             <div className="space-y-2">
-                                <Label>Acquisition Channel</Label>
+                                <Label>{t('contacts.leadForm.acquisitionChannel')}</Label>
                                 <Select
                                     value={formData.acquisition_channel}
                                     onValueChange={v => setFormData({ ...formData, acquisition_channel: v })}
                                 >
-                                    <SelectTrigger><SelectValue placeholder="Select a channel" /></SelectTrigger>
+                                    <SelectTrigger><SelectValue placeholder={t('contacts.leadForm.selectChannel')} /></SelectTrigger>
                                     <SelectContent>
                                         {channels.map(channel => (
                                             <SelectItem key={channel.id} value={channel.name}>{channel.name}</SelectItem>
@@ -251,17 +257,17 @@ export function AddLeadDialog() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Date of First Contact <span className="font-normal text-muted-foreground">(optional)</span></Label>
+                                <Label>{t('contacts.leadForm.firstContactDate')} <span className="font-normal text-muted-foreground">({t('common.optional')})</span></Label>
                                 <DateInput
                                     value={formData.first_contact_date}
                                     onChange={e => setFormData({ ...formData, first_contact_date: e.target.value })}
-                                    emptyLabel="Date inconnue"
+                                    emptyLabel={t('contacts.leadForm.unknownDate')}
                                     aria-describedby="first-contact-date-help"
                                 />
                                 <p id="first-contact-date-help" className="text-xs text-muted-foreground">
                                     {formData.first_contact_date
-                                        ? "Date enregistrée comme premier contact."
-                                        : "Date inconnue — elle ne sera pas remplacée par la date d’aujourd’hui."}
+                                        ? t('contacts.leadForm.dateRecorded')
+                                        : t('contacts.leadForm.unknownDateHelp')}
                                 </p>
                             </div>
                         </TabsContent>
@@ -270,7 +276,7 @@ export function AddLeadDialog() {
                     <DialogFooter className="pt-4">
                         <Button type="submit" disabled={loading} className="w-full">
                             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Create Lead
+                            {t('contacts.leadForm.create')}
                         </Button>
                     </DialogFooter>
                 </form>

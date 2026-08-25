@@ -12,8 +12,10 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { createClient } from "@/lib/supabase/client"
 import { Contact } from "@/types"
+import { useLanguage } from "@/components/i18n/language-context"
 
 export function StatusCell({ contact }: { contact: Contact }) {
+    const { t } = useLanguage()
     const [status, setStatus] = useState(contact.status)
     const [loading, setLoading] = useState(false)
     const supabase = createClient()
@@ -39,6 +41,24 @@ export function StatusCell({ contact }: { contact: Contact }) {
         setLoading(false)
     }
 
+    const getStatusLabel = (s: string | null) => {
+        switch (s) {
+            case "N/A": return t('contacts.statuses.notAvailable')
+            case "Cold": return t('contacts.statuses.cold')
+            case "Prospect": return t('contacts.statuses.prospect')
+            case "Engaged": return t('contacts.statuses.engaged')
+            case "Interested": return t('contacts.statuses.interested')
+            case "Warm": return t('contacts.statuses.warm')
+            case "Client":
+            case "Customer": return t('contacts.statuses.client')
+            case "Ghosted": return t('contacts.statuses.ghosted')
+            case "Closed": return t('contacts.statuses.closed')
+            case "Deal Won": return t('contacts.statuses.dealWon')
+            case "Lost": return t('contacts.statuses.lost')
+            default: return s || t('contacts.statuses.notAvailable')
+        }
+    }
+
     const getStatusColor = (s: string) => {
         switch (s) {
             case "Customer":
@@ -61,24 +81,24 @@ export function StatusCell({ contact }: { contact: Contact }) {
     return (
         <Select value={status || undefined} onValueChange={handleValueChange} disabled={loading}>
             <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Status">
+                <SelectValue placeholder={t('contacts.statuses.placeholder')}>
                     <Badge variant="outline" className={getStatusColor(status || "N/A")}>
-                        {status || "N/A"}
+                        {getStatusLabel(status)}
                     </Badge>
                 </SelectValue>
             </SelectTrigger>
             <SelectContent>
-                <SelectItem value="N/A">N/A</SelectItem>
-                <SelectItem value="Cold">Cold</SelectItem>
-                <SelectItem value="Prospect">Prospect</SelectItem>
-                <SelectItem value="Engaged">Engaged</SelectItem>
-                <SelectItem value="Interested">Interested</SelectItem>
-                <SelectItem value="Warm">Warm</SelectItem>
-                <SelectItem value="Client">Client</SelectItem>
-                <SelectItem value="Ghosted">Ghosted</SelectItem>
-                <SelectItem value="Closed">Closed</SelectItem>
-                <SelectItem value="Deal Won">Deal Won</SelectItem>
-                <SelectItem value="Lost">Lost</SelectItem>
+                <SelectItem value="N/A">{t('contacts.statuses.notAvailable')}</SelectItem>
+                <SelectItem value="Cold">{t('contacts.statuses.cold')}</SelectItem>
+                <SelectItem value="Prospect">{t('contacts.statuses.prospect')}</SelectItem>
+                <SelectItem value="Engaged">{t('contacts.statuses.engaged')}</SelectItem>
+                <SelectItem value="Interested">{t('contacts.statuses.interested')}</SelectItem>
+                <SelectItem value="Warm">{t('contacts.statuses.warm')}</SelectItem>
+                <SelectItem value="Client">{t('contacts.statuses.client')}</SelectItem>
+                <SelectItem value="Ghosted">{t('contacts.statuses.ghosted')}</SelectItem>
+                <SelectItem value="Closed">{t('contacts.statuses.closed')}</SelectItem>
+                <SelectItem value="Deal Won">{t('contacts.statuses.dealWon')}</SelectItem>
+                <SelectItem value="Lost">{t('contacts.statuses.lost')}</SelectItem>
             </SelectContent>
         </Select>
     )

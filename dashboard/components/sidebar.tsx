@@ -201,6 +201,7 @@ export function Sidebar(props: SidebarProps) {
 }
 
 export function MobileSidebar() {
+    const { t } = useLanguage()
     const [open, setOpen] = useState(false)
 
     return (
@@ -209,14 +210,14 @@ export function MobileSidebar() {
                 <div className="flex h-16 items-center justify-between px-4">
                     <Sheet open={open} onOpenChange={setOpen}>
                         <SheetTrigger asChild>
-                            <Button variant="outline" size="icon" aria-label="Open navigation menu">
+                            <Button variant="outline" size="icon" aria-label={t('sidebar.mobileNavigation')}>
                                 <Menu className="h-5 w-5" />
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="left" className="w-[calc(100vw-3rem)] max-w-xs p-0">
                             <SheetHeader className="sr-only">
-                                <SheetTitle>Navigation</SheetTitle>
-                                <SheetDescription>Open the main sections of OwnPulse.</SheetDescription>
+                                <SheetTitle>{t('sidebar.mobileNavigationTitle')}</SheetTitle>
+                                <SheetDescription>{t('sidebar.mobileNavigation')}</SheetDescription>
                             </SheetHeader>
                             <SidebarContent
                                 className="h-full min-h-full w-full border-r-0 bg-background pb-6"

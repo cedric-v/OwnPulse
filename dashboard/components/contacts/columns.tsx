@@ -33,27 +33,28 @@ export function ActionsCell({
     onRefresh?: () => void
 }) {
     const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+    const { t } = useLanguage()
 
     return (
         <>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
+                        <span className="sr-only">{t('contacts.actions.openMenu')}</span>
                         <MoreHorizontal className="h-4 w-4" />
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuLabel>{t('contacts.actions.label')}</DropdownMenuLabel>
                     <DropdownMenuItem
                         onClick={() => navigator.clipboard.writeText(contact.email || "")}
                     >
-                        Copy Email
+                        {t('contacts.actions.copyEmail')}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                         <Link href={`/contacts/${contact.id}`} className="cursor-pointer">
-                            Edit details
+                            {t('contacts.actions.editDetails')}
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -66,7 +67,7 @@ export function ActionsCell({
                             if (url) window.open(url, "_blank")
                         }}
                     >
-                        <ExternalLink className="mr-2 h-4 w-4" /> Open LinkedIn
+                        <ExternalLink className="mr-2 h-4 w-4" /> {t('contacts.actions.openLinkedIn')}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                         disabled={!contact.threads_url}
@@ -78,7 +79,7 @@ export function ActionsCell({
                             if (url) window.open(url, "_blank")
                         }}
                     >
-                        <Globe className="mr-2 h-4 w-4" /> Open Threads
+                        <Globe className="mr-2 h-4 w-4" /> {t('contacts.actions.openThreads')}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                         disabled={!contact.instagram_url}
@@ -90,14 +91,14 @@ export function ActionsCell({
                             if (url) window.open(url, "_blank")
                         }}
                     >
-                        <Globe className="mr-2 h-4 w-4" /> Open Instagram
+                        <Globe className="mr-2 h-4 w-4" /> {t('contacts.actions.openInstagram')}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                         className="text-red-600 focus:text-red-600 cursor-pointer"
                         onClick={() => setShowDeleteDialog(true)}
                     >
-                        Delete lead
+                        {t('contacts.actions.deleteLead')}
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -113,14 +114,12 @@ export function ActionsCell({
     )
 }
 
-const TotalSalesHeader = () => {
+const TableHeaderLabel = ({ translationKey }: { translationKey: string }) => {
     const { t } = useLanguage()
-    return (
-        <span className="font-semibold">
-            {t('contacts.totalSales')}
-        </span>
-    )
+    return <span className="font-semibold">{t(translationKey)}</span>
 }
+
+const TotalSalesHeader = () => <TableHeaderLabel translationKey="contacts.totalSales" />
 
 export const columns: LegacyColumnDef<Contact>[] = [
     {
@@ -140,7 +139,7 @@ export const columns: LegacyColumnDef<Contact>[] = [
     },
     {
         id: "name",
-        header: "Name",
+        header: () => <TableHeaderLabel translationKey="contacts.table.name" />,
         accessorFn: (row) => `${row.first_name} ${row.last_name}`,
         cell: ({ row }) => {
             const first = row.original.first_name || ""
@@ -154,7 +153,7 @@ export const columns: LegacyColumnDef<Contact>[] = [
     },
     {
         accessorKey: "company",
-        header: "Company",
+        header: () => <TableHeaderLabel translationKey="contacts.table.company" />,
         cell: ({ row }) => {
             return (
                 <div className="flex flex-col">
@@ -166,14 +165,14 @@ export const columns: LegacyColumnDef<Contact>[] = [
     },
     {
         accessorKey: "status",
-        header: "Status",
+        header: () => <TableHeaderLabel translationKey="contacts.table.status" />,
         cell: ({ row }) => {
             return <StatusCell contact={row.original} />
         }
     },
     {
         accessorKey: "notes",
-        header: "Notes",
+        header: () => <TableHeaderLabel translationKey="contacts.table.notes" />,
         cell: ({ row }) => {
             return <NotesSheet contact={row.original} />
         }

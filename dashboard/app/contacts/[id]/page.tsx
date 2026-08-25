@@ -254,7 +254,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
             .eq('id', editingTask.id)
 
         if (error) {
-            alert("Error updating task: " + error.message)
+            alert(`${t('contacts.detail.taskUpdateError')}: ${error.message}`)
         } else {
             setEditingTask(null)
             // Local update or refresh
@@ -277,20 +277,28 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
             router.push('/')
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : "Unknown error"
-            alert("Error deleting contact: " + message)
+            alert(`${t('contacts.detail.contactDeleteError')}: ${message}`)
             setIsDeleting(false)
             setShowDeleteDialog(false)
         }
     }
 
     if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin h-8 w-8" /></div>
-    if (error || !contact) return <div className="p-12 text-red-500 text-center">Contact not found: {error}</div>
+    if (error || !contact) return <div className="p-12 text-red-500 text-center">{t('contacts.detail.contactNotFound')}: {error}</div>
 
     const PRIORITY_COLORS = {
         High: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200",
         Medium: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200",
         Low: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 border-emerald-200"
     }
+    const listLabel = (contact.list || "Prospects").split(",").map((list) => {
+        const normalizedList = list.trim()
+        if (normalizedList === "Customers" || normalizedList === "Customer") return t('sidebar.customers')
+        if (normalizedList === "Partnerships") return t('sidebar.partnerships')
+        if (normalizedList === "Network/Peers") return t('sidebar.network')
+        if (normalizedList === "Podcast") return t('sidebar.podcast')
+        return t('sidebar.prospects')
+    }).join(", ")
 
     return (
         <div className="container mx-auto p-6 space-y-6">
@@ -306,25 +314,25 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     </h1>
                     <div className="flex items-center gap-2 mt-1">
                         <Badge variant="outline" className="uppercase text-[10px] h-4">
-                            {contact.list || 'Prospects'}
+                            {listLabel}
                         </Badge>
                         <div className="text-[10px] font-medium text-muted-foreground flex items-center">
                             {saveStatus === "saving" && (
                                 <span className="flex items-center gap-1">
                                     <Loader2 className="h-3 w-3 animate-spin" />
-                                    Saving...
+                                    {t('contacts.detail.saving')}
                                 </span>
                             )}
                             {saveStatus === "saved" && (
                                 <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
                                     <Check className="h-3 w-3" />
-                                    Saved
+                                    {t('contacts.detail.saved')}
                                 </span>
                             )}
                             {saveStatus === "error" && (
                                 <span className="flex items-center gap-1 text-red-600">
                                     <AlertCircle className="h-3 w-3" />
-                                    Error saving
+                                    {t('contacts.detail.saveError')}
                                 </span>
                             )}
                         </div>
@@ -337,13 +345,13 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                 <div className="md:col-span-2 space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Details</CardTitle>
+                            <CardTitle>{t('contacts.detail.details')}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="first_name">First Name</Label>
+                                        <Label htmlFor="first_name">{t('contacts.detail.firstName')}</Label>
                                         <Input
                                             id="first_name"
                                             value={contact.first_name || ""}
@@ -351,7 +359,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="last_name">Last Name</Label>
+                                        <Label htmlFor="last_name">{t('contacts.detail.lastName')}</Label>
                                         <Input
                                             id="last_name"
                                             value={contact.last_name || ""}
@@ -362,7 +370,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="email" className="flex items-center gap-2"><Mail className="h-3 w-3" /> Email</Label>
+                                        <Label htmlFor="email" className="flex items-center gap-2"><Mail className="h-3 w-3" /> {t('contacts.detail.email')}</Label>
                                         <Input
                                             id="email"
                                             type="email"
@@ -371,7 +379,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="phone" className="flex items-center gap-2"><Phone className="h-3 w-3" /> Phone</Label>
+                                        <Label htmlFor="phone" className="flex items-center gap-2"><Phone className="h-3 w-3" /> {t('contacts.detail.phone')}</Label>
                                         <Input
                                             id="phone"
                                             value={contact.phone || ""}
@@ -383,7 +391,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="company" className="flex items-center gap-2">Company</Label>
+                                        <Label htmlFor="company" className="flex items-center gap-2">{t('contacts.detail.company')}</Label>
                                         <div className="flex gap-2">
                                             <Input
                                                 id="company"
@@ -400,11 +408,11 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                             )}
                                         </div>
                                         {contact.company_id && (
-                                            <p className="text-[10px] text-blue-500 italic">Linked to Company profile</p>
+                                            <p className="text-[10px] text-blue-500 italic">{t('contacts.detail.linkedCompany')}</p>
                                         )}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Lists</Label>
+                                        <Label>{t('contacts.detail.lists')}</Label>
                                         <div className="flex flex-wrap gap-x-4 gap-y-2 pt-2">
                                             {["Prospects", "Customers", "Partnerships", "Network/Peers", "Podcast"].map(option => {
                                                 const currentLists = (contact.list || "").split(',').map(l => l.trim().toLowerCase())
@@ -436,7 +444,11 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                                             htmlFor={`list-${option}`}
                                                             className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                                                         >
-                                                            {option}
+                                                            {option === "Prospects" ? t('sidebar.prospects')
+                                                                : option === "Customers" ? t('sidebar.customers')
+                                                                    : option === "Partnerships" ? t('sidebar.partnerships')
+                                                                        : option === "Network/Peers" ? t('sidebar.network')
+                                                                            : t('sidebar.podcast')}
                                                         </label>
                                                     </div>
                                                 )
@@ -446,7 +458,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="role">Role</Label>
+                                    <Label htmlFor="role">{t('contacts.detail.role')}</Label>
                                     <Input
                                         id="role"
                                         value={contact.company_role || ""}
@@ -455,7 +467,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="value">Value ({currency})</Label>
+                                    <Label htmlFor="value">{t('contacts.detail.value')} ({currency})</Label>
                                     <Input
                                         id="value"
                                         type="number"
@@ -468,7 +480,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
 
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="location" className="flex items-center gap-2"><MapPin className="h-3 w-3" /> Location</Label>
+                                        <Label htmlFor="location" className="flex items-center gap-2"><MapPin className="h-3 w-3" /> {t('contacts.detail.location')}</Label>
                                         <Input
                                             id="location"
                                             value={contact.location || ""}
@@ -476,7 +488,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="website" className="flex items-center gap-2"><Globe className="h-3 w-3" /> Website</Label>
+                                        <Label htmlFor="website" className="flex items-center gap-2"><Globe className="h-3 w-3" /> {t('contacts.detail.website')}</Label>
                                         <Input
                                             id="website"
                                             value={contact.website || ""}
@@ -487,7 +499,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
 
                                 <div className="grid grid-cols-1 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="linkedin_url" className="flex items-center gap-2"><ExternalLink className="h-3 w-3" /> LinkedIn Profile</Label>
+                                        <Label htmlFor="linkedin_url" className="flex items-center gap-2"><ExternalLink className="h-3 w-3" /> {t('contacts.detail.linkedinProfile')}</Label>
                                         <div className="flex gap-2">
                                             <Input
                                                 id="linkedin_url"
@@ -508,7 +520,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="threads_url" className="flex items-center gap-2"><Globe className="h-3 w-3" /> Threads Profile</Label>
+                                        <Label htmlFor="threads_url" className="flex items-center gap-2"><Globe className="h-3 w-3" /> {t('contacts.detail.threadsProfile')}</Label>
                                         <div className="flex gap-2">
                                             <Input
                                                 id="threads_url"
@@ -529,7 +541,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="instagram_url" className="flex items-center gap-2"><Globe className="h-3 w-3" /> Instagram Profile</Label>
+                                        <Label htmlFor="instagram_url" className="flex items-center gap-2"><Globe className="h-3 w-3" /> {t('contacts.detail.instagramProfile')}</Label>
                                         <div className="flex gap-2">
                                             <Input
                                                 id="instagram_url"
@@ -552,7 +564,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label htmlFor="notes">Notes</Label>
+                                    <Label htmlFor="notes">{t('contacts.detail.notes')}</Label>
                                     <Textarea
                                         id="notes"
                                         rows={6}
@@ -566,7 +578,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Marketing & Conversion</CardTitle>
+                            <CardTitle>{t('contacts.detail.marketingConversion')}</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
@@ -759,7 +771,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                                 </div>
                                                 <div className="flex flex-col items-end">
                                                     <span className="font-bold">{((sale.price_ht || 0) * (sale.quantity || 1)).toLocaleString('fr-CH', { style: 'currency', currency: currency })}</span>
-                                                    <span className="text-[10px] text-muted-foreground">Qty: {sale.quantity}</span>
+                                                    <span className="text-[10px] text-muted-foreground">{t('contacts.detail.quantityShort')}: {sale.quantity}</span>
                                                 </div>
                                             </div>
                                         ))}
@@ -774,22 +786,22 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                 <div className="space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Current Status</CardTitle>
+                            <CardTitle>{t('contacts.detail.currentStatus')}</CardTitle>
                         </CardHeader>
                         <CardContent className="flex flex-col gap-4">
                             <StatusCell contact={contact} />
-                            <p className="text-xs text-muted-foreground">Lead ID: {contact.id}</p>
+                            <p className="text-xs text-muted-foreground">{t('contacts.detail.leadId')}: {contact.id}</p>
                         </CardContent>
                     </Card>
 
                     <Card>
                         <CardHeader>
-                            <CardTitle className="text-lg">Tasks</CardTitle>
+                            <CardTitle className="text-lg">{t('contacts.detail.tasks')}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <form onSubmit={addTask} className="space-y-2">
                                 <Input
-                                    placeholder="Add a new task..."
+                                    placeholder={t('contacts.detail.addTaskPlaceholder')}
                                     value={newTaskDesc}
                                     onChange={e => setNewTaskDesc(e.target.value)}
                                 />
@@ -805,12 +817,12 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                         value={newTaskPriority}
                                         onChange={e => setNewTaskPriority(e.target.value as Task["priority"])}
                                     >
-                                        <option value="Low">Low</option>
-                                        <option value="Medium">Medium</option>
-                                        <option value="High">High</option>
+                                        <option value="Low">{t('contacts.detail.low')}</option>
+                                        <option value="Medium">{t('contacts.detail.medium')}</option>
+                                        <option value="High">{t('contacts.detail.high')}</option>
                                     </select>
                                     <Button type="submit" size="sm" variant="secondary" className="h-8">
-                                        <Plus className="h-4 w-4 mr-1" /> Add
+                                        <Plus className="h-4 w-4 mr-1" /> {t('common.add')}
                                     </Button>
                                 </div>
                             </form>
@@ -827,7 +839,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                             <p className={task.completed ? "line-through text-muted-foreground" : ""}>{task.description}</p>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <Badge variant="outline" className={`text-[9px] px-1 py-0 ${PRIORITY_COLORS[task.priority as keyof typeof PRIORITY_COLORS]}`}>
-                                                    {task.priority}
+                                                    {t(`contacts.detail.${task.priority.toLowerCase()}`)}
                                                 </Badge>
                                                 <button
                                                     onClick={() => handleEditTask(task)}
@@ -835,10 +847,10 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                                 >
                                                     <CalendarIcon className="h-2.5 w-2.5 text-muted-foreground group-hover:text-blue-500" />
                                                     <span className="text-[10px] text-muted-foreground group-hover:text-blue-600 group-hover:underline italic">
-                                                        {task.due_date ? new Date(task.due_date).toLocaleDateString() : "No date"}
+                                                        {task.due_date ? new Date(task.due_date).toLocaleDateString() : t('contacts.detail.noDate')}
                                                     </span>
                                                 </button>
-                                                <span className="text-[10px] text-muted-foreground italic">{task.category}</span>
+                                                <span className="text-[10px] text-muted-foreground italic">{task.category === "Follow-up" ? t('contacts.detail.followUp') : task.category}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -850,17 +862,17 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Quick Actions</CardTitle>
+                            <CardTitle>{t('contacts.detail.quickActions')}</CardTitle>
                         </CardHeader>
                         <CardContent className="flex flex-col gap-2">
                             {contact.email && (
                                 <Button variant="outline" className="justify-start" asChild>
-                                    <a href={`mailto:${contact.email}`}><Mail className="mr-2 h-4 w-4" /> Send Email</a>
+                                    <a href={`mailto:${contact.email}`}><Mail className="mr-2 h-4 w-4" /> {t('contacts.detail.sendEmail')}</a>
                                 </Button>
                             )}
                             {contact.phone && (
                                 <Button variant="outline" className="justify-start" asChild>
-                                    <a href={`tel:${contact.phone}`}><Phone className="mr-2 h-4 w-4" /> Call</a>
+                                    <a href={`tel:${contact.phone}`}><Phone className="mr-2 h-4 w-4" /> {t('contacts.detail.call')}</a>
                                 </Button>
                             )}
                             <Button
@@ -886,11 +898,11 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
             <Dialog open={!!editingTask} onOpenChange={(open) => !open && setEditingTask(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Edit Task</DialogTitle>
+                        <DialogTitle>{t('contacts.detail.editTask')}</DialogTitle>
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                         <div className="space-y-2">
-                            <Label htmlFor="desc">Description</Label>
+                            <Label htmlFor="desc">{t('contacts.detail.description')}</Label>
                             <Input
                                 id="desc"
                                 value={editForm.description}
@@ -899,7 +911,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label>Priority</Label>
+                                <Label>{t('contacts.detail.priority')}</Label>
                                 <Select
                                     value={editForm.priority}
                                     onValueChange={v => setEditForm({ ...editForm, priority: v })}
@@ -908,14 +920,14 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="Low">Low</SelectItem>
-                                        <SelectItem value="Medium">Medium</SelectItem>
-                                        <SelectItem value="High">High</SelectItem>
+                                        <SelectItem value="Low">{t('contacts.detail.low')}</SelectItem>
+                                        <SelectItem value="Medium">{t('contacts.detail.medium')}</SelectItem>
+                                        <SelectItem value="High">{t('contacts.detail.high')}</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label>Due Date</Label>
+                                <Label>{t('contacts.detail.dueDate')}</Label>
                                 <Input
                                     type="date"
                                     value={editForm.due_date}
@@ -924,7 +936,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="cat">Category</Label>
+                            <Label htmlFor="cat">{t('contacts.detail.category')}</Label>
                             <Input
                                 id="cat"
                                 value={editForm.category}
@@ -933,8 +945,8 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                         </div>
                     </div>
                     <DialogFooter>
-                        <Button variant="outline" onClick={() => setEditingTask(null)}>Cancel</Button>
-                        <Button onClick={handleUpdateTask}>Save Changes</Button>
+                        <Button variant="outline" onClick={() => setEditingTask(null)}>{t('common.cancel')}</Button>
+                        <Button onClick={handleUpdateTask}>{t('contacts.detail.saveChanges')}</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -943,7 +955,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
             <Dialog open={showSaleDialog} onOpenChange={setShowSaleDialog}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Add New Sale</DialogTitle>
+                        <DialogTitle>{t('contacts.detail.addNewSale')}</DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
                         <NewSaleForm
@@ -961,7 +973,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
             <Dialog open={!!editingSale} onOpenChange={(open) => !open && setEditingSale(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Edit Sale</DialogTitle>
+                        <DialogTitle>{t('contacts.detail.editSale')}</DialogTitle>
                     </DialogHeader>
                     <div className="py-4">
                         {editingSale && (

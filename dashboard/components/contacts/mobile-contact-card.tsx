@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { StatusCell } from "./status-cell"
 import { NotesSheet } from "./notes-sheet"
+import { useLanguage } from "@/components/i18n/language-context"
 import { ActionsCell } from "./columns"
 
 export function MobileContactCard({
@@ -20,6 +21,7 @@ export function MobileContactCard({
     selected?: boolean
     onSelectChange?: (checked: boolean) => void
 }) {
+    const { t } = useLanguage()
     const initials = `${contact.first_name?.[0] || "?"}${contact.last_name?.[0] || "?"}`
     const totalSales = contact.total_sales || 0
     const formattedSales = new Intl.NumberFormat("fr-FR", {
@@ -82,7 +84,7 @@ export function MobileContactCard({
                 <NotesSheet contact={contact} />
                 {contact.email ? (
                     <Button variant="outline" size="sm" asChild>
-                        <a href={`mailto:${contact.email}`}>Email</a>
+                        <a href={`mailto:${contact.email}`}>{t('contacts.detail.email')}</a>
                     </Button>
                 ) : null}
                 {contact.phone ? (

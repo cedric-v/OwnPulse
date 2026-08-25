@@ -13,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Loader2, Trash2 } from "lucide-react"
 import { useRouter } from "next/navigation"
+import { useLanguage } from "@/components/i18n/language-context"
 
 interface DeleteLeadAlertProps {
     contactId: string
@@ -29,6 +30,7 @@ export function DeleteLeadAlert({
     onOpenChange,
     onSuccess
 }: DeleteLeadAlertProps) {
+    const { t } = useLanguage()
     const [loading, setLoading] = useState(false)
     const router = useRouter()
     const supabase = createClient()
@@ -42,7 +44,7 @@ export function DeleteLeadAlert({
 
         setLoading(false)
         if (error) {
-            alert("Error deleting lead: " + error.message)
+            alert(`${t('contacts.actions.deleteError')}: ${error.message}`)
         } else {
             onOpenChange(false)
             if (onSuccess) {
@@ -56,14 +58,14 @@ export function DeleteLeadAlert({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Are you absolutely sure?</DialogTitle>
+                    <DialogTitle>{t('contacts.actions.deleteConfirmTitle')}</DialogTitle>
                     <DialogDescription>
-                        This action cannot be undone. This will permanently delete <strong>{contactName}</strong> from the CRM.
+                        {t('contacts.actions.deleteConfirmMessage', { name: contactName })}
                     </DialogDescription>
                 </DialogHeader>
                 <DialogFooter className="gap-2 sm:gap-0">
                     <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-                        Cancel
+                        {t('common.cancel')}
                     </Button>
                     <Button
                         variant="destructive"
@@ -72,7 +74,7 @@ export function DeleteLeadAlert({
                         className="bg-red-600 hover:bg-red-700 text-white"
                     >
                         {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Trash2 className="mr-2 h-4 w-4" />}
-                        Delete
+                        {t('contacts.actions.deleteButton')}
                     </Button>
                 </DialogFooter>
             </DialogContent>

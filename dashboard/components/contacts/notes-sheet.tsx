@@ -19,12 +19,14 @@ import { createClient } from "@/lib/supabase/client"
 import { Contact } from "@/types"
 import { StickyNote } from "lucide-react"
 import { htmlToText } from "@/lib/html-to-text"
+import { useLanguage } from "@/components/i18n/language-context"
 
 interface NotesSheetProps {
     contact: Contact
 }
 
 export function NotesSheet({ contact }: NotesSheetProps) {
+    const { t } = useLanguage()
     const [notes, setNotes] = useState(htmlToText(contact.notes))
     const [loading, setLoading] = useState(false)
     const supabase = createClient()
@@ -39,7 +41,7 @@ export function NotesSheet({ contact }: NotesSheetProps) {
 
         if (error) {
             console.error("Error saving notes:", error)
-            alert("Failed to save notes")
+            alert(t('contacts.notes.saveError'))
         } else {
             setOpen(false)
         }
@@ -55,15 +57,15 @@ export function NotesSheet({ contact }: NotesSheetProps) {
             </SheetTrigger>
             <SheetContent>
                 <SheetHeader>
-                    <SheetTitle>Notes for {contact.first_name} {contact.last_name}</SheetTitle>
+                    <SheetTitle>{t('contacts.notes.title', { firstName: contact.first_name || "", lastName: contact.last_name || "" })}</SheetTitle>
                     <SheetDescription>
-                        Add or update notes for this contact.
+                        {t('contacts.notes.description')}
                     </SheetDescription>
                 </SheetHeader>
                 <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="notes" className="text-right">
-                            Notes
+                            {t('contacts.notes.field')}
                         </Label>
                         <Textarea
                             id="notes"
@@ -75,10 +77,10 @@ export function NotesSheet({ contact }: NotesSheetProps) {
                 </div>
                 <SheetFooter>
                     <SheetClose asChild>
-                        <Button variant="outline">Cancel</Button>
+                        <Button variant="outline">{t('common.cancel')}</Button>
                     </SheetClose>
                     <Button onClick={handleSave} disabled={loading}>
-                        {loading ? "Saving..." : "Save changes"}
+                        {loading ? t('contacts.detail.saving') : t('contacts.notes.saveChanges')}
                     </Button>
                 </SheetFooter>
             </SheetContent>
