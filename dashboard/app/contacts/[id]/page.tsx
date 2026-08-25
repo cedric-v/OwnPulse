@@ -5,14 +5,14 @@ import { useEffect, useState, use } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { useLanguage } from "@/components/i18n/language-context"
-import { Contact, Task, Sale } from "@/types"
+import { Contact, ContactActivity, Task, Sale } from "@/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Loader2, Phone, Mail, MapPin, Globe, ExternalLink, Check, Building, Pencil, GitMerge, X } from "lucide-react"
+import { Activity, ArrowLeft, Loader2, Phone, Mail, MapPin, Globe, ExternalLink, Check, Building, Pencil, GitMerge, X } from "lucide-react"
 import Link from "next/link"
 import { StatusCell } from "@/components/contacts/status-cell"
 import { MergeContactDialog } from "@/components/contacts/merge-contact-dialog"
@@ -37,6 +37,38 @@ import { NewSaleForm } from "@/app/cfo/components/new-sale-form"
 import { htmlToText } from "@/lib/html-to-text"
 import { cn } from "@/lib/utils"
 
+const ACTIVITY_CHANNEL_LABELS: Record<ContactActivity["channel"], string> = {
+    LinkedIn: "MP LinkedIn",
+    Email: "E-mail",
+    Phone: "Appel",
+    WhatsApp: "WhatsApp",
+    SMS: "SMS",
+    Instagram: "MP Instagram",
+    Threads: "Threads",
+    Other: "Autre",
+}
+
+const ACTIVITY_OUTCOME_LABELS: Record<ContactActivity["outcome"], string> = {
+    "Message sent": "Message envoyé",
+    "Conversation started": "Échange obtenu",
+    "No response": "Pas de réponse",
+    "Follow-up needed": "À relancer",
+    "Meeting booked": "Rendez-vous obtenu",
+    "Not interested": "Pas intéressé",
+    "Wrong contact": "Mauvais contact",
+    Other: "Autre",
+}
+
+function formatActivityDate(value: string) {
+    return new Intl.DateTimeFormat("fr-FR", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(new Date(value))
+}
+
 export default function ContactDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params)
     const router = useRouter()
@@ -45,6 +77,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
 
     const [contact, setContact] = useState<Contact | null>(null)
     const [tasks, setTasks] = useState<Task[]>([])
+    const [activities, setActivities] = useState<ContactActivity[]>([])
     const [sales, setSales] = useState<Sale[]>([])
     const [loading, setLoading] = useState(true)
     const [showSaleDialog, setShowSaleDialog] = useState(false)
@@ -52,6 +85,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
     const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle")
     const [currency, setCurrency] = useState("CHF")
     const [error, setError] = useState<string | null>(null)
+    const [activityError, setActivityError] = useState<string | null>(null)
     const [channels, setChannels] = useState<{ id: string, name: string }[]>([])
     const [isEditingDate, setIsEditingDate] = useState(false)
 
@@ -71,9 +105,10 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
     useEffect(() => {
         async function fetchData() {
             setLoading(true)
-            const [contactRes, tasksRes, salesRes, settingsRes, channelsRes] = await Promise.all([
+            const [contactRes, tasksRes, activitiesRes, salesRes, settingsRes, channelsRes] = await Promise.all([
                 supabase.from('contacts').select('*').eq('id', id).single(),
                 supabase.from('tasks').select('*').eq('contact_id', id),
+                supabase.from('contact_activities').select('*').eq('contact_id', id).order('created_at', { ascending: false }),
                 supabase.from('sales').select('*').eq('contact_id', id).order('sale_date', { ascending: false }),
                 supabase.from('settings').select('value').eq('key', 'currency').single(),
                 supabase.from('acquisition_channels').select('*').order('name')
@@ -100,6 +135,8 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     return new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
                 })
                 setTasks(sorted)
+                if (activitiesRes.error) setActivityError(activitiesRes.error.message)
+                else setActivities((activitiesRes.data || []) as ContactActivity[])
                 if (salesRes.data) setSales(salesRes.data)
                 if (settingsRes.data) setCurrency(settingsRes.data.value)
                 if (channelsRes.data) setChannels(channelsRes.data)
@@ -626,6 +663,66 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                     </div>
                                 )}
                             </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Prospecting History Card */}
+                    <Card>
+                        <CardHeader className="flex flex-row items-start justify-between space-y-0">
+                            <div>
+                                <CardTitle className="flex items-center gap-2 text-lg">
+                                    <Activity className="h-4 w-4 text-muted-foreground" />
+                                    Historique de prospection
+                                </CardTitle>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    Chaque ligne correspond à une action enregistrée.
+                                </p>
+                            </div>
+                            <Badge variant="secondary">
+                                {activities.length} {activities.length === 1 ? "action" : "actions"}
+                            </Badge>
+                        </CardHeader>
+                        <CardContent>
+                            {activityError ? (
+                                <p className="text-sm text-muted-foreground">
+                                    Historique indisponible. Vérifie que la migration des activités a été exécutée.
+                                </p>
+                            ) : activities.length === 0 ? (
+                                <div className="rounded-lg border border-dashed p-5 text-center">
+                                    <p className="text-sm font-medium">Aucune action enregistrée</p>
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        Les actions enregistrées depuis la page Prospection apparaîtront ici.
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {activities.map((activity) => (
+                                        <div key={activity.id} className="flex items-start gap-3 rounded-lg border p-3">
+                                            <div className="mt-0.5 rounded-full bg-muted p-2 text-muted-foreground">
+                                                <Activity className="h-3.5 w-3.5" />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <Badge variant="outline" className="text-[10px]">
+                                                        {ACTIVITY_CHANNEL_LABELS[activity.channel]}
+                                                    </Badge>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {formatActivityDate(activity.created_at)}
+                                                    </span>
+                                                </div>
+                                                <p className="mt-1 text-sm font-medium">
+                                                    {ACTIVITY_OUTCOME_LABELS[activity.outcome]}
+                                                </p>
+                                                {activity.note && (
+                                                    <p className="mt-1 whitespace-pre-line text-sm text-muted-foreground">
+                                                        {activity.note}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 
