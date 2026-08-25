@@ -43,6 +43,7 @@ import {
     Search,
     Smartphone,
     Target,
+    Trophy,
     UserRound,
     X,
 } from "lucide-react"
@@ -332,6 +333,8 @@ function ProspectingPage() {
     }
 
     const contactedCount = contactedIds.size
+    const isGoalExceeded = contactedCount > goal
+    const isGoalReached = contactedCount >= goal
     const progress = Math.min(100, Math.round((contactedCount / goal) * 100))
     const isToday = selectedDate === today
     const selectedDateLabel = new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" })
@@ -367,15 +370,15 @@ function ProspectingPage() {
                                 <p className="text-sm font-medium text-muted-foreground">Objectif du jour</p>
                                 <p className="mt-1 text-2xl font-bold">{contactedCount} <span className="text-base font-normal text-muted-foreground">/ {goal} personnes contactées</span></p>
                             </div>
-                            <div className={cn("flex h-12 w-12 items-center justify-center rounded-full", contactedCount >= goal ? "bg-emerald-100 text-emerald-700" : "bg-orange-100 text-orange-700")}>
-                                {contactedCount >= goal ? <Check className="h-6 w-6" /> : <Flame className="h-6 w-6" />}
+                            <div className={cn("flex h-12 w-12 items-center justify-center rounded-full", isGoalExceeded ? "bg-violet-100 text-violet-700" : isGoalReached ? "bg-emerald-100 text-emerald-700" : "bg-orange-100 text-orange-700")}>
+                                {isGoalExceeded ? <Trophy className="h-6 w-6" /> : isGoalReached ? <Check className="h-6 w-6" /> : <Flame className="h-6 w-6" />}
                             </div>
                         </div>
                         <div className="mt-4 h-2 overflow-hidden rounded-full bg-muted">
-                            <div className={cn("h-full rounded-full transition-all", contactedCount >= goal ? "bg-emerald-500" : "bg-orange-500")} style={{ width: `${progress}%` }} />
+                            <div className={cn("h-full rounded-full transition-all", isGoalExceeded ? "bg-violet-500" : isGoalReached ? "bg-emerald-500" : "bg-orange-500")} style={{ width: `${progress}%` }} />
                         </div>
                         <p className="mt-2 text-xs text-muted-foreground">
-                            {contactedCount >= goal ? "Objectif atteint — bravo." : `${goal - contactedCount} personne${goal - contactedCount > 1 ? "s" : ""} restante${goal - contactedCount > 1 ? "s" : ""} pour atteindre ton objectif.`}
+                            {isGoalExceeded ? "Objectif dépassé — bravo !" : isGoalReached ? "Objectif atteint — bravo." : `${goal - contactedCount} personne${goal - contactedCount > 1 ? "s" : ""} restante${goal - contactedCount > 1 ? "s" : ""} pour atteindre ton objectif.`}
                         </p>
                     </CardContent>
                 </Card>
