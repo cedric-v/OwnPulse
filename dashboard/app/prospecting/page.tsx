@@ -61,6 +61,12 @@ type FollowUp = {
 
 const PRIORITY_STATUSES = ["Warm", "Interested", "Engaged"]
 const CLOSED_STATUSES = ["Client", "Customer", "Deal Won", "Closed", "Lost"]
+const FILTER_LABELS: Record<Filter, string> = {
+    all: "Tous les leads",
+    priority: "Tièdes à chauds",
+    "follow-up": "Relances dues",
+    never: "Jamais contactés",
+}
 const CHANNELS: { value: Channel; label: string }[] = [
     { value: "LinkedIn", label: "MP LinkedIn" },
     { value: "Email", label: "E-mail" },
@@ -218,9 +224,14 @@ function ProspectingPage() {
         return contacts
             .filter((contact) => {
                 const status = contact.status || ""
-                // Une recherche par nom doit toujours trouver le lead, même s'il
-                // est déjà contacté aujourd'hui ou dans un statut fermé : elle
-                // passe donc devant les exclusions de la file de prospection.
+                // Le filtre explicite choisi à droite s'applique aussi pendant
+                // une recherche (recherche + filtre se combinent). En revanche,
+                // les exclusions implicites de la file (déjà contacté
+                // aujourd'hui, statut fermé) sont levées dès qu'on cherche, pour
+                // que taper un nom puisse toujours trouver le lead.
+                if (filter === "priority" && !PRIORITY_STATUSES.some((item) => item.toLowerCase() === status.toLowerCase())) return false
+                if (filter === "follow-up" && !followUpIds.has(contact.id)) return false
+                if (filter === "never" && lastActivityByContact.has(contact.id)) return false
                 if (query) {
                     return normalizeSearchText(
                         [displayName(contact), contact.company || "", contact.company_role || "", contact.notes || "", status].join(" ")
@@ -228,9 +239,6 @@ function ProspectingPage() {
                 }
                 if (CLOSED_STATUSES.some((closed) => closed.toLowerCase() === status.toLowerCase())) return false
                 if (contactedIds.has(contact.id)) return false
-                if (filter === "priority" && !PRIORITY_STATUSES.some((item) => item.toLowerCase() === status.toLowerCase())) return false
-                if (filter === "follow-up" && !followUpIds.has(contact.id)) return false
-                if (filter === "never" && lastActivityByContact.has(contact.id)) return false
                 return true
             })
             .sort((a, b) => {
@@ -400,7 +408,7 @@ function ProspectingPage() {
 
             {error && <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">Impossible de charger la prospection : {error}. Vérifie que la migration des activités a été exécutée.</div>}
             {loading ? <div className="flex justify-center p-12"><Loader2 className="h-8 w-8 animate-spin" /></div> : queue.length === 0 ? (
-                <Card><CardContent className="flex flex-col items-center gap-2 p-12 text-center"><Search className="h-10 w-10 rounded-full bg-muted p-2 text-muted-foreground" /><p className="font-medium">{search.trim() ? "Aucun lead ne correspond à ta recherche" : "Aucun lead dans cette file"}</p><p className="text-sm text-muted-foreground">{search.trim() ? `Essaie avec un autre nom, une entreprise ou un statut.` : "Tous les leads pertinents ont peut-être déjà été contactés pour cette journée."}</p></CardContent></Card>
+                <Card><CardContent className="flex flex-col items-center gap-2 p-12 text-center"><Search className="h-10 w-10 rounded-full bg-muted p-2 text-muted-foreground" /><p className="font-medium">{search.trim() ? (filter === "all" ? "Aucun lead ne correspond à ta recherche" : `Aucun lead dans le filtre « ${FILTER_LABELS[filter]} »` ) : "Aucun lead dans cette file"}</p><p className="text-sm text-muted-foreground">{search.trim() ? (filter === "all" ? "Essaie avec un autre nom, une entreprise ou un statut." : "Essaie un autre nom ou change de filtre.") : "Tous les leads pertinents ont peut-être déjà été contactés pour cette journée."}</p></CardContent></Card>
             ) : (
                 <div className="space-y-3">
                     {queue.map((contact) => {
