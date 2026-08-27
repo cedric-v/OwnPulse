@@ -51,7 +51,7 @@ import { cn, normalizeSearchText } from "@/lib/utils"
 import { DateInput } from "@/components/ui/date-input"
 import { htmlToText } from "@/lib/html-to-text"
 
-type Filter = "all" | "priority" | "follow-up" | "never"
+type Filter = "all" | "priority" | "follow-up" | "never" | "recent"
 type Channel = ContactActivity["channel"]
 type Outcome = ContactActivity["outcome"]
 
@@ -67,7 +67,12 @@ const FILTER_LABELS: Record<Filter, string> = {
     priority: "Tièdes à chauds",
     "follow-up": "Relances dues",
     never: "Jamais contactés",
+    recent: "Contactés récemment",
 }
+// Un lead contacté il y a moins de jours que cette fenêtre est considéré
+// comme « récent » : il descend en bas de la file pour laisser la place à des
+// leads moins sollicités (une relance trop rapprochée fait fuir).
+const RECENT_WINDOW_DAYS = 14
 const CHANNELS: { value: Channel; label: string }[] = [
     { value: "LinkedIn", label: "MP LinkedIn" },
     { value: "Email", label: "E-mail" },
@@ -110,6 +115,32 @@ function shiftDate(dateKey: string, amount: number) {
 
 function displayName(contact: Contact) {
     return `${contact.first_name || ""} ${contact.last_name || ""}`.trim() || "Lead sans nom"
+}
+
+// Petit hash déterministe (xmur3) : transforme une chaîne en graine numérique.
+function hashSeed(text: string) {
+    let h = 1779033703 ^ text.length
+    for (let i = 0; i < text.length; i++) {
+        h = Math.imul(h ^ text.charCodeAt(i), 3432918353)
+        h = (h << 13) | (h >>> 19)
+    }
+    return h >>> 0
+}
+
+// Générateur pseudo-aléatoire mulberry32 : reproductible pour une même graine.
+function seededRandom(seed: number) {
+    return () => {
+        seed = (seed + 0x6D2B79F5) | 0
+        let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
+        t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+    }
+}
+
+function daysBetween(referenceDateKey: string, isoDate: string) {
+    return Math.floor(
+        (new Date(`${referenceDateKey}T12:00:00`).getTime() - new Date(isoDate).getTime()) / 86400000
+    )
 }
 
 function statusRank(status: string | null) {
@@ -220,6 +251,28 @@ function ProspectingPage() {
     }, [activities])
     const followUpIds = useMemo(() => new Set(followUps.map((task) => task.contact_id)), [followUps])
 
+    // Clé de tri pseudo-aléatoire par lead, ressemée sur le jour affiché :
+    // l'ordre varie d'un jour à l'autre mais reste stable toute la journée
+    // (pas de réorganisation au fil des clics, ce qui serait désorientant).
+    const randomKeys = useMemo(() => {
+        const keys = new Map<string, number>()
+        contacts.forEach((contact) => {
+            keys.set(contact.id, seededRandom(hashSeed(`${selectedDate}:${contact.id}`))())
+        })
+        return keys
+    }, [contacts, selectedDate])
+
+    // Nombre de jours depuis le dernier contact, calculé par rapport au jour
+    // affiché (cohérent quand on navigue dans l'historique). Absent = jamais.
+    const recentDaysByContact = useMemo(() => {
+        const result = new Map<string, number>()
+        contacts.forEach((contact) => {
+            const last = lastActivityByContact.get(contact.id)
+            if (last) result.set(contact.id, daysBetween(selectedDate, last.created_at))
+        })
+        return result
+    }, [contacts, lastActivityByContact, selectedDate])
+
     const queue = useMemo(() => {
         const query = normalizeSearchText(search)
         return contacts
@@ -233,6 +286,10 @@ function ProspectingPage() {
                 if (filter === "priority" && !PRIORITY_STATUSES.some((item) => item.toLowerCase() === status.toLowerCase())) return false
                 if (filter === "follow-up" && !followUpIds.has(contact.id)) return false
                 if (filter === "never" && lastActivityByContact.has(contact.id)) return false
+                if (filter === "recent") {
+                    const days = recentDaysByContact.get(contact.id)
+                    if (days === undefined || days < 0 || days >= RECENT_WINDOW_DAYS) return false
+                }
                 if (query) {
                     return normalizeSearchText(
                         [displayName(contact), contact.company || "", contact.company_role || "", contact.notes || "", status].join(" ")
@@ -243,16 +300,20 @@ function ProspectingPage() {
                 return true
             })
             .sort((a, b) => {
-                const priority = statusRank(b.status) - statusRank(a.status)
-                if (priority !== 0) return priority
-                const aFollowUp = followUpIds.has(a.id) ? 1 : 0
-                const bFollowUp = followUpIds.has(b.id) ? 1 : 0
-                if (aFollowUp !== bFollowUp) return bFollowUp - aFollowUp
-                const aLast = lastActivityByContact.get(a.id)?.created_at || a.created_at
-                const bLast = lastActivityByContact.get(b.id)?.created_at || b.created_at
-                return new Date(aLast).getTime() - new Date(bLast).getTime()
+                // Trois étages : relances dues (urgent, en tête), puis le gros
+                // de la file mélangée, puis les leads contactés récemment en
+                // bas pour éviter de marteler les mêmes personnes.
+                const tierOf = (contact: Contact) => {
+                    if (followUpIds.has(contact.id)) return 0
+                    const days = recentDaysByContact.get(contact.id)
+                    if (days !== undefined && days >= 1 && days < RECENT_WINDOW_DAYS) return 2
+                    return 1
+                }
+                const tierDiff = tierOf(a) - tierOf(b)
+                if (tierDiff !== 0) return tierDiff
+                return (randomKeys.get(a.id) ?? 0) - (randomKeys.get(b.id) ?? 0)
             })
-    }, [contacts, contactedIds, filter, followUpIds, lastActivityByContact, search])
+    }, [contacts, contactedIds, filter, followUpIds, lastActivityByContact, randomKeys, recentDaysByContact, search])
 
     const openLogSheet = useCallback((contact: Contact) => {
         setSelectedContact(contact)
@@ -393,7 +454,7 @@ function ProspectingPage() {
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                 <div>
                     <h2 className="text-xl font-semibold">À contacter maintenant</h2>
-                    <p className="text-sm text-muted-foreground">{selectedDateLabel}{isToday ? " · aujourd’hui" : ""}</p>
+                    <p className="text-sm text-muted-foreground">{selectedDateLabel}{isToday ? " · aujourd’hui" : ""} · ordre remanié chaque jour, relances en tête</p>
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row">
                     <div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input placeholder="Rechercher un lead..." value={search} onChange={(event) => setSearch(event.target.value)} className="pl-9 sm:w-64" /></div>
@@ -404,6 +465,7 @@ function ProspectingPage() {
                             <SelectItem value="priority">Tièdes à chauds</SelectItem>
                             <SelectItem value="follow-up">Relances dues</SelectItem>
                             <SelectItem value="never">Jamais contactés</SelectItem>
+                            <SelectItem value="recent">Contactés récemment</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -417,13 +479,15 @@ function ProspectingPage() {
                     {queue.map((contact) => {
                         const lastActivity = lastActivityByContact.get(contact.id)
                         const isFollowUp = followUpIds.has(contact.id)
-                        return <Card key={contact.id} className="transition-shadow hover:shadow-md">
+                        const recentDays = recentDaysByContact.get(contact.id)
+                        const isRecentlyContacted = recentDays !== undefined && recentDays >= 1 && recentDays < RECENT_WINDOW_DAYS
+                        return <Card key={contact.id} className={cn("transition-shadow hover:shadow-md", isRecentlyContacted && "opacity-75")}>
                             <CardContent className="p-4 sm:p-5">
                                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
                                     <div className="flex min-w-0 flex-1 items-start gap-3">
                                         <Avatar className="mt-0.5 h-10 w-10"><AvatarImage src={contact.avatar_url || undefined} /><AvatarFallback>{(contact.first_name?.[0] || "?")}{contact.last_name?.[0] || ""}</AvatarFallback></Avatar>
                                         <div className="min-w-0 flex-1">
-                                            <div className="flex flex-wrap items-center gap-2"><Link href={`/contacts/${contact.id}`} className="font-semibold hover:underline">{displayName(contact)}</Link><Badge variant="outline" className={statusClass(contact.status)}>{contact.status || "N/A"}</Badge>{isFollowUp && <Badge variant="outline" className="gap-1 border-red-200 bg-red-50 text-red-700"><Clock3 className="h-3 w-3" /> Relance due</Badge>}</div>
+                                            <div className="flex flex-wrap items-center gap-2"><Link href={`/contacts/${contact.id}`} className="font-semibold hover:underline">{displayName(contact)}</Link><Badge variant="outline" className={statusClass(contact.status)}>{contact.status || "N/A"}</Badge>{isFollowUp && <Badge variant="outline" className="gap-1 border-red-200 bg-red-50 text-red-700"><Clock3 className="h-3 w-3" /> Relance due</Badge>}{isRecentlyContacted && <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-500">{recentDays === 1 ? "Contacté hier" : `Contacté il y a ${recentDays} jours`}</Badge>}</div>
                                             <p className="mt-0.5 truncate text-sm text-muted-foreground">{contact.company || "Entreprise inconnue"}{contact.company_role ? ` · ${contact.company_role}` : ""}</p>
                                             <p className="mt-2 line-clamp-2 whitespace-pre-line text-sm text-muted-foreground">{htmlToText(lastActivity?.note || contact.notes) || "Aucune note disponible pour ce lead."}</p>
                                             <p className="mt-2 text-xs text-muted-foreground">{lastActivity ? `Dernière action : ${formatActivityDate(lastActivity.created_at)}` : "Jamais contacté dans l’historique"}</p>
