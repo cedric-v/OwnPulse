@@ -137,10 +137,15 @@ function seededRandom(seed: number) {
     }
 }
 
+// Nombre de jours calendaires entre la date affichée et une activité.
+// On compare des dates (sans l'heure) : sinon un contact de la veille à
+// 14h donnerait « 0 jour » le lendemain matin et perdrait son badge.
 function daysBetween(referenceDateKey: string, isoDate: string) {
-    return Math.floor(
-        (new Date(`${referenceDateKey}T12:00:00`).getTime() - new Date(isoDate).getTime()) / 86400000
-    )
+    const [year, month, day] = referenceDateKey.split("-").map(Number)
+    const reference = new Date(year, month - 1, day)
+    const activity = new Date(isoDate)
+    const activityDay = new Date(activity.getFullYear(), activity.getMonth(), activity.getDate())
+    return Math.round((reference.getTime() - activityDay.getTime()) / 86400000)
 }
 
 function statusRank(status: string | null) {
@@ -200,6 +205,9 @@ function ProspectingPage() {
     const [channel, setChannel] = useState<Channel>("LinkedIn")
     const [outcome, setOutcome] = useState<Outcome>("Message sent")
     const [note, setNote] = useState("")
+    // Date du contact enregistré : aujourd'hui par défaut, modifiable pour
+    // un reporting a posteriori (ex. appel passé hier, enregistré aujourd'hui).
+    const [activityDate, setActivityDate] = useState(today)
     const [followUpDate, setFollowUpDate] = useState("")
     const [goal, setGoal] = useState(10)
 
@@ -320,8 +328,9 @@ function ProspectingPage() {
         setChannel(contact.linkedin_url ? "LinkedIn" : contact.email ? "Email" : contact.phone ? "Phone" : "Other")
         setOutcome("Message sent")
         setNote("")
+        setActivityDate(today)
         setFollowUpDate("")
-    }, [])
+    }, [today])
 
     useEffect(() => {
         if (loading || requestedAction !== "log" || !requestedContactId || selectedContact) return
@@ -340,6 +349,11 @@ function ProspectingPage() {
     const saveActivity = async () => {
         if (!selectedContact || !note.trim() && !channel) return
         setSaving(true)
+        // Date choisie + heure actuelle : pour un reporting a posteriori,
+        // l'heure exacte du contact réel est de toute façon perdue.
+        const now = new Date()
+        const currentTime = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`
+        const activityCreatedAt = new Date(`${activityDate}T${currentTime}`).toISOString()
         const { data, error: activityError } = await supabase
             .from("contact_activities")
             .insert({
@@ -347,6 +361,7 @@ function ProspectingPage() {
                 channel,
                 outcome,
                 note: note.trim() || null,
+                created_at: activityCreatedAt,
             })
             .select()
             .single()
@@ -360,7 +375,7 @@ function ProspectingPage() {
         // The first contact date is only set when an outreach is actually
         // logged. A newly imported/created lead must not inherit today's date.
         if (!selectedContact.first_contact_date) {
-            const firstContactDate = localDateKey(new Date())
+            const firstContactDate = activityDate
             const { error: firstContactDateError } = await supabase
                 .from("contacts")
                 .update({ first_contact_date: firstContactDate })
@@ -388,7 +403,14 @@ function ProspectingPage() {
             })
         }
 
-        if (data) setActivities((current) => [data as ContactActivity, ...current])
+        if (data) {
+            // Insertion triée par date : une activité rétrodatée ne doit pas
+            // passer devant les activités plus récentes (l'historique suppose
+            // un ordre décroissant pour déterminer la dernière action).
+            setActivities((current) => [data as ContactActivity, ...current].sort(
+                (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            ))
+        }
         setSelectedContact(null)
         setSaving(false)
     }
@@ -480,14 +502,15 @@ function ProspectingPage() {
                         const lastActivity = lastActivityByContact.get(contact.id)
                         const isFollowUp = followUpIds.has(contact.id)
                         const recentDays = recentDaysByContact.get(contact.id)
+                        const isContactedToday = recentDays === 0
                         const isRecentlyContacted = recentDays !== undefined && recentDays >= 1 && recentDays < RECENT_WINDOW_DAYS
-                        return <Card key={contact.id} className={cn("transition-shadow hover:shadow-md", isRecentlyContacted && "opacity-75")}>
+                        return <Card key={contact.id} className={cn("transition-shadow hover:shadow-md", (isContactedToday || isRecentlyContacted) && "opacity-75")}>
                             <CardContent className="p-4 sm:p-5">
                                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
                                     <div className="flex min-w-0 flex-1 items-start gap-3">
                                         <Avatar className="mt-0.5 h-10 w-10"><AvatarImage src={contact.avatar_url || undefined} /><AvatarFallback>{(contact.first_name?.[0] || "?")}{contact.last_name?.[0] || ""}</AvatarFallback></Avatar>
                                         <div className="min-w-0 flex-1">
-                                            <div className="flex flex-wrap items-center gap-2"><Link href={`/contacts/${contact.id}`} className="font-semibold hover:underline">{displayName(contact)}</Link><Badge variant="outline" className={statusClass(contact.status)}>{contact.status || "N/A"}</Badge>{isFollowUp && <Badge variant="outline" className="gap-1 border-red-200 bg-red-50 text-red-700"><Clock3 className="h-3 w-3" /> Relance due</Badge>}{isRecentlyContacted && <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-500">{recentDays === 1 ? "Contacté hier" : `Contacté il y a ${recentDays} jours`}</Badge>}</div>
+                                            <div className="flex flex-wrap items-center gap-2"><Link href={`/contacts/${contact.id}`} className="font-semibold hover:underline">{displayName(contact)}</Link><Badge variant="outline" className={statusClass(contact.status)}>{contact.status || "N/A"}</Badge>{isFollowUp && <Badge variant="outline" className="gap-1 border-red-200 bg-red-50 text-red-700"><Clock3 className="h-3 w-3" /> Relance due</Badge>}{isContactedToday && <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-500">Contacté aujourd’hui</Badge>}{isRecentlyContacted && <Badge variant="outline" className="border-slate-200 bg-slate-50 text-slate-500">{recentDays === 1 ? "Contacté hier" : `Contacté il y a ${recentDays} jours`}</Badge>}</div>
                                             <p className="mt-0.5 truncate text-sm text-muted-foreground">{contact.company || "Entreprise inconnue"}{contact.company_role ? ` · ${contact.company_role}` : ""}</p>
                                             <p className="mt-2 line-clamp-2 whitespace-pre-line text-sm text-muted-foreground">{htmlToText(lastActivity?.note || contact.notes) || "Aucune note disponible pour ce lead."}</p>
                                             <p className="mt-2 text-xs text-muted-foreground">{lastActivity ? `Dernière action : ${formatActivityDate(lastActivity.created_at)}` : "Jamais contacté dans l’historique"}</p>
@@ -534,7 +557,21 @@ function ProspectingPage() {
                         <SheetDescription>{selectedContact && `${displayName(selectedContact)}${selectedContact.company ? ` · ${selectedContact.company}` : ""}`}</SheetDescription>
                     </SheetHeader>
                     <div className="space-y-5 px-4">
-                        <div className="rounded-lg bg-muted/50 p-3 text-sm"><div className="flex items-center gap-2 font-medium"><UserRound className="h-4 w-4" /> Étape 2 — confirmer le contact</div><p className="mt-1 text-xs text-muted-foreground">Choisis le moyen réellement utilisé. Cette personne sera comptée dans ton objectif du jour.</p></div>
+                        <div className="rounded-lg bg-muted/50 p-3 text-sm"><div className="flex items-center gap-2 font-medium"><UserRound className="h-4 w-4" /> Étape 2 — confirmer le contact</div><p className="mt-1 text-xs text-muted-foreground">Choisis le moyen réellement utilisé. {activityDate === today ? "Cette personne sera comptée dans ton objectif du jour." : `Cette personne sera comptée dans l'objectif du ${new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long" }).format(new Date(`${activityDate}T12:00:00`))}.`}</p></div>
+                        <div className="space-y-2">
+                            <Label htmlFor="activity-date">Date du contact</Label>
+                            <DateInput
+                                id="activity-date"
+                                max={today}
+                                value={activityDate}
+                                onChange={(event) => setActivityDate(event.target.value)}
+                                containerClassName="w-full"
+                                aria-describedby="activity-date-help"
+                            />
+                            <p id="activity-date-help" className="text-xs text-muted-foreground">
+                                Aujourd’hui par défaut — modifiable si tu enregistres le contact après coup.
+                            </p>
+                        </div>
                         <div className="space-y-2"><Label>Moyen réellement utilisé</Label><Select value={channel} onValueChange={(value) => setChannel(value as Channel)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{CHANNELS.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent></Select></div>
                         <div className="space-y-2"><Label>Résultat</Label><Select value={outcome} onValueChange={(value) => setOutcome(value as Outcome)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{OUTCOMES.map((item) => <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>)}</SelectContent></Select></div>
                         <div className="space-y-2"><Label htmlFor="activity-note">Petite note <span className="font-normal text-muted-foreground">({t('contacts.detail.optional')})</span></Label><Textarea id="activity-note" value={note} onChange={(event) => setNote(event.target.value)} placeholder="Ex. Message envoyé avec deux exemples de missions..." className="min-h-28" /></div>
