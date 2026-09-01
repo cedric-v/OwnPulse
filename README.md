@@ -93,6 +93,7 @@ The extension reports **Already in CRM** when the profile URL is already capture
 
 **Dependency & security bots:**
 - **[Renovate](https://github.com/apps/renovate) is the only dependency bot** on this repo (`renovate.json` at the repo root). It handles both regular updates and security-related bumps (GitHub Security Advisories), as `config:recommended` keeps it active across all manifests.
+- **Auto-merge is enabled for patch/minor updates** (`:automergeMinor`): Renovate merges those PRs itself once all status checks (Vercel) pass (`:automergeRequireAllStatusChecks`, with `platformAutomerge` as fallback where no checks exist). Major updates and automerge failures still require a manual review.
 - **Dependabot is disabled**: no `.github/dependabot.yml` exists and GitHub's *Automated security fixes* setting is turned off, so Dependabot will not open PRs.
 - Security-sensitive dependency floors live in `dashboard/package.json` `overrides` (e.g. `next`, `postcss`, `hono`, `@hono/node-server`, `sharp`, `fast-uri`, `body-parser`). When a new advisory affects a transitive dependency, bump the matching override floor to the patched version and verify with `npm audit` (target: `found 0 vulnerabilities`) + `npm run lint` + `npm run build`.
 
