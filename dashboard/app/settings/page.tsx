@@ -17,6 +17,7 @@ import { Plus, Trash2, Save, Loader2, Edit2, Check, X } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Dialog, DialogContent, DialogTrigger, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { OfferForm } from "./components/offer-form"
+import { parseWorkDays, DEFAULT_WORK_DAYS } from "@/lib/prospecting"
 
 function SettingsContent() {
     const { toast } = useToast()
@@ -31,6 +32,8 @@ function SettingsContent() {
     const [taxRate, setTaxRate] = useState("5")
     const [targetNetSalary, setTargetNetSalary] = useState("4000")
     const [prospectingGoal, setProspectingGoal] = useState("10")
+    // Jours comptés pour les objectifs de prospection (numéros ISO, 1 = lundi … 7 = dimanche).
+    const [prospectingWorkDays, setProspectingWorkDays] = useState<number[]>(DEFAULT_WORK_DAYS)
     const [offers, setOffers] = useState<Offer[]>([])
     const [acquisitionChannels, setAcquisitionChannels] = useState<AcquisitionChannel[]>([])
     const supabase = createClient()
@@ -47,13 +50,14 @@ function SettingsContent() {
     useEffect(() => {
         async function loadSettings() {
             setLoading(true)
-            const [currencyRes, vatRes, socialRes, taxRes, salaryRes, prospectingGoalRes, offersRes, channelsRes] = await Promise.all([
+            const [currencyRes, vatRes, socialRes, taxRes, salaryRes, prospectingGoalRes, prospectingWorkDaysRes, offersRes, channelsRes] = await Promise.all([
                 supabase.from('settings').select('*').eq('key', 'currency').single(),
                 supabase.from('settings').select('*').eq('key', 'vat_rate').single(),
                 supabase.from('settings').select('*').eq('key', 'social_rate').single(),
                 supabase.from('settings').select('*').eq('key', 'tax_rate').single(),
                 supabase.from('settings').select('*').eq('key', 'target_net_salary').single(),
                 supabase.from('settings').select('*').eq('key', 'prospecting_daily_goal').maybeSingle(),
+                supabase.from('settings').select('value').eq('key', 'prospecting_work_days').maybeSingle(),
                 supabase.from('offers').select('*').order('name'),
                 supabase.from('acquisition_channels').select('*').order('name')
             ])
@@ -64,6 +68,7 @@ function SettingsContent() {
             if (taxRes.data) setTaxRate(taxRes.data.value)
             if (salaryRes.data) setTargetNetSalary(salaryRes.data.value)
             if (prospectingGoalRes.data) setProspectingGoal(prospectingGoalRes.data.value)
+            if (prospectingWorkDaysRes.data) setProspectingWorkDays(parseWorkDays(prospectingWorkDaysRes.data.value))
             if (offersRes.data) setOffers(offersRes.data)
             if (channelsRes.data) setAcquisitionChannels(channelsRes.data)
             setLoading(false)
@@ -121,12 +126,22 @@ function SettingsContent() {
             return
         }
 
+        if (prospectingWorkDays.length === 0) {
+            toast({ title: t('common.error'), description: t('settings.prospectingWorkDaysInvalid'), variant: "destructive" })
+            setSaving(false)
+            return
+        }
+
         const { error: prospectingGoalError } = await supabase
             .from('settings')
             .upsert({ key: 'prospecting_daily_goal', value: String(goal) }, { onConflict: 'key' })
 
-        if (currencyError || vatError || socialError || taxError || salaryError || prospectingGoalError) {
-            toast({ title: t('common.error'), description: (currencyError || vatError || socialError || taxError || salaryError || prospectingGoalError)?.message, variant: "destructive" })
+        const { error: prospectingWorkDaysError } = await supabase
+            .from('settings')
+            .upsert({ key: 'prospecting_work_days', value: prospectingWorkDays.join(',') }, { onConflict: 'key' })
+
+        if (currencyError || vatError || socialError || taxError || salaryError || prospectingGoalError || prospectingWorkDaysError) {
+            toast({ title: t('common.error'), description: (currencyError || vatError || socialError || taxError || salaryError || prospectingGoalError || prospectingWorkDaysError)?.message, variant: "destructive" })
         } else {
             toast({ title: t('common.success'), description: t('common.success') })
         }
@@ -279,6 +294,40 @@ function SettingsContent() {
                                     onChange={e => setProspectingGoal(e.target.value)}
                                 />
                                 <p className="text-xs text-muted-foreground italic">{t('settings.prospectingGoalNote')}</p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>{t('settings.prospectingWorkDays')}</Label>
+                                <div className="flex flex-wrap gap-1.5" role="group" aria-label={t('settings.prospectingWorkDays')}>
+                                    {[1, 2, 3, 4, 5, 6, 7].map((day) => {
+                                        const selected = prospectingWorkDays.includes(day)
+                                        // 1er janvier 2024 = lundi : date de référence stable
+                                        // pour libeller les jours via Intl sans dépendance.
+                                        const label = new Intl.DateTimeFormat(
+                                            currentLanguage === 'en' ? 'en-GB' : 'fr-CH',
+                                            { weekday: 'short' }
+                                        ).format(new Date(2024, 0, day))
+                                        return (
+                                            <Button
+                                                key={day}
+                                                type="button"
+                                                variant={selected ? "secondary" : "outline"}
+                                                size="sm"
+                                                className={"w-14" + (selected ? "" : " text-muted-foreground")}
+                                                aria-pressed={selected}
+                                                onClick={() =>
+                                                    setProspectingWorkDays((current) =>
+                                                        current.includes(day)
+                                                            ? current.filter((d) => d !== day)
+                                                            : [...current, day].sort((a, b) => a - b)
+                                                    )
+                                                }
+                                            >
+                                                {label}
+                                            </Button>
+                                        )
+                                    })}
+                                </div>
+                                <p className="text-xs text-muted-foreground italic">{t('settings.prospectingWorkDaysNote')}</p>
                             </div>
                             <div className="space-y-2 max-w-sm">
                                 <Label>{t('settings.interfaceLanguage')}</Label>

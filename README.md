@@ -48,8 +48,8 @@
 
 ### 1. Database Setup (Supabase)
 1. Create a free project on [Supabase](https://supabase.com).
-2. Execute the SQL schema found in `/supabase/schema.sql` to initialize your `contacts`, `companies`, and `tasks` tables (already security-hardened: RLS owner-scoped, anonymous access limited to `contact_urls` view + `capture_contact` RPC).
-3. Run the incremental migrations in order: `fix_missing_tables.sql`, `migration_social_fields.sql`, `migration_marketing_cfo.sql`, `migration_acquisition_channels.sql`, `migration_offers_enhancement.sql`, `add_tax_social_settings.sql`, `add_vat_setting.sql`, `migration_sales_company_link.sql`, `migration_sales_quantity_decimal.sql`, `migration_contact_activities.sql`, `migration_merge_contacts.sql` (and `supabase/seed_generic.sql` for neutral demo data).
+2. Execute the SQL schema found in `/supabase/schema.sql` to initialize your `contacts`, `companies`, and `tasks` tables (already security-hardened: RLS owner-scoped, anonymous access limited to `contact_urls` view + `capture_contact` / `refresh_contact_from_capture` RPCs).
+3. Run the incremental migrations in order: `fix_missing_tables.sql`, `migration_social_fields.sql`, `migration_marketing_cfo.sql`, `migration_acquisition_channels.sql`, `migration_offers_enhancement.sql`, `add_tax_social_settings.sql`, `add_vat_setting.sql`, `migration_sales_company_link.sql`, `migration_sales_quantity_decimal.sql`, `migration_contact_activities.sql`, `migration_merge_contacts.sql`, `migration_refresh_contact.sql`, `migration_prospecting_work_days.sql` (and `supabase/seed_generic.sql` for neutral demo data).
 4. Retrieve your `SUPABASE_URL` and `SUPABASE_ANON_KEY`.
 5. Disable public signup: **Authentication > Providers > Email > "Allow new users to sign up" = OFF**, and enable 2FA/MFA on your account.
 
@@ -83,7 +83,7 @@ Note: Supabase's Data API no longer exposes newly created `public` tables automa
 4. After updating the extension, click **Reload** on the OwnPulse extension and refresh the social profile tab so the new content script is loaded.
 5. Update the extension's configuration (in `popup.js` or `content.js`) with your Supabase endpoint.
 
-The extension reports **Already in CRM** when the profile URL is already captured. On the dashboard, search by the profile URL or username: the All Leads search includes LinkedIn, Threads, and Instagram URLs. If a profile is already present but not visible on the current page, it may be on another paginated results page.
+The extension reports **Already in CRM** when the profile URL is already captured, and automatically **refreshes the profile data** (company, role, names, avatar) in the same click — manual edits of email, phone, notes, status, and lists are never overwritten. On the dashboard, the **Company** and **Role** fields on a contact page are editable with auto-save, so you can also correct them manually. Search by the profile URL or username: the All Leads search includes LinkedIn, Threads, and Instagram URLs. If a profile is already present but not visible on the current page, it may be on another paginated results page.
 
 ### 4. Tooling Maintenance
 - Keep `eslint` aligned with `eslint-config-next` compatibility, not simply with the latest ESLint major.
@@ -100,7 +100,7 @@ The extension reports **Already in CRM** when the profile URL is already capture
 ### 5. Security & Privacy (GDPR / LPD)
 
 OwnPulse stores personal data (contacts, notes, finances) and business secrets (offers, rates). Baseline practices:
-- **Data access**: the dashboard talks to Supabase only with the user session (`authenticated` role); RLS is the single enforcement point — keep policies aligned with `hardening_security_rls.sql`. The extension uses the publishable key and is restricted to the `capture_contact` RPC (whitelisted INSERT) + a minimal `contact_urls` view (no read of emails/phones/notes).
+- **Data access**: the dashboard talks to Supabase only with the user session (`authenticated` role); RLS is the single enforcement point — keep policies aligned with `hardening_security_rls.sql`. The extension uses the publishable key and is restricted to the `capture_contact` RPC (whitelisted INSERT), the `refresh_contact_from_capture` RPC (whitelisted UPDATE of profile fields only), and a minimal `contact_urls` view (no read of emails/phones/notes).
 - **Multi-user**: if more than one account will ever use the app, run `hardening_multi_user_rls.sql` — every row gets a `user_id`, all tables are scoped to `auth.uid()`, and anonymous captures land as "unclaimed" contacts that the first editor claims. Current data is backfilled to the first created user.
 - **No secret keys in the repo**: only publishable keys appear in `extension/content.js`; the `service_role` key must never be committed, used in the browser, or put in the extension.
 - **Env vars**: copy `dashboard/.env.local.example` → `.env.local`; never commit `.env.local` (already gitignored).
@@ -157,8 +157,8 @@ The dedup `contact_urls` view automatically stops listing the deleted duplicate'
 ---
 
 ## 📊 How it works
-1. 📡 **Capture**: The Chrome extension scrapes the LinkedIn, Threads, or Instagram profile DOM securely.
-2. ⚡ **Sync**: Data is sent instantly to your private Supabase PostgreSQL instance.
+1. 📡 **Capture**: The Chrome extension scrapes the LinkedIn, Threads, or Instagram profile DOM securely — only when you click the button on a profile you opened manually (no background crawling, human pace).
+2. ⚡ **Sync**: Data is sent instantly to your private Supabase PostgreSQL instance. If the profile is already in the CRM, its company/role/avatar are refreshed instead of creating a duplicate.
 3. 🛰️ **Pulse**: Manage your relationships and pipeline stages via the OwnPulse dashboard.
 
 ---

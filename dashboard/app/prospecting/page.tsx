@@ -29,6 +29,7 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet"
 import {
+    BarChart3,
     Check,
     ChevronLeft,
     ChevronRight,
@@ -434,14 +435,19 @@ function ProspectingPage() {
                     <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Ta prospection</h1>
                     <p className="mt-1 text-muted-foreground">Les leads les plus pertinents à contacter en priorité.</p>
                 </div>
-                <div className="flex items-center gap-2 self-start rounded-lg border bg-background p-1">
-                    <Button variant="ghost" size="icon-sm" aria-label="Jour précédent" onClick={() => setSelectedDate(shiftDate(selectedDate, -1))}>
-                        <ChevronLeft className="h-4 w-4" />
+                <div className="flex items-center gap-2 self-start">
+                    <Button variant="outline" asChild>
+                        <Link href="/prospecting/stats"><BarChart3 className="h-4 w-4" /> Statistiques</Link>
                     </Button>
-                    <Input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} className="w-[145px] border-0 shadow-none" />
-                    <Button variant="ghost" size="icon-sm" aria-label="Jour suivant" onClick={() => setSelectedDate(shiftDate(selectedDate, 1))}>
-                        <ChevronRight className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-2 rounded-lg border bg-background p-1">
+                        <Button variant="ghost" size="icon-sm" aria-label="Jour précédent" onClick={() => setSelectedDate(shiftDate(selectedDate, -1))}>
+                            <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <Input type="date" value={selectedDate} onChange={(event) => setSelectedDate(event.target.value)} className="w-[145px] border-0 shadow-none" />
+                        <Button variant="ghost" size="icon-sm" aria-label="Jour suivant" onClick={() => setSelectedDate(shiftDate(selectedDate, 1))}>
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </div>
             </div>
 
