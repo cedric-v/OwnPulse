@@ -44,7 +44,10 @@ function createFloatingButton() {
 
             btn.innerText = 'Saving...';
             const saveResult = await saveToSupabase(profileData);
-            if (saveResult.status === 'existing') {
+            if (saveResult.status === 'updated') {
+                btn.innerText = '✔ Profile updated';
+                btn.style.backgroundColor = '#059669'; // Emerald 600
+            } else if (saveResult.status === 'existing') {
                 btn.innerText = 'Already in CRM';
                 btn.style.backgroundColor = '#d97706'; // Amber 600
             } else {
@@ -88,6 +91,17 @@ function scrapeProfile() {
         return '';
     };
 
+    // Split a LinkedIn-style headline ("Founder & CEO @ Acme", "CEO chez X",
+    // "CTO at Y") into role + company. Falls back to the whole headline.
+    const splitHeadline = (headline) => {
+        const text = getSafeString(headline).replace(/\s+/g, ' ');
+        const parts = text.split(/\s+(?:@|chez|at|[·|–—-])\s+/i);
+        if (parts.length >= 2 && parts[0].trim() && parts[parts.length - 1].trim()) {
+            return { role: parts[0].trim(), company: parts[parts.length - 1].trim() };
+        }
+        return { role: text, company: '' };
+    };
+
     try {
         if (url.includes('linkedin.com/')) {
             const nameEl = document.querySelector('.text-heading-xlarge') || document.querySelector('h1.text-heading-xlarge');
@@ -101,7 +115,9 @@ function scrapeProfile() {
                     name = title.split(' | LinkedIn')[0];
                 }
             }
-            companyRole = getSafeString(roleEl?.innerText) || 'LinkedIn Profile';
+            const parsedHeadline = splitHeadline(getSafeString(roleEl?.innerText) || 'LinkedIn Profile');
+            companyRole = parsedHeadline.role || 'LinkedIn Profile';
+            company = parsedHeadline.company;
             avatarUrl = avatarEl?.src || null;
 
         } else if (url.includes('threads.net/') || url.includes('threads.com/')) {
@@ -210,6 +226,7 @@ function scrapeProfile() {
         const finalData = {
             first_name: firstName,
             last_name: lastName || '',
+            company: company,
             company_role: companyRole,
             linkedin_url: url.includes('linkedin.com') ? url : null,
             threads_url: (url.includes('threads.net') || url.includes('threads.com')) ? url : null,
@@ -264,13 +281,24 @@ async function saveToSupabase(data) {
     // unrelated contacts and falsely report every new profile as a duplicate.
     // Queries the minimal `contact_urls` view (RLS hardening): the anonymous
     // key no longer has read access to the full `contacts` table.
+    // Each URL is queried in both trailing-slash variants: contacts captured
+    // before URL normalization may store the profile URL without a trailing
+    // slash, and exact equality would otherwise miss them and create duplicates.
+    const urlVariants = (value) => {
+        const withoutSlash = value.replace(/\/+$/, '');
+        const withSlash = withoutSlash + '/';
+        return value.endsWith('/') ? [value, withoutSlash] : [value, withSlash];
+    };
+
     const urlFilters = [
         ['linkedin_url', normalizedData.linkedin_url],
         ['threads_url', normalizedData.threads_url],
         ['instagram_url', normalizedData.instagram_url]
     ]
         .filter(([, value]) => value)
-        .map(([column, value]) => `${column}.eq.${encodeURIComponent(value)}`);
+        .flatMap(([column, value]) =>
+            urlVariants(value).map(variant => `${column}.eq.${encodeURIComponent(variant)}`)
+        );
 
     let existing = [];
     if (urlFilters.length > 0) {
@@ -291,7 +319,28 @@ async function saveToSupabase(data) {
     }
 
     if (existing && existing.length > 0) {
-        return { status: 'existing', id: existing[0].id };
+        const existingId = existing[0].id;
+
+        // Refresh whitelisted profile fields (company, role, names, avatar,
+        // URLs) instead of just reporting the duplicate. The RPC enforces
+        // ownership and never touches email/phone/notes/status/list/value.
+        const refreshUrl = `${SUPABASE_URL}/rest/v1/rpc/refresh_contact_from_capture`;
+        const refreshRes = await fetch(refreshUrl, {
+            method: 'POST',
+            headers: {
+                'apikey': SUPABASE_KEY,
+                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ p_contact_id: existingId, p_payload: normalizedData })
+        });
+
+        if (!refreshRes.ok) {
+            throw new Error(`Refresh request failed (${refreshRes.status}): ${await refreshRes.text()}`);
+        }
+
+        const updatedId = await refreshRes.json();
+        return { status: updatedId ? 'updated' : 'existing', id: existingId };
     }
 
     // Create new contact via the whitelisted capture RPC (RLS hardening):

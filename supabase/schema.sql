@@ -171,6 +171,51 @@ $$;
 revoke all on function capture_contact(jsonb) from public;
 grant execute on function capture_contact(jsonb) to anon, authenticated;
 
+-- 3) Whitelisted refresh entry point (extension /rest/v1/rpc/refresh_contact_from_capture)
+--    SECURITY DEFINER: updates only whitelisted profile fields (names
+--    fill-if-empty, company, role, avatar, social URLs) on a row the caller
+--    may touch (owner or unclaimed). Emails, phones, notes, status, list,
+--    value and user_id are never modified. Returns NULL otherwise.
+create or replace function refresh_contact_from_capture(
+  p_contact_id uuid,
+  p_payload jsonb
+)
+returns uuid
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare v_id uuid;
+begin
+  select id into v_id
+  from contacts
+  where id = p_contact_id
+    and (user_id = auth.uid() or user_id is null)
+  for update;
+
+  if v_id is null then
+    return null;
+  end if;
+
+  update contacts set
+    first_name    = coalesce(nullif(first_name, ''), nullif(p_payload->>'first_name', '')),
+    last_name     = coalesce(nullif(last_name, ''), nullif(p_payload->>'last_name', '')),
+    company       = coalesce(nullif(p_payload->>'company', ''), company),
+    company_role  = coalesce(nullif(p_payload->>'company_role', ''), company_role),
+    avatar_url    = coalesce(nullif(p_payload->>'avatar_url', ''), avatar_url),
+    linkedin_url  = coalesce(nullif(p_payload->>'linkedin_url', ''), linkedin_url),
+    threads_url   = coalesce(nullif(p_payload->>'threads_url', ''), threads_url),
+    instagram_url = coalesce(nullif(p_payload->>'instagram_url', ''), instagram_url),
+    updated_at    = now()
+  where id = v_id;
+
+  return v_id;
+end;
+$$;
+
+revoke all on function refresh_contact_from_capture(uuid, jsonb) from public;
+grant execute on function refresh_contact_from_capture(uuid, jsonb) to anon, authenticated;
+
 -- ---------------------------------------------------------------------------
 -- Indexes
 -- ---------------------------------------------------------------------------
