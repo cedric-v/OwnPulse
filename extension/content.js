@@ -47,6 +47,9 @@ function createFloatingButton() {
             if (saveResult.status === 'updated') {
                 btn.innerText = '✔ Profile updated';
                 btn.style.backgroundColor = '#059669'; // Emerald 600
+            } else if (saveResult.status === 'existing' && saveResult.needsLogin) {
+                btn.innerText = 'Log in via popup to update';
+                btn.style.backgroundColor = '#d97706'; // Amber 600
             } else if (saveResult.status === 'existing') {
                 btn.innerText = 'Already in CRM';
                 btn.style.backgroundColor = '#d97706'; // Amber 600
@@ -324,12 +327,25 @@ async function saveToSupabase(data) {
         // Refresh whitelisted profile fields (company, role, names, avatar,
         // URLs) instead of just reporting the duplicate. The RPC enforces
         // ownership and never touches email/phone/notes/status/list/value.
+        // CLAIMED contacts can only be refreshed by their owner: ask the
+        // background worker for the user's access token (popup login). With
+        // the anon key alone, the RPC only touches unclaimed rows.
+        let accessToken = null;
+        let loggedIn = false;
+        try {
+            const tokenResp = await chrome.runtime.sendMessage({ type: 'getAccessToken' });
+            accessToken = tokenResp?.accessToken || null;
+            loggedIn = !!tokenResp?.loggedIn;
+        } catch {
+            // Background worker unavailable — fall back to the anon key.
+        }
+
         const refreshUrl = `${SUPABASE_URL}/rest/v1/rpc/refresh_contact_from_capture`;
         const refreshRes = await fetch(refreshUrl, {
             method: 'POST',
             headers: {
                 'apikey': SUPABASE_KEY,
-                'Authorization': `Bearer ${SUPABASE_KEY}`,
+                'Authorization': `Bearer ${accessToken || SUPABASE_KEY}`,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({ p_contact_id: existingId, p_payload: normalizedData })
@@ -340,7 +356,11 @@ async function saveToSupabase(data) {
         }
 
         const updatedId = await refreshRes.json();
-        return { status: updatedId ? 'updated' : 'existing', id: existingId };
+        if (updatedId) {
+            return { status: 'updated', id: existingId };
+        }
+        // RPC returned NULL: contact not owned by the caller.
+        return { status: 'existing', needsLogin: !loggedIn, id: existingId };
     }
 
     // Create new contact via the whitelisted capture RPC (RLS hardening):

@@ -5,8 +5,12 @@
     "description": "Minimalist CRM Extension for LinkedIn, Threads, and Instagram",
     "permissions": [
         "activeTab",
-        "scripting"
+        "scripting",
+        "storage"
     ],
+    "background": {
+        "service_worker": "background.js"
+    },
     "host_permissions": [
         "https://*.linkedin.com/*",
         "https://*.threads.net/*",

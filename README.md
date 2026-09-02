@@ -81,9 +81,10 @@ Note: Supabase's Data API no longer exposes newly created `public` tables automa
 2. Enable **Developer Mode**.
 3. Click **Load unpacked** and select the `/extension` folder from this repository.
 4. After updating the extension, click **Reload** on the OwnPulse extension and refresh the social profile tab so the new content script is loaded.
-5. Update the extension's configuration (Supabase URL and publishable key in `content.js`) with your Supabase endpoint.
+5. Update the extension's configuration (Supabase URL and publishable key in `content.js` and `background.js`) with your Supabase endpoint.
+6. Click the OwnPulse icon and **log in** with your dashboard account. This is required to refresh contacts that are already claimed (edited) in the CRM; anonymous capture of new contacts works without login.
 
-The extension reports **Already in CRM** when the profile URL is already captured, and automatically **refreshes the profile data** (company, role, names, avatar) in the same click — manual edits of email, phone, notes, status, and lists are never overwritten. On the dashboard, the **Company** and **Role** fields on a contact page are editable with auto-save, so you can also correct them manually. Search by the profile URL or username: the All Leads search includes LinkedIn, Threads, and Instagram URLs. If a profile is already present but not visible on the current page, it may be on another paginated results page.
+When the profile URL is already captured, the extension automatically **refreshes the profile data** (company, role, names, avatar) in the same click — manual edits of email, phone, notes, status, and lists are never overwritten. Unclaimed (never-edited) contacts can be refreshed anonymously; **claimed contacts require the popup login** (the refresh then runs as the authenticated owner). On the dashboard, the **Company** and **Role** fields on a contact page are editable with auto-save, so you can also correct them manually. Search by the profile URL or username: the All Leads search includes LinkedIn, Threads, and Instagram URLs. If a profile is already present but not visible on the current page, it may be on another paginated results page.
 
 ### 4. Tooling Maintenance
 - Keep `eslint` aligned with `eslint-config-next` compatibility, not simply with the latest ESLint major.

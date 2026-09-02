@@ -4,26 +4,76 @@
 <head>
   <style>
     body {
-      width: 200px;
+      width: 240px;
       padding: 10px;
       font-family: sans-serif;
     }
 
     h1 {
       font-size: 16px;
-      margin-bottom: 5px;
+      margin-bottom: 8px;
     }
 
     p {
       font-size: 12px;
       color: #666;
     }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 6px;
+      margin-bottom: 6px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 12px;
+    }
+
+    button {
+      width: 100%;
+      padding: 6px;
+      border: none;
+      border-radius: 6px;
+      background-color: #6366f1;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+    }
+
+    #logout-btn {
+      background-color: #e5e7eb;
+      color: #374151;
+    }
+
+    .error {
+      color: #dc2626;
+      min-height: 14px;
+    }
   </style>
 </head>
 
 <body>
   <h1>OwnPulse CRM</h1>
-  <p>Navigate to a LinkedIn, Threads, or Instagram profile to add a contact.</p>
+
+  <div id="logged-out">
+    <p>Navigate to a LinkedIn, Threads, or Instagram profile to add a contact. Log in to also enable profile updates on contacts already claimed in the CRM.</p>
+    <input id="email" type="email" placeholder="Email" autocomplete="username" />
+    <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
+    <button id="login-btn">Log in</button>
+    <p id="error" class="error"></p>
+  </div>
+
+  <div id="logged-in" style="display:none">
+    <p>Logged in as <strong id="email-label"></strong>.</p>
+    <p>Profile updates on contacts you own are enabled.</p>
+    <button id="logout-btn">Log out</button>
+  </div>
+
+  <script src="popup.js"></script>
 </body>
 
 </html>
