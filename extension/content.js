@@ -102,10 +102,12 @@ function scrapeProfile() {
     };
 
     // Split a LinkedIn-style headline ("Founder & CEO @ Acme", "CEO chez X",
-    // "CTO at Y") into role + company. Falls back to the whole headline.
+    // "CTO at Y") into role + company. Only @/chez/at reliably imply an
+    // employer — separators like "|" or "-" are usually taglines, not
+    // companies. Falls back to the whole headline as the role.
     const splitHeadline = (headline) => {
         const text = getSafeString(headline).replace(/\s+/g, ' ');
-        const parts = text.split(/\s+(?:@|chez|at|[·|–—-])\s+/i);
+        const parts = text.split(/\s+(?:@|chez|at)\s+/i);
         if (parts.length >= 2 && parts[0].trim() && parts[parts.length - 1].trim()) {
             return { role: parts[0].trim(), company: parts[parts.length - 1].trim() };
         }
@@ -115,7 +117,6 @@ function scrapeProfile() {
     try {
         if (url.includes('linkedin.com/')) {
             const nameEl = document.querySelector('.text-heading-xlarge') || document.querySelector('h1.text-heading-xlarge');
-            const roleEl = document.querySelector('.text-body-medium');
             const avatarEl = document.querySelector('.pv-top-card-profile-picture__image--show') || document.querySelector('img.pv-top-card-profile-picture__image');
 
             name = getSafeString(nameEl?.innerText);
@@ -125,7 +126,29 @@ function scrapeProfile() {
                     name = title.split(' | LinkedIn')[0];
                 }
             }
-            const parsedHeadline = splitHeadline(getSafeString(roleEl?.innerText) || 'LinkedIn Profile');
+
+            // Headline: LinkedIn's DOM changes often — try scoped selectors
+            // first, then any non-empty .text-body-medium, then the page
+            // title (which usually embeds the headline).
+            let headline = '';
+            const headlineCandidates = document.querySelectorAll(
+                '.pv-text-details__left-panel .text-body-medium, main section .text-body-medium, .text-body-medium'
+            );
+            for (const el of headlineCandidates) {
+                const text = getSafeString(el.innerText);
+                if (text && text.length > 2 && !/^\d/.test(text)) {
+                    headline = text;
+                    break;
+                }
+            }
+            if (!headline) {
+                const title = document.title || '';
+                if (title.includes(' | LinkedIn')) {
+                    headline = title.split(' | LinkedIn')[0].replace(/^\(\d+\)\s*/, '');
+                }
+            }
+
+            const parsedHeadline = splitHeadline(headline);
             companyRole = parsedHeadline.role || 'LinkedIn Profile';
             company = parsedHeadline.company;
             avatarUrl = avatarEl?.src || null;
