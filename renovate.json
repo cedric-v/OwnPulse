@@ -3,7 +3,8 @@
   "extends": [
     "config:recommended",
     ":automergeMinor",
-    ":automergeRequireAllStatusChecks"
+    ":automergeRequireAllStatusChecks",
+    "osvVulnerabilityAlerts"
   ],
   "platformAutomerge": true
 }
