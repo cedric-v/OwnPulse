@@ -20,6 +20,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { UserPlus, Loader2 } from "lucide-react"
 import { DateInput } from "@/components/ui/date-input"
 import { useLanguage } from "@/components/i18n/language-context"
+import { isValidEmail, isValidPhone } from "@/lib/validation"
 import { useRouter } from "next/navigation"
 
 export function AddLeadDialog() {
@@ -31,6 +32,7 @@ export function AddLeadDialog() {
         last_name: "",
         company: "",
         email: "",
+        phone: "",
         linkedin_url: "",
         threads_url: "",
         instagram_url: "",
@@ -42,6 +44,7 @@ export function AddLeadDialog() {
         first_contact_date: ""
     })
     const [channels, setChannels] = useState<{ id: string, name: string }[]>([])
+    const [fieldErrors, setFieldErrors] = useState<{ email?: boolean, phone?: boolean }>({})
     const router = useRouter()
     const supabase = createClient()
 
@@ -55,6 +58,16 @@ export function AddLeadDialog() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
+
+        // Client-side validation before hitting the database
+        const emailOk = isValidEmail(formData.email)
+        const phoneOk = isValidPhone(formData.phone)
+        setFieldErrors({
+            email: !emailOk,
+            phone: !phoneOk,
+        })
+        if (!emailOk || !phoneOk) return
+
         setLoading(true)
 
         const { data, error } = await supabase
@@ -64,7 +77,8 @@ export function AddLeadDialog() {
                     first_name: formData.first_name,
                     last_name: formData.last_name,
                     company: formData.company,
-                    email: formData.email,
+                    email: formData.email || null,
+                    phone: formData.phone || null,
                     linkedin_url: formData.linkedin_url || null,
                     threads_url: formData.threads_url || null,
                     instagram_url: formData.instagram_url || null,
@@ -84,7 +98,7 @@ export function AddLeadDialog() {
             setOpen(false)
             setOpen(false)
             setFormData({
-                first_name: "", last_name: "", company: "", email: "",
+                first_name: "", last_name: "", company: "", email: "", phone: "",
                 linkedin_url: "", threads_url: "", instagram_url: "",
                 list: "Prospects", value: 0, acquisition_channel: "",
                 first_contact_date: ""
@@ -184,9 +198,35 @@ export function AddLeadDialog() {
                                     id="email"
                                     type="email"
                                     value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                    onChange={e => {
+                                        setFormData({ ...formData, email: e.target.value })
+                                        if (fieldErrors.email) setFieldErrors(prev => ({ ...prev, email: !isValidEmail(e.target.value) && e.target.value !== "" }))
+                                    }}
                                     placeholder="jean@exemple.com"
+                                    aria-invalid={fieldErrors.email || undefined}
+                                    className={fieldErrors.email ? "border-red-500" : ""}
                                 />
+                                {fieldErrors.email && (
+                                    <p className="text-xs text-red-600">{t('contacts.detail.emailInvalid')}</p>
+                                )}
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="phone">{t('contacts.detail.phone')}</Label>
+                                <Input
+                                    id="phone"
+                                    type="tel"
+                                    value={formData.phone}
+                                    onChange={e => {
+                                        setFormData({ ...formData, phone: e.target.value })
+                                        if (fieldErrors.phone) setFieldErrors(prev => ({ ...prev, phone: !isValidPhone(e.target.value) && e.target.value !== "" }))
+                                    }}
+                                    placeholder="+41 79 123 45 67"
+                                    aria-invalid={fieldErrors.phone || undefined}
+                                    className={fieldErrors.phone ? "border-red-500" : ""}
+                                />
+                                {fieldErrors.phone && (
+                                    <p className="text-xs text-red-600">{t('contacts.detail.phoneInvalid')}</p>
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <Label>{t('contacts.detail.lists')}</Label>

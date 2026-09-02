@@ -5,6 +5,7 @@ import { useEffect, useState, use } from "react"
 import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { useLanguage } from "@/components/i18n/language-context"
+import { isValidEmail, isValidPhone } from "@/lib/validation"
 import { Contact, ContactActivity, Task, Sale } from "@/types"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -151,6 +152,10 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
     // Debounced Auto-Save
     useEffect(() => {
         if (!contact || loading) return
+
+        // Field-level validation gate: never persist an invalid email or phone.
+        // The inline errors below the inputs guide the user to fix the values.
+        if (!isValidEmail(contact.email) || !isValidPhone(contact.phone)) return
 
         const timer = setTimeout(async () => {
             setSaveStatus("saving")
@@ -376,7 +381,12 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                             type="email"
                                             value={contact.email || ""}
                                             onChange={e => setContact({ ...contact, email: e.target.value })}
+                                            aria-invalid={contact.email ? !isValidEmail(contact.email) : undefined}
+                                            className={contact.email && !isValidEmail(contact.email) ? "border-red-500" : ""}
                                         />
+                                        {contact.email && !isValidEmail(contact.email) && (
+                                            <p className="text-xs text-red-600">{t('contacts.detail.emailInvalid')}</p>
+                                        )}
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="phone" className="flex items-center gap-2"><Phone className="h-3 w-3" /> {t('contacts.detail.phone')}</Label>
@@ -384,8 +394,13 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                             id="phone"
                                             value={contact.phone || ""}
                                             onChange={e => setContact({ ...contact, phone: e.target.value })}
-                                            placeholder="+41 7x xxx xx xx"
+                                            placeholder="+41 79 123 45 67"
+                                            aria-invalid={contact.phone ? !isValidPhone(contact.phone) : undefined}
+                                            className={contact.phone && !isValidPhone(contact.phone) ? "border-red-500" : ""}
                                         />
+                                        {contact.phone && !isValidPhone(contact.phone) && (
+                                            <p className="text-xs text-red-600">{t('contacts.detail.phoneInvalid')}</p>
+                                        )}
                                     </div>
                                 </div>
 
