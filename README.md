@@ -81,7 +81,7 @@ Note: Supabase's Data API no longer exposes newly created `public` tables automa
 2. Enable **Developer Mode**.
 3. Click **Load unpacked** and select the `/extension` folder from this repository.
 4. After updating the extension, click **Reload** on the OwnPulse extension and refresh the social profile tab so the new content script is loaded.
-5. Update the extension's configuration (in `popup.js` or `content.js`) with your Supabase endpoint.
+5. Update the extension's configuration (Supabase URL and publishable key in `content.js`) with your Supabase endpoint.
 
 The extension reports **Already in CRM** when the profile URL is already captured, and automatically **refreshes the profile data** (company, role, names, avatar) in the same click — manual edits of email, phone, notes, status, and lists are never overwritten. On the dashboard, the **Company** and **Role** fields on a contact page are editable with auto-save, so you can also correct them manually. Search by the profile URL or username: the All Leads search includes LinkedIn, Threads, and Instagram URLs. If a profile is already present but not visible on the current page, it may be on another paginated results page.
 
