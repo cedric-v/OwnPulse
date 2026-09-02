@@ -50,6 +50,13 @@ function createFloatingButton() {
             } else if (saveResult.status === 'existing' && saveResult.needsLogin) {
                 btn.innerText = 'Log in via popup to update';
                 btn.style.backgroundColor = '#d97706'; // Amber 600
+                btn.title = 'Open the OwnPulse toolbar icon and log in with your dashboard account';
+                // Best-effort: open the extension popup automatically.
+                try {
+                    chrome.runtime.sendMessage({ type: 'openPopup' });
+                } catch {
+                    /* ignore — user can open it from the toolbar */
+                }
             } else if (saveResult.status === 'existing') {
                 btn.innerText = 'Already in CRM';
                 btn.style.backgroundColor = '#d97706'; // Amber 600

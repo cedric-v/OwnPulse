@@ -93,6 +93,18 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
                 await clearSession();
                 sendResponse({ ok: true });
                 break;
+            case 'openPopup':
+                // Best-effort: requires Chrome 127+ and may be rejected if
+                // the browser does not treat the forwarded click as a user
+                // gesture. Failure is harmless — the button text still
+                // tells the user to open the popup manually.
+                try {
+                    await chrome.action.openPopup();
+                } catch {
+                    /* ignore */
+                }
+                sendResponse({ ok: true });
+                break;
             default:
                 sendResponse({ ok: false, error: 'Unknown message type' });
         }
