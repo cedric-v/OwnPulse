@@ -55,7 +55,7 @@
 
 ⚠️ **Never re-run `schema.sql` or the migrations on an existing project** — they are initialization scripts. Existing projects are updated with `hardening_security_rls.sql` and `hardening_multi_user_rls.sql` instead.
 
-Note: Supabase's Data API no longer exposes newly created `public` tables automatically by default on new projects starting May 30, 2026. Keep explicit `GRANT` statements alongside each `CREATE TABLE` migration.
+Note: from October 30, 2026, Supabase no longer auto-grants Data API access to newly created `public` tables (including tables created by migrations) for existing projects. Keep explicit `GRANT` statements alongside each `CREATE TABLE` migration.
 
 **Security hardening (required for GDPR/LPD):** new projects are already hardened by `schema.sql` (see above). *Existing* projects: run `hardening_security_rls.sql` then `hardening_multi_user_rls.sql` once. They revoke anonymous access to personal/financial data, add `user_id` ownership (multi-user), and expose only the minimal `contact_urls` view + `capture_contact` RPC for the extension. Then, in the Supabase dashboard:
 - **Authentication > Providers > Email > "Allow new users to sign up" = OFF** (otherwise anyone can create an account and read all data).
