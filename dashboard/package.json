@@ -10,15 +10,17 @@
   },
   "overrides": {
     "postcss": "^8.5.18",
-    "hono": "^4.12.27",
+    "hono": "^4.13.5",
     "@hono/node-server": "^2.0.5",
-    "fast-uri": "^3.1.4",
-    "sharp": "^0.35.0",
+    "fast-uri": "^3.1.6",
+    "sharp": "^0.35.4",
     "body-parser": "^2.3.0",
     "flatted": "^3.4.2",
     "express-rate-limit": "^8.5.2",
     "ip-address": "^10.2.0",
-    "qs": "^6.15.2",
+    "qs": "^6.15.4",
+    "js-yaml": "^4.3.2",
+    "@humanfs/node": "^0.16.8",
     "@modelcontextprotocol/sdk": {
       "ajv": "^8.20.0"
     },
