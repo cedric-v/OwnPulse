@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts"
-import { Loader2, Users, Clock } from "lucide-react"
+import { Loader2, Users, Clock, ShoppingCart, CreditCard, UserPlus, Receipt, UserCheck } from "lucide-react"
 import { PeriodSelector, Period } from "@/components/dashboard/period-selector"
 import { createClient } from "@/lib/supabase/client"
 import { useLanguage } from "@/components/i18n/language-context"
@@ -216,6 +216,21 @@ export default function MarketingPage() {
 
     const totalClients = singleOfferClients + multiOfferClients
     const retentionRate = totalClients > 0 ? Math.round((multiOfferClients / totalClients) * 100) : 0
+
+    // 5. Jay Abraham key metrics (based on the selected period)
+    //    Revenue = Number of clients × Average purchase value × Purchase frequency
+    let periodRevenue = 0
+    filteredSales.forEach(s => {
+        periodRevenue += (s.price_ht || 0) * (s.quantity || 1)
+    })
+    const activeClientsCount = activeContactIds.size
+    const purchaseCount = filteredSales.length
+    const avgBasketPerClient = activeClientsCount > 0 ? periodRevenue / activeClientsCount : 0
+    const avgPurchaseValue = purchaseCount > 0 ? periodRevenue / purchaseCount : 0
+    const purchaseFrequency = activeClientsCount > 0 ? purchaseCount / activeClientsCount : 0
+
+    // 6. New clients converted during the selected period
+    const newClientsCount = contacts.filter(c => c.customer_conversion_date && isWithinPeriod(c.customer_conversion_date)).length
     const retentionData = [
         { name: t('marketing.singleOffer'), value: singleOfferClients },
         { name: t('marketing.returningClients'), value: multiOfferClients }
@@ -226,6 +241,47 @@ export default function MarketingPage() {
             <div className="flex items-center justify-between space-y-2">
                 <h2 className="text-3xl font-bold tracking-tight">{t('marketing.title')}</h2>
                 <PeriodSelector value={period} onValueChange={setPeriod} />
+            </div>
+
+            <div className="space-y-4">
+                <div>
+                    <h3 className="text-lg font-semibold tracking-tight">{t('marketing.leversTitle')}</h3>
+                    <p className="text-sm text-muted-foreground">{t('marketing.leversNote')}</p>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{t('marketing.clients')}</CardTitle>
+                            <UserCheck className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{activeClientsCount}</div>
+                            <p className="text-xs text-muted-foreground">{t('marketing.clientsNote')}</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{t('marketing.avgPurchaseValue')}</CardTitle>
+                            <Receipt className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">
+                                {Math.round(avgPurchaseValue).toLocaleString('fr-CH', { style: 'currency', currency: currency, maximumFractionDigits: 0 })}
+                            </div>
+                            <p className="text-xs text-muted-foreground">{t('marketing.avgPurchaseValueNote')}</p>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardTitle className="text-sm font-medium">{t('marketing.purchaseFrequency')}</CardTitle>
+                            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-2xl font-bold">{purchaseFrequency.toFixed(1)}</div>
+                            <p className="text-xs text-muted-foreground">{t('marketing.purchaseFrequencyNote')}</p>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -249,6 +305,28 @@ export default function MarketingPage() {
                         <p className="text-xs text-muted-foreground">
                             {t('marketing.returningVsSingle', { returning: multiOfferClients, single: singleOfferClients })}
                         </p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">{t('marketing.avgBasket')}</CardTitle>
+                        <CreditCard className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">
+                            {Math.round(avgBasketPerClient).toLocaleString('fr-CH', { style: 'currency', currency: currency, maximumFractionDigits: 0 })}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{t('marketing.avgBasketNote')}</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">{t('marketing.newClients')}</CardTitle>
+                        <UserPlus className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{newClientsCount}</div>
+                        <p className="text-xs text-muted-foreground">{t('marketing.newClientsNote')}</p>
                     </CardContent>
                 </Card>
             </div>
