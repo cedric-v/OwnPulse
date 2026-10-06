@@ -262,7 +262,7 @@ export default function CFODashboard() {
                             </CardContent>
                         </Card>
                     </div>
-                    <SalesList sales={filteredSales} currency={currency} />
+                    <SalesList sales={filteredSales} currency={currency} onRefresh={fetchFinancials} />
                 </TabsContent>
 
                 <TabsContent value="expenses" className="space-y-4">

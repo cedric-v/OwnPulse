@@ -15,6 +15,7 @@ import { ArrowLeft, Loader2, Globe, MapPin, ExternalLink, Users, Check, Trash2, 
 import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { NewSaleForm } from "@/app/cfo/components/new-sale-form"
+import { DeleteSaleAlert } from "@/components/sales/delete-sale-alert"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Sale } from "@/types"
 import { useLanguage } from "@/components/i18n/language-context"
@@ -40,6 +41,7 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
     const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle")
     const [saleDialogOpen, setSaleDialogOpen] = useState(false)
     const [editingSale, setEditingSale] = useState<Sale | null>(null)
+    const [deletingSale, setDeletingSale] = useState<Sale | null>(null)
 
     useEffect(() => {
         async function fetchData() {
@@ -298,6 +300,15 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                                         >
                                             <Pencil className="h-3 w-3 text-muted-foreground" />
                                         </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-6 w-6 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            onClick={() => setDeletingSale(sale)}
+                                            title={t('sales.deleteSale')}
+                                        >
+                                            <Trash2 className="h-3 w-3 text-red-500" />
+                                        </Button>
                                         <div className="overflow-hidden">
                                             <p className="text-sm font-medium truncate">{sale.offer_name}</p>
                                             <p className="text-xs text-muted-foreground">
@@ -374,6 +385,18 @@ export default function CompanyDetailPage({ params }: { params: Promise<{ id: st
                     )}
                 </DialogContent>
             </Dialog>
+            {deletingSale && (
+                <DeleteSaleAlert
+                    saleId={deletingSale.id}
+                    saleName={deletingSale.offer_name}
+                    open={!!deletingSale}
+                    onOpenChange={(open) => !open && setDeletingSale(null)}
+                    onSuccess={() => {
+                        setDeletingSale(null)
+                        refreshSales()
+                    }}
+                />
+            )}
         </div>
     )
 }

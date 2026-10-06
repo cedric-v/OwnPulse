@@ -441,6 +441,13 @@ export const translations = {
                 clearSelection: "Effacer la sélection",
             },
         },
+        sales: {
+            deleteConfirmTitle: "Supprimer la vente",
+            deleteConfirmMessage: "Voulez-vous vraiment supprimer la vente « {{name}} » ? Cette action est irréversible.",
+            deleteButton: "Supprimer",
+            deleteError: "Erreur lors de la suppression",
+            deleteSale: "Supprimer la vente",
+        },
         companies: {
             totalSales: "Total ventes",
             sortBy: "Trier par",
@@ -888,6 +895,13 @@ export const translations = {
                 selectedCount: "{{count}} selected",
                 clearSelection: "Clear selection",
             },
+        },
+        sales: {
+            deleteConfirmTitle: "Delete sale",
+            deleteConfirmMessage: "Are you sure you want to delete the sale “{{name}}”? This action cannot be undone.",
+            deleteButton: "Delete",
+            deleteError: "Error while deleting",
+            deleteSale: "Delete sale",
         },
         companies: {
             totalSales: "Total Sales",

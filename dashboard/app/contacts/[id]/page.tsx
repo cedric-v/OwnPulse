@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { Activity, ArrowLeft, Loader2, Phone, Mail, MapPin, Globe, ExternalLink, Check, Building, Pencil, GitMerge, X } from "lucide-react"
+import { Activity, ArrowLeft, Loader2, Phone, Mail, MapPin, Globe, ExternalLink, Check, Building, Pencil, Trash2, GitMerge, X } from "lucide-react"
 import Link from "next/link"
 import { StatusCell } from "@/components/contacts/status-cell"
 import { MergeContactDialog } from "@/components/contacts/merge-contact-dialog"
@@ -35,6 +35,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox"
 import { Calendar as CalendarIcon, Plus, AlertCircle } from "lucide-react"
 import { NewSaleForm } from "@/app/cfo/components/new-sale-form"
+import { DeleteSaleAlert } from "@/components/sales/delete-sale-alert"
 import { htmlToText } from "@/lib/html-to-text"
 import { DateInput } from "@/components/ui/date-input"
 
@@ -83,6 +84,7 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
     const [loading, setLoading] = useState(true)
     const [showSaleDialog, setShowSaleDialog] = useState(false)
     const [editingSale, setEditingSale] = useState<Sale | null>(null)
+    const [deletingSale, setDeletingSale] = useState<Sale | null>(null)
     const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle")
     const [currency, setCurrency] = useState("CHF")
     const [error, setError] = useState<string | null>(null)
@@ -787,6 +789,15 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                                                     >
                                                         <Pencil className="h-3 w-3 text-muted-foreground" />
                                                     </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        onClick={() => setDeletingSale(sale)}
+                                                        title={t('sales.deleteSale')}
+                                                    >
+                                                        <Trash2 className="h-3 w-3 text-red-500" />
+                                                    </Button>
                                                     <div className="flex flex-col">
                                                         <span className="font-medium">{sale.offer_name}</span>
                                                         <span className="text-[10px] text-muted-foreground">{new Date(sale.sale_date).toLocaleDateString()}</span>
@@ -1012,6 +1023,20 @@ export default function ContactDetailPage({ params }: { params: Promise<{ id: st
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {/* Delete Sale Dialog */}
+            {deletingSale && (
+                <DeleteSaleAlert
+                    saleId={deletingSale.id}
+                    saleName={deletingSale.offer_name}
+                    open={!!deletingSale}
+                    onOpenChange={(open) => !open && setDeletingSale(null)}
+                    onSuccess={() => {
+                        setDeletingSale(null)
+                        refreshSales()
+                    }}
+                />
+            )}
 
             {/* Merge Duplicates Dialog */}
             <MergeContactDialog
