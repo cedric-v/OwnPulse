@@ -28,7 +28,7 @@
 - **Offer Mastery:** Manage complex service offers with integrated work-time calculators and automatic margin tracking.
 - **Profitability Dashboard:** Visualize real vs. theoretical hourly rates and sales goals progress per offer.
 - **Retention Tracking:** Visualize returning vs. new customer ratios to optimize long-term growth.
-- **Exceptional Sales:** Flag a one-off sale so it is excluded from the marketing averages/ratios (and see the median purchase value as a robust signal), while keeping it fully counted in the CFO revenue. Excluded/included via a toggle on the Marketing dashboard.
+- **Exceptional Sales:** Flag a one-off sale so it is excluded from the Marketing statistics (growth levers, retention, acquisition channels, top offers, client lists) while staying fully counted in the CFO revenue. The mean purchase value is kept for the growth-lever identity; the median purchase value is shown alongside as a robust signal, and the exclusion can be toggled on the Marketing dashboard.
 
 ### 3. 💰 Financial Command (CFO Dashboard)
 - **Revenue vs. Reality:** Track total sales against professional expenses and **actual remuneration**.
@@ -156,6 +156,20 @@ Run `migration_merge_contacts.sql` once on an existing project. It adds the `mer
 - The merge runs in a single transaction: any validation error rolls everything back.
 
 The dedup `contact_urls` view automatically stops listing the deleted duplicate's profile URLs, and the kept contact retains both profile URLs (LinkedIn + Instagram) so the extension will report **Already in CRM** for both.
+
+### 9. Exceptional sales & marketing statistics
+
+A single exceptional deal can distort the marketing averages and the growth levers. Instead of silently trimming outliers, the sale is flagged explicitly:
+
+- **CFO → Sales:** open the `⋯` menu on a row → **Exclure des statistiques marketing** (or tick **Vente exceptionnelle** when creating/editing a sale). Flagged rows show a `Hors stats` badge.
+- **Marketing:** exceptional sales are excluded from the page statistics by default. Use **Inclure les ventes exceptionnelles** next to the period selector to compare with them included.
+
+Semantics:
+- **Accounting is never affected.** The CFO revenue, expenses, net result, revenue-goal progress and offer profitability always include every sale. Only the Marketing statistics exclude flagged sales.
+- **Mean vs median.** "Valeur moyenne par achat" stays an arithmetic mean so the growth-lever identity `Revenue ≈ clients × avg purchase value × frequency` holds. The **median purchase value** is shown underneath as a robust signal: when it is far below the mean, a single purchase is pulling the average up.
+- The exclusion never deletes or modifies the sale; it only changes whether it is counted in the Marketing statistics.
+
+Migration: run `migration_sales_exclude_from_stats.sql` once on an existing project (adds `sales.exclude_from_stats BOOLEAN NOT NULL DEFAULT false`). No new grant/RLS is needed: the table-level grant and the `owner_full_access` policy already cover every column.
 
 ---
 

@@ -35,6 +35,15 @@ Always run `npm run lint` and `npm run build` in `dashboard/` after meaningful a
 - The anti-pause watchdog (`keepalive-worker/`, Cloudflare cron) pings `contact_urls` via the anon key. Keep an explicit `GRANT SELECT ON contact_urls TO anon` — if that grant is removed or the view is renamed, the keep-alive falls back to `/auth/v1/health` and logs the 404.
 - When changing schema or access patterns, update both SQL and documentation.
 
+## Sales & Statistics Rules
+- `sales.exclude_from_stats` (BOOLEAN, default `false`, added by `migration_sales_exclude_from_stats.sql`) flags an exceptional sale. Preserve this invariant:
+  - **CFO / accounting always includes every sale** (revenue, expenses, net result, revenue-goal progress, offer profitability).
+  - **Marketing excludes flagged sales by default**, with a user-facing toggle to re-include them for comparison.
+- In `dashboard/app/marketing/page.tsx`, derive a single `statsSales` scope upstream and use it for every indicator (growth levers, average basket, purchase frequency, retention, acquisition channels, top offers and the per-client dialog lists) so the numbers stay mutually consistent. `allStatsSales` is the all-time equivalent used for retention.
+- "Valeur moyenne par achat" must remain the arithmetic **mean**: the Jay Abraham growth-lever identity (`revenue ≈ clients × avg purchase value × frequency`) only holds with the mean. The **median** is displayed alongside as a robust signal, never as a replacement.
+- Do not auto-trim outliers (IQR/percentile/winsorization): outlier handling is explicit and reversible via the flag + Marketing toggle.
+- Flag editing lives in the sale form (`new-sale-form.tsx`, `Checkbox` with a helper text) and in `sales-list.tsx` via a labeled actions menu. Never expose it as an icon-only control — the semantics are not self-evident.
+
 ## Extension Rules
 - `extension/content.js` calls `/rest/v1/contact_urls` for dedup, `/rest/v1/rpc/capture_contact` for inserts, and `/rest/v1/rpc/refresh_contact_from_capture` for whitelisted updates (profile fields only) of already-captured contacts, with the publishable key. `background.js` + `popup.html`/`popup.js` provide an optional Supabase login (session in `chrome.storage.local`): logged in, the refresh runs as the authenticated owner and may touch claimed contacts; with the anon key alone, only unclaimed rows can be refreshed (enforced inside the RPC).
 - Anonymous access is intentionally locked down: no direct SELECT/INSERT/UPDATE on `contacts` with the anon key (personal data exposure risk). Keep this invariant — any future change must preserve the extension flow via `contact_urls` + `capture_contact` + `refresh_contact_from_capture`.
