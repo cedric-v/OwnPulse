@@ -12,9 +12,17 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { useToast } from "@/components/ui/use-toast"
 import { createClient } from "@/lib/supabase/client"
-import { Eye, EyeOff, Trash2 } from "lucide-react"
+import { Eye, EyeOff, MoreHorizontal, Trash2 } from "lucide-react"
 import { DeleteSaleAlert } from "@/components/sales/delete-sale-alert"
 
 interface SalesListProps {
@@ -102,29 +110,36 @@ export function SalesList({ sales, currency, onRefresh }: SalesListProps) {
                                     {((sale.price_ht || 0) * (sale.quantity || 1)).toLocaleString('fr-CH', { style: 'currency', currency: currency })}
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <div className="flex items-center justify-end gap-1">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 text-muted-foreground"
-                                            onClick={() => toggleStatsExclusion(sale)}
-                                            disabled={updatingId === sale.id}
-                                            title={sale.exclude_from_stats ? t('sales.includeInStats') : t('sales.excludeFromStats')}
-                                            aria-label={sale.exclude_from_stats ? t('sales.includeInStats') : t('sales.excludeFromStats')}
-                                            aria-pressed={Boolean(sale.exclude_from_stats)}
-                                        >
-                                            {sale.exclude_from_stats ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8 text-muted-foreground hover:text-red-500"
-                                            onClick={() => setDeletingSale(sale)}
-                                            title={t('sales.deleteSale')}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                className="h-8 w-8 p-0"
+                                                disabled={updatingId === sale.id}
+                                            >
+                                                <span className="sr-only">{t('sales.openMenu')}</span>
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuLabel>{t('sales.actionsLabel')}</DropdownMenuLabel>
+                                            <DropdownMenuItem
+                                                className="cursor-pointer"
+                                                onClick={() => toggleStatsExclusion(sale)}
+                                            >
+                                                {sale.exclude_from_stats
+                                                    ? <><Eye className="mr-2 h-4 w-4" /> {t('sales.includeInStats')}</>
+                                                    : <><EyeOff className="mr-2 h-4 w-4" /> {t('sales.excludeFromStats')}</>}
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem
+                                                className="text-red-600 focus:text-red-600 cursor-pointer"
+                                                onClick={() => setDeletingSale(sale)}
+                                            >
+                                                <Trash2 className="mr-2 h-4 w-4" /> {t('sales.deleteSale')}
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </TableCell>
                             </TableRow>
                         ))
