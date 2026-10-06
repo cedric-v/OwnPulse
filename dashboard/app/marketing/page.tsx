@@ -1,16 +1,62 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts"
-import { Loader2, Users, Clock, ShoppingCart, CreditCard, UserPlus, Receipt, UserCheck } from "lucide-react"
+import { Loader2, Users, Clock, ShoppingCart, CreditCard, UserPlus, Receipt, UserCheck, Award } from "lucide-react"
 import { PeriodSelector, Period } from "@/components/dashboard/period-selector"
+import { ClientListDialog, ClientRankingList, ClientListItem } from "@/components/marketing/client-list"
 import { createClient } from "@/lib/supabase/client"
 import { useLanguage } from "@/components/i18n/language-context"
 import { Contact, Sale } from "@/types"
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d']
+
+type ClientListKind = 'clients' | 'avgPurchase' | 'frequency' | 'conversion' | 'retention' | 'basket' | 'newClients'
+
+function MetricCard({
+    title,
+    icon,
+    value,
+    note,
+    onClick,
+}: {
+    title: string
+    icon: ReactNode
+    value: ReactNode
+    note: ReactNode
+    onClick?: () => void
+}) {
+    const interactive = Boolean(onClick)
+    return (
+        <Card
+            className={interactive ? "cursor-pointer transition-colors hover:border-primary/50 hover:bg-muted/40" : undefined}
+            onClick={onClick}
+            role={interactive ? "button" : undefined}
+            tabIndex={interactive ? 0 : undefined}
+            onKeyDown={
+                interactive
+                    ? (event) => {
+                          if (event.key === 'Enter' || event.key === ' ') {
+                              event.preventDefault()
+                              onClick?.()
+                          }
+                      }
+                    : undefined
+            }
+        >
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                {icon}
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{value}</div>
+                <p className="text-xs text-muted-foreground">{note}</p>
+            </CardContent>
+        </Card>
+    )
+}
 
 function OffersTooltip({
     active,
@@ -44,6 +90,7 @@ export default function MarketingPage() {
     const [currency, setCurrency] = useState("CHF")
     const [loading, setLoading] = useState(true)
     const [period, setPeriod] = useState<Period>("12m")
+    const [clientList, setClientList] = useState<ClientListKind | null>(null)
 
     const supabase = createClient()
 
@@ -230,11 +277,131 @@ export default function MarketingPage() {
     const purchaseFrequency = activeClientsCount > 0 ? purchaseCount / activeClientsCount : 0
 
     // 6. New clients converted during the selected period
-    const newClientsCount = contacts.filter(c => c.customer_conversion_date && isWithinPeriod(c.customer_conversion_date)).length
+    const newClientsContacts = contacts
+        .filter(c => c.customer_conversion_date && isWithinPeriod(c.customer_conversion_date))
+        .sort((a, b) => new Date(b.customer_conversion_date as string).getTime() - new Date(a.customer_conversion_date as string).getTime())
+    const newClientsCount = newClientsContacts.length
     const retentionData = [
         { name: t('marketing.singleOffer'), value: singleOfferClients },
         { name: t('marketing.returningClients'), value: multiOfferClients }
     ]
+
+    // 7. Client lists behind each metric (cards are clickable)
+    const formatCurrency = (value: number) =>
+        Math.round(value).toLocaleString('fr-CH', { style: 'currency', currency, maximumFractionDigits: 0 })
+
+    const getContactName = (contact: Contact) =>
+        [contact.first_name, contact.last_name].filter(Boolean).join(" ") ||
+        contact.company ||
+        contact.email ||
+        t('marketing.unknownClient')
+
+    const toClientItem = (contact: Contact, value?: string, secondary?: string): ClientListItem => ({
+        id: contact.id,
+        name: getContactName(contact),
+        company: contact.company,
+        avatar_url: contact.avatar_url,
+        value,
+        secondary,
+    })
+
+    const purchaseLabel = (count: number) =>
+        `${count} ${count > 1 ? t('marketing.purchases') : t('marketing.purchase')}`
+
+    // Revenue and number of purchases per client over the selected period
+    const periodClientStats: Record<string, { revenue: number; purchases: number }> = {}
+    filteredSales.forEach(s => {
+        if (!s.contact_id) return
+        if (!periodClientStats[s.contact_id]) periodClientStats[s.contact_id] = { revenue: 0, purchases: 0 }
+        periodClientStats[s.contact_id].revenue += (s.price_ht || 0) * (s.quantity || 1)
+        periodClientStats[s.contact_id].purchases += 1
+    })
+
+    const activeClients = Object.entries(periodClientStats)
+        .map(([id, stats]) => ({ contact: contacts.find(c => c.id === id), ...stats }))
+        .filter((entry): entry is { contact: Contact; revenue: number; purchases: number } => Boolean(entry.contact))
+        .sort((a, b) => b.revenue - a.revenue)
+
+    const activeClientsList: ClientListItem[] = activeClients.map(entry =>
+        toClientItem(entry.contact, formatCurrency(entry.revenue), purchaseLabel(entry.purchases))
+    )
+
+    const topClientsList: ClientListItem[] = activeClients.slice(0, 10).map(entry =>
+        toClientItem(entry.contact, formatCurrency(entry.revenue), purchaseLabel(entry.purchases))
+    )
+
+    const avgPurchaseList: ClientListItem[] = activeClients
+        .map(entry => ({ ...entry, avg: entry.purchases > 0 ? entry.revenue / entry.purchases : 0 }))
+        .sort((a, b) => b.avg - a.avg)
+        .map(entry =>
+            toClientItem(
+                entry.contact,
+                t('marketing.avgPerPurchase', { value: formatCurrency(entry.avg) }),
+                purchaseLabel(entry.purchases)
+            )
+        )
+
+    const frequencyList: ClientListItem[] = [...activeClients]
+        .sort((a, b) => b.purchases - a.purchases)
+        .map(entry =>
+            toClientItem(entry.contact, `${entry.purchases.toFixed(1)}×`, purchaseLabel(entry.purchases))
+        )
+
+    const retentionList: ClientListItem[] = activeClients
+        .filter(entry => (totalSalesByContact[entry.contact.id] || 0) > 1)
+        .map(entry =>
+            toClientItem(entry.contact, formatCurrency(entry.revenue), purchaseLabel(entry.purchases))
+        )
+
+    const conversionList: ClientListItem[] = filteredContacts
+        .filter(c => c.first_contact_date && c.customer_conversion_date)
+        .map(c => ({
+            contact: c,
+            days: Math.round(
+                (new Date(c.customer_conversion_date as string).getTime() -
+                    new Date(c.first_contact_date as string).getTime()) /
+                    (1000 * 3600 * 24)
+            ),
+        }))
+        .filter(entry => entry.days >= 0)
+        .sort((a, b) => b.days - a.days)
+        .map(entry =>
+            toClientItem(
+                entry.contact,
+                t('marketing.conversionDuration', { days: entry.days })
+            )
+        )
+
+    const newClientsList: ClientListItem[] = newClientsContacts.map(c => {
+        const revenue = activeClients.find(entry => entry.contact.id === c.id)?.revenue
+        return toClientItem(
+            c,
+            revenue ? formatCurrency(revenue) : undefined,
+            t('marketing.convertedOn', {
+                date: new Date(c.customer_conversion_date as string).toLocaleDateString(),
+            })
+        )
+    })
+
+    const clientListItems: Record<ClientListKind, ClientListItem[]> = {
+        clients: activeClientsList,
+        avgPurchase: avgPurchaseList,
+        frequency: frequencyList,
+        conversion: conversionList,
+        retention: retentionList,
+        basket: activeClientsList,
+        newClients: newClientsList,
+    }
+
+    const clientListMeta: Record<ClientListKind, { title: string; description: string }> = {
+        clients: { title: t('marketing.clients'), description: t('marketing.clientsNote') },
+        avgPurchase: { title: t('marketing.avgPurchaseValue'), description: t('marketing.avgPurchaseValueNote') },
+        frequency: { title: t('marketing.purchaseFrequency'), description: t('marketing.purchaseFrequencyNote') },
+        conversion: { title: t('marketing.avgConversion'), description: t('marketing.fromContactToClient') },
+        retention: { title: t('marketing.retention'), description: t('marketing.retentionNote') },
+        basket: { title: t('marketing.avgBasket'), description: t('marketing.avgBasketNote') },
+        newClients: { title: t('marketing.newClients'), description: t('marketing.newClientsNote') },
+    }
 
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
@@ -247,88 +414,62 @@ export default function MarketingPage() {
                 <div>
                     <h3 className="text-lg font-semibold tracking-tight">{t('marketing.leversTitle')}</h3>
                     <p className="text-sm text-muted-foreground">{t('marketing.leversNote')}</p>
+                    <p className="text-xs text-muted-foreground">{t('marketing.clickHint')}</p>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{t('marketing.clients')}</CardTitle>
-                            <UserCheck className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{activeClientsCount}</div>
-                            <p className="text-xs text-muted-foreground">{t('marketing.clientsNote')}</p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{t('marketing.avgPurchaseValue')}</CardTitle>
-                            <Receipt className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
-                                {Math.round(avgPurchaseValue).toLocaleString('fr-CH', { style: 'currency', currency: currency, maximumFractionDigits: 0 })}
-                            </div>
-                            <p className="text-xs text-muted-foreground">{t('marketing.avgPurchaseValueNote')}</p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">{t('marketing.purchaseFrequency')}</CardTitle>
-                            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{purchaseFrequency.toFixed(1)}</div>
-                            <p className="text-xs text-muted-foreground">{t('marketing.purchaseFrequencyNote')}</p>
-                        </CardContent>
-                    </Card>
+                    <MetricCard
+                        title={t('marketing.clients')}
+                        icon={<UserCheck className="h-4 w-4 text-muted-foreground" />}
+                        value={activeClientsCount}
+                        note={t('marketing.clientsNote')}
+                        onClick={() => setClientList('clients')}
+                    />
+                    <MetricCard
+                        title={t('marketing.avgPurchaseValue')}
+                        icon={<Receipt className="h-4 w-4 text-muted-foreground" />}
+                        value={formatCurrency(avgPurchaseValue)}
+                        note={t('marketing.avgPurchaseValueNote')}
+                        onClick={() => setClientList('avgPurchase')}
+                    />
+                    <MetricCard
+                        title={t('marketing.purchaseFrequency')}
+                        icon={<ShoppingCart className="h-4 w-4 text-muted-foreground" />}
+                        value={purchaseFrequency.toFixed(1)}
+                        note={t('marketing.purchaseFrequencyNote')}
+                        onClick={() => setClientList('frequency')}
+                    />
                 </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{t('marketing.avgConversion')}</CardTitle>
-                        <Clock className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{avgConversionTime} {t('marketing.days')}</div>
-                        <p className="text-xs text-muted-foreground">{t('marketing.fromContactToClient')}</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{t('marketing.retention')}</CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{retentionRate}%</div>
-                        <p className="text-xs text-muted-foreground">
-                            {t('marketing.returningVsSingle', { returning: multiOfferClients, single: singleOfferClients })}
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{t('marketing.avgBasket')}</CardTitle>
-                        <CreditCard className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">
-                            {Math.round(avgBasketPerClient).toLocaleString('fr-CH', { style: 'currency', currency: currency, maximumFractionDigits: 0 })}
-                        </div>
-                        <p className="text-xs text-muted-foreground">{t('marketing.avgBasketNote')}</p>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">{t('marketing.newClients')}</CardTitle>
-                        <UserPlus className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{newClientsCount}</div>
-                        <p className="text-xs text-muted-foreground">{t('marketing.newClientsNote')}</p>
-                    </CardContent>
-                </Card>
+                <MetricCard
+                    title={t('marketing.avgConversion')}
+                    icon={<Clock className="h-4 w-4 text-muted-foreground" />}
+                    value={`${avgConversionTime} ${t('marketing.days')}`}
+                    note={t('marketing.fromContactToClient')}
+                    onClick={() => setClientList('conversion')}
+                />
+                <MetricCard
+                    title={t('marketing.retention')}
+                    icon={<Users className="h-4 w-4 text-muted-foreground" />}
+                    value={`${retentionRate}%`}
+                    note={t('marketing.returningVsSingle', { returning: multiOfferClients, single: singleOfferClients })}
+                    onClick={() => setClientList('retention')}
+                />
+                <MetricCard
+                    title={t('marketing.avgBasket')}
+                    icon={<CreditCard className="h-4 w-4 text-muted-foreground" />}
+                    value={formatCurrency(avgBasketPerClient)}
+                    note={t('marketing.avgBasketNote')}
+                    onClick={() => setClientList('basket')}
+                />
+                <MetricCard
+                    title={t('marketing.newClients')}
+                    icon={<UserPlus className="h-4 w-4 text-muted-foreground" />}
+                    value={newClientsCount}
+                    note={t('marketing.newClientsNote')}
+                    onClick={() => setClientList('newClients')}
+                />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
@@ -383,7 +524,7 @@ export default function MarketingPage() {
                 </Card>
             </div>
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-7">
+                <Card className="col-span-4">
                     <CardHeader>
                         <CardTitle>{t('marketing.topOffers')}</CardTitle>
                         <CardDescription>{t('marketing.offersNote')}</CardDescription>
@@ -415,7 +556,37 @@ export default function MarketingPage() {
                         </div>
                     </CardContent>
                 </Card>
+
+                <Card className="col-span-3">
+                    <CardHeader>
+                        <div className="flex items-center justify-between gap-2">
+                            <CardTitle>{t('marketing.topClients')}</CardTitle>
+                            <Award className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <CardDescription>{t('marketing.topClientsNote')}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ClientRankingList
+                            items={topClientsList}
+                            emptyLabel={t('marketing.noClientsInPeriod')}
+                            maxHeight="h-[300px]"
+                        />
+                    </CardContent>
+                </Card>
             </div>
+
+            {clientList ? (
+                <ClientListDialog
+                    open={Boolean(clientList)}
+                    onOpenChange={(open) => {
+                        if (!open) setClientList(null)
+                    }}
+                    title={clientListMeta[clientList].title}
+                    description={clientListMeta[clientList].description}
+                    items={clientListItems[clientList]}
+                    emptyLabel={t('marketing.noClientsInPeriod')}
+                />
+            ) : null}
         </div>
     )
 }
