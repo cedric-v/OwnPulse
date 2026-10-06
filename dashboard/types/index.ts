@@ -59,6 +59,7 @@ export type Sale = {
     payment_delay: string | null
     contact_id: string | null
     company_id: string | null
+    exclude_from_stats?: boolean
     created_at: string
     contacts?: { first_name: string | null, last_name: string | null } | null
     companies?: { name: string | null } | null

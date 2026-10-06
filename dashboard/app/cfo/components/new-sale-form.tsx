@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/components/ui/use-toast"
 import { Offer, Sale } from "@/types"
 
@@ -46,6 +47,7 @@ export function NewSaleForm({ onSuccess, defaultContactId, defaultCompanyId, ini
     const [paymentDelay, setPaymentDelay] = useState(initialData?.payment_delay || "immediat")
     const [contactId, setContactId] = useState(initialData?.contact_id || defaultContactId || "")
     const [companyId, setCompanyId] = useState(initialData?.company_id || defaultCompanyId || "")
+    const [excludedFromStats, setExcludedFromStats] = useState(initialData?.exclude_from_stats ?? false)
     const [staggeredValue, setStaggeredValue] = useState(
         initialTerms.includes("% commande / solde fin") ? initialTerms.split("%")[0] : "50"
     )
@@ -111,7 +113,8 @@ export function NewSaleForm({ onSuccess, defaultContactId, defaultCompanyId, ini
                     : paymentTerms,
             payment_delay: paymentDelay,
             contact_id: contactId === "none" ? null : (contactId || null),
-            company_id: companyId === "none" ? null : (companyId || null)
+            company_id: companyId === "none" ? null : (companyId || null),
+            exclude_from_stats: excludedFromStats
         }
 
         const query = initialData
@@ -136,10 +139,11 @@ export function NewSaleForm({ onSuccess, defaultContactId, defaultCompanyId, ini
                         .eq('id', contactId)
                 }
             }
-            toast({ title: t('common.success'), description: initialData ? "Sale updated successfully" : "Sale recorded successfully" })
+            toast({ title: t('common.success'), description: initialData ? t('cfo.saleUpdated') : t('cfo.saleCreated') })
             if (!initialData) {
                 setOfferName("")
                 setPrice("")
+                setExcludedFromStats(false)
             }
             onSuccess()
         }
@@ -267,6 +271,24 @@ export function NewSaleForm({ onSuccess, defaultContactId, defaultCompanyId, ini
                         <SelectItem value="90_jours">{t('cfo.days90')}</SelectItem>
                     </SelectContent>
                 </Select>
+            </div>
+
+            <div className="flex items-start gap-3 rounded-md border bg-muted/40 p-3">
+                <Checkbox
+                    id="exclude-from-stats"
+                    checked={excludedFromStats}
+                    onCheckedChange={(checked) => setExcludedFromStats(checked === true)}
+                    aria-describedby="exclude-from-stats-help"
+                    className="mt-0.5"
+                />
+                <div className="space-y-1">
+                    <Label htmlFor="exclude-from-stats" className="cursor-pointer font-medium">
+                        {t('cfo.exceptionalSale')}
+                    </Label>
+                    <p id="exclude-from-stats-help" className="text-xs text-muted-foreground">
+                        {t('cfo.exceptionalSaleHelp')}
+                    </p>
+                </div>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>

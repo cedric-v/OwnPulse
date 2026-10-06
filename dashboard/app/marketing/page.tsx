@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react"
 import { useRouter } from "next/navigation"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts"
 import { Loader2, Users, Clock, ShoppingCart, CreditCard, UserPlus, Receipt, UserCheck, Award } from "lucide-react"
 import { PeriodSelector, Period } from "@/components/dashboard/period-selector"
@@ -91,6 +92,7 @@ export default function MarketingPage() {
     const [loading, setLoading] = useState(true)
     const [period, setPeriod] = useState<Period>("12m")
     const [clientList, setClientList] = useState<ClientListKind | null>(null)
+    const [includeExceptional, setIncludeExceptional] = useState(false)
 
     const supabase = createClient()
 
@@ -180,10 +182,18 @@ export default function MarketingPage() {
 
     const filteredSales = sales.filter(s => isWithinPeriod(s.sale_date))
 
+    // Exceptional sales (explicit user flag) are excluded from the marketing
+    // statistics by default. The toggle lets the user re-include them for
+    // comparison. Accounting (CFO) always includes every sale.
+    const isStatsSale = (sale: Sale) => includeExceptional || !sale.exclude_from_stats
+    const statsSales = filteredSales.filter(isStatsSale)
+    const allStatsSales = sales.filter(isStatsSale)
+    const exceptionalSalesCount = filteredSales.filter(s => s.exclude_from_stats).length
+
     // 1. Acquisition Channels (Driven by Transactions and Customer List)
     const channelCounts: Record<string, number> = {}
     const wonStatuses = ['client', 'customer', 'closed', 'deal won']
-    const contactIdsWithRecentSales = new Set(filteredSales.map(s => s.contact_id).filter(Boolean))
+    const contactIdsWithRecentSales = new Set(statsSales.map(s => s.contact_id).filter(Boolean))
 
     const convertedWonContactIds = new Set(
         filteredContacts
@@ -225,7 +235,7 @@ export default function MarketingPage() {
 
     // 3. Top 5 Offers by Revenue (price_ht × quantity over the period)
     const offerRevenue: Record<string, { revenue: number; count: number }> = {}
-    filteredSales.forEach(s => {
+    statsSales.forEach(s => {
         const name = s.offer_name || 'Unknown Offer'
         const revenue = (s.price_ht || 0) * (s.quantity || 1)
         const count = s.quantity || 1
@@ -241,14 +251,14 @@ export default function MarketingPage() {
     // 4. Retention Rate (Based on real sales data)
     // We count how many sales each contact has in total (all time)
     const totalSalesByContact: Record<string, number> = {}
-    sales.forEach(s => {
+    allStatsSales.forEach(s => {
         if (s.contact_id) {
             totalSalesByContact[s.contact_id] = (totalSalesByContact[s.contact_id] || 0) + (s.quantity || 1)
         }
     })
 
     // We only consider contacts who have at least one sale in the selected period
-    const activeContactIds = new Set(filteredSales.map(s => s.contact_id).filter(Boolean))
+    const activeContactIds = new Set(statsSales.map(s => s.contact_id).filter(Boolean))
 
     let singleOfferClients = 0
     let multiOfferClients = 0
@@ -267,14 +277,25 @@ export default function MarketingPage() {
     // 5. Jay Abraham key metrics (based on the selected period)
     //    Revenue = Number of clients × Average purchase value × Purchase frequency
     let periodRevenue = 0
-    filteredSales.forEach(s => {
+    statsSales.forEach(s => {
         periodRevenue += (s.price_ht || 0) * (s.quantity || 1)
     })
     const activeClientsCount = activeContactIds.size
-    const purchaseCount = filteredSales.length
+    const purchaseCount = statsSales.length
     const avgBasketPerClient = activeClientsCount > 0 ? periodRevenue / activeClientsCount : 0
     const avgPurchaseValue = purchaseCount > 0 ? periodRevenue / purchaseCount : 0
     const purchaseFrequency = activeClientsCount > 0 ? purchaseCount / activeClientsCount : 0
+
+    // Median purchase value: a robust signal shown alongside the mean so a
+    // single outlier is visible (mean >> median) without distorting the mean
+    // used by the growth-lever identity.
+    const median = (values: number[]) => {
+        if (values.length === 0) return 0
+        const sorted = [...values].sort((a, b) => a - b)
+        const mid = Math.floor(sorted.length / 2)
+        return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid]
+    }
+    const medianPurchaseValue = median(statsSales.map(s => (s.price_ht || 0) * (s.quantity || 1)))
 
     // 6. New clients converted during the selected period
     const newClientsContacts = contacts
@@ -310,7 +331,7 @@ export default function MarketingPage() {
 
     // Revenue and number of purchases per client over the selected period
     const periodClientStats: Record<string, { revenue: number; purchases: number }> = {}
-    filteredSales.forEach(s => {
+    statsSales.forEach(s => {
         if (!s.contact_id) return
         if (!periodClientStats[s.contact_id]) periodClientStats[s.contact_id] = { revenue: 0, purchases: 0 }
         periodClientStats[s.contact_id].revenue += (s.price_ht || 0) * (s.quantity || 1)
@@ -405,15 +426,34 @@ export default function MarketingPage() {
 
     return (
         <div className="flex-1 space-y-4 p-8 pt-6">
-            <div className="flex items-center justify-between space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-3xl font-bold tracking-tight">{t('marketing.title')}</h2>
-                <PeriodSelector value={period} onValueChange={setPeriod} />
+                <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex items-center gap-2">
+                        <Checkbox
+                            id="include-exceptional-sales"
+                            checked={includeExceptional}
+                            onCheckedChange={(checked) => setIncludeExceptional(checked === true)}
+                        />
+                        <label
+                            htmlFor="include-exceptional-sales"
+                            className="cursor-pointer select-none text-sm text-muted-foreground"
+                        >
+                            {t('marketing.includeExceptional')}
+                            {exceptionalSalesCount > 0 ? ` (${exceptionalSalesCount})` : ""}
+                        </label>
+                    </div>
+                    <PeriodSelector value={period} onValueChange={setPeriod} />
+                </div>
             </div>
 
             <div className="space-y-4">
                 <div>
                     <h3 className="text-lg font-semibold tracking-tight">{t('marketing.leversTitle')}</h3>
                     <p className="text-sm text-muted-foreground">{t('marketing.leversNote')}</p>
+                    {exceptionalSalesCount > 0 && !includeExceptional && (
+                        <p className="text-xs text-muted-foreground">{t('marketing.exceptionalExcludedNote')}</p>
+                    )}
                     <p className="text-xs text-muted-foreground">{t('marketing.clickHint')}</p>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -428,7 +468,14 @@ export default function MarketingPage() {
                         title={t('marketing.avgPurchaseValue')}
                         icon={<Receipt className="h-4 w-4 text-muted-foreground" />}
                         value={formatCurrency(avgPurchaseValue)}
-                        note={t('marketing.avgPurchaseValueNote')}
+                        note={
+                            <span className="flex flex-col gap-0.5">
+                                <span>{t('marketing.avgPurchaseValueNote')}</span>
+                                <span title={t('marketing.medianNote')}>
+                                    {t('marketing.medianPerPurchase', { value: formatCurrency(medianPurchaseValue) })}
+                                </span>
+                            </span>
+                        }
                         onClick={() => setClientList('avgPurchase')}
                     />
                     <MetricCard
