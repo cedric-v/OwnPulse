@@ -27,3 +27,22 @@ KEEPALIVE_TABLE = "contact_urls"
 # Ping every 6 hours (free tier supports cron triggers; 7-day pause window).
 [triggers]
 crons = ["0 */6 * * *"]
+
+# ── Cloudflare Observability (Workers Logs) ────────────────────────────────
+# Le 1er décembre 2026, Cloudflare passe l'Observability à une tarification
+# au volume : le plan gratuit offre 0,5 Go d'ingestion par jour (7 jours de
+# rétention). Au-delà, l'ingestion se met en pause (aucun site en panne, mais
+# plus de logs).
+#
+# Ce Worker est déclenché par cron (toutes les 15 à 20 minutes) : son volume
+# de logs est dérisoire, et ses erreurs sont déjà remontées par e-mail
+# (Mailjet). On désactive donc complètement l'Observability : aucun volume
+# ingéré, aucune part du quota gratuit consommée.
+#
+# Attention : ce worker signalait ses erreurs par e-mail ET laissait des
+# traces en console. Après ce changement, seul l'e-mail reste : c'est le
+# canal qui déclenche une action, pas le log.
+#
+# Référence : tools/docs/cloudflare-observability.md
+[observability]
+enabled = false
