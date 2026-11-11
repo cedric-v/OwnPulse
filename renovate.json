@@ -4,7 +4,39 @@
     "config:recommended",
     ":automergeMinor",
     ":automergeRequireAllStatusChecks",
-    "osvVulnerabilityAlerts"
+    "osvVulnerabilityAlerts",
+    "helpers:pinGitHubActionDigests"
   ],
-  "platformAutomerge": true
+  "platformAutomerge": true,
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": [
+      "security"
+    ],
+    "schedule": [
+      "at any time"
+    ],
+    "automerge": true
+  },
+  "minimumReleaseAge": "7 days",
+  "packageRules": [
+    {
+      "description": "Patchs et mineures : automerge si la CI est verte",
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "automerge": true
+    },
+    {
+      "description": "Majeures : revue humaine obligatoire (rupture possible)",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "automerge": false
+    }
+  ]
 }
