@@ -65,6 +65,8 @@ La clé est publishable (publique par design), mais la rotater invalide tout usa
 ### 6. (Futur) Flux authentifié pour l'extension
 Aujourd'hui la capture anon passe par `capture_contact` (whitelistée, non réclamée). Une évolution plus propre : l'extension s'authentifie (JWT) et appelle une RPC qui lie le contact au propriétaire (`user_id = auth.uid()`) — supprimerait le concept de « réclamation ».
 
+➡️ **Conception détaillée prête** : voir [`CAPTURE_AUTHENTIFIE.md`](CAPTURE_AUTHENTIFIE.md) (SQL proposé, modifications extension, décisions D1–D5, checklist de vérification, rollback, ordre d'exécution). Rien n'est implémenté à ce jour.
+
 ## 🚨 Rappels / pièges
 
 - **Ne jamais ré-exécuter `supabase/schema.sql` ou les migrations sur le projet existant** — scripts d'initialisation uniquement (une ré-exécution rouvrirait les grants anon). Pour un projet existant : `hardening_security_rls.sql` puis `hardening_multi_user_rls.sql` (idempotents).

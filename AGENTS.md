@@ -49,6 +49,7 @@ Always run `npm run lint` and `npm run build` in `dashboard/` after meaningful a
 - Anonymous access is intentionally locked down: no direct SELECT/INSERT/UPDATE on `contacts` with the anon key (personal data exposure risk). Keep this invariant — any future change must preserve the extension flow via `contact_urls` + `capture_contact` + `refresh_contact_from_capture`.
 - `refresh_contact_from_capture` (extension, `anon` + `authenticated`): SECURITY DEFINER refresh of profile fields (names fill-if-empty, company, role, avatar, social URLs). It never touches email, phone, notes, status, list, value, or `user_id`, and enforces ownership inside the function (owner or unclaimed rows only) — keep that invariant if it changes.
 - Prefer a server-mediated or authenticated extension flow for future hardening, but do not partially migrate it without updating the full path.
+- Planned (not implemented): the authenticated capture flow is designed in `CAPTURE_AUTHENTIFIE.md` (new `capture_contact_owned` RPC, `my_contact_urls` security-invoker view, JWT-only writes, per-user dedup, keep-alive ping view). Treat that document as the reference when the work starts; keep the anon invariants above until the migration is fully validated.
 
 ## Tooling Policy
 - Keep `eslint` compatible with `eslint-config-next`. Do not force the newest ESLint major unless Next.js tooling supports it cleanly.
