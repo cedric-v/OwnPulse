@@ -54,9 +54,13 @@ Always run `npm run lint` and `npm run build` in `dashboard/` after meaningful a
 ## Tooling Policy
 - Keep `eslint` compatible with `eslint-config-next`. Do not force the newest ESLint major unless Next.js tooling supports it cleanly.
 - Current intentional state:
-  - `next`: `^16.4.4`
-  - `eslint-config-next`: `^16.4.4`
+  - `next`: `^16.4.6`
+  - `eslint-config-next`: `^16.4.6`
   - `eslint`: `^9.39.5`
+- `overrides` scoped `minimatch@^10.0.0` → `^11.0.9` : corrige l'avis DoS
+  _globparts amplification_ (GHSA-g3hv-75wg-m249) remonté par `@ts-morph/common`
+  (via la CLI `shadcn`) sans toucher le `minimatch@3` d'ESLint. Vérifié :
+  `npm run lint` et `npm run build` passent.
 - If testing a new ESLint major, verify `npm run lint` before keeping the upgrade.
 - Dependency freshness matters, but build and lint stability take priority over chasing every new major immediately.
 
